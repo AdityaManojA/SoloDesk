@@ -20,9 +20,19 @@ The workspace now includes a **Daily planner**, scheduling **conflicts and free-
 
 Undo retains 20 changes for the current session; Trash persists in the workspace. Completing a repeating task creates its next occurrence. Recurring invoices require **Generate due drafts** and remain unsent drafts. Focus uses elapsed wall-clock time and logs on Finish. **92 tests and the build pass**; see [verification and limits](qa/productivity-2026-10-20.md).
 
+See the [productivity guide](docs/productivity.md) for where to find each tool and how to use it.
+
 ## Screenshots
 
-Captured from the deployed app using **demo data**. [View all 12 screenshots](docs/screenshots/README.md), including sign-in, projects, invoices, reports and the guided tour.
+Captured from the deployed app on **20 October 2026** using **demo data**. [View all 21 screenshots](docs/screenshots/README.md), including nine new views of the planner, templates, search, focus, client timeline, recurring drafts, Trash and scheduling conflicts. Mobile images use simulated phone viewports.
+
+### Daily planner
+
+![SoloDesk daily planner](docs/screenshots/13-daily-planner-desktop.png)
+
+### Conflicts & free time
+
+![Overlapping work blocks and suggested free time](docs/screenshots/21-conflicts-and-free-time.png)
 
 ### Desktop dashboard
 
@@ -38,7 +48,7 @@ Captured from the deployed app using **demo data**. [View all 12 screenshots](do
 
 ### Mobile & onboarding
 
-<img src="docs/screenshots/08-dashboard-mobile.png" alt="SoloDesk mobile dashboard" width="280"> <img src="docs/screenshots/11-onboarding-mobile.png" alt="SoloDesk visual onboarding on mobile" width="280">
+<img src="docs/screenshots/20-planner-mobile-dark.png" alt="SoloDesk daily planner in mobile dark mode" width="280"> <img src="docs/screenshots/11-onboarding-mobile.png" alt="SoloDesk visual onboarding on mobile" width="280">
 
 ## Run locally
 
