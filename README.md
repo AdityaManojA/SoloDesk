@@ -14,6 +14,10 @@ A freelancer business manager for clients, projects, tasks, invoices, payments a
 
 **Status:** frontend deployed to https://taskflow-solodesk.web.app in `taskflow-dailytracker`, separately from TaskFlow’s Hosting site. The latest 20 October 2026 update passes all **103 automated tests** and the production build. TaskFlow quests and its shared Google events are read-only in SoloDesk. Live sign-in/cloud-save round trips still need an account-level check. The standalone integration API and background server functions are not deployed on the Spark plan.
 
+## Calendar and mobile refresh
+
+The header actions now align in one group. Calendar has a selected-day schedule, separate timed work / deadlines / project timelines, a date-grouped agenda, and compact phone month markers. See [checks and screenshots](qa/calendar-refresh-2026-10-20.md). The current automated suite has **105 passing tests**.
+
 ## Latest interface cleanup
 
 Settings now use expandable groups, client details have Overview / Work / Invoices / Access sections, and related planning and export tools live together. Filters, calendar choices and scroll positions survive navigation within a session. Less-used screens load separately; the application entry bundle is about 19% smaller. See [verification and screenshots](qa/ui-polish-2026-10-20.md).

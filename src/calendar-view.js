@@ -28,3 +28,19 @@ export function eventsInLocalRange(events, from='', through='') {
     ? (!from || event.end>from) && (!through || event.start<=through)
     : (!start || Date.parse(event.end)>start.getTime()) && (!end || Date.parse(event.start)<end.getTime()));
 }
+
+// Stable chronological presentation; a project span never hides timed work.
+export function sortCalendarItems(items) {
+  const rank = event => event.type==='project'?2:event.allDay?1:0;
+  return [...items].sort((a,b)=>rank(a)-rank(b)||(a.allDay&&b.allDay?a.start.localeCompare(b.start):Date.parse(a.start)-Date.parse(b.start))||a.title.localeCompare(b.title)||a.id.localeCompare(b.id));
+}
+export function groupCalendarAgenda(items, month) {
+  const groups=new Map();
+  for(const event of items){
+    // Spanning events appear once, on their start or the first visible month day.
+    const date=localDay(event.start)<month+'-01'?month+'-01':localDay(event.start);
+    if(!groups.has(date))groups.set(date,[]);
+    groups.get(date).push(event);
+  }
+  return [...groups].sort(([a],[b])=>a.localeCompare(b)).map(([date,events])=>({date,events:sortCalendarItems(events)}));
+}

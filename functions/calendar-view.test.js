@@ -43,3 +43,16 @@ test('timed blocks appear on every local day overlapped, without a phantom event
   assert.equal(onDay({ allDay: false, start, end }, '2026-10-20'), true);
   assert.equal(onDay({ allDay: false, start, end: new Date('2026-10-20T00:00:00').toISOString() }, '2026-10-20'), false);
 });
+import {sortCalendarItems,groupCalendarAgenda} from '../src/calendar-view.js';
+test('calendar presentation puts timed work before deadlines and spans without mutating input',()=>{
+  const items=[{id:'p',type:'project',allDay:true,start:'2026-10-01',title:'Project'},{id:'b',type:'task',allDay:false,start:'2026-10-20T15:00:00Z',title:'Later'},{id:'d',type:'task',allDay:true,start:'2026-10-20',title:'Due'},{id:'a',type:'taskflow-event',allDay:false,start:'2026-10-20T08:00:00Z',title:'Earlier'}];
+  assert.deepEqual(sortCalendarItems(items).map(e=>e.id),['a','b','d','p']);
+  assert.deepEqual(items.map(e=>e.id),['p','b','d','a']);
+});
+test('agenda groups dates once and anchors continuing spans to the visible month',()=>{
+  const items=[{id:'old',type:'project',allDay:true,start:'2026-09-27',title:'Continuing'},{id:'new',type:'task',allDay:true,start:'2026-10-20',title:'Deadline'},{id:'same',type:'task',allDay:true,start:'2026-10-20',title:'Another'}];
+  const groups=groupCalendarAgenda(items,'2026-10');
+  assert.deepEqual(groups.map(g=>g.date),['2026-10-01','2026-10-20']);
+  assert.deepEqual(groups.map(g=>g.events.length),[1,2]);
+  assert.equal(groups.flatMap(g=>g.events).length,items.length);
+});
