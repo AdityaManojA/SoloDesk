@@ -35,5 +35,9 @@ export function deleteRecord(workspace, kind, id, invoiceId) {
     workspace.invoices=workspace.invoices.filter(i=>i.client!==id);
   }
   workspace[kind]=workspace[kind].filter(record=>record.id!==id);
+  // Removing a prerequisite must not leave remaining tasks permanently blocked.
+  // Trash captures these field changes so restoring the bundle can recover them.
+  const remainingTasks=new Set(workspace.tasks.map(task=>task.id));
+  for(const task of workspace.tasks)if(task.dependencies)task.dependencies=task.dependencies.filter(id=>remainingTasks.has(id));
   return true;
 }

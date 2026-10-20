@@ -2,6 +2,7 @@
   "functions": [{ "source": "functions", "codebase": "default", "ignore": ["node_modules", ".git", "*.test.js"] }],
   "hosting": { "target": "solodesk", "public": "dist", "ignore": ["firebase.json", "**/.*", "**/node_modules/**"], "rewrites": [{ "source": "**", "destination": "/index.html" }], "headers": [{ "source": "**", "headers": [
     { "key": "X-Content-Type-Options", "value": "nosniff" },
+    { "key": "Cache-Control", "value": "no-cache" },
     { "key": "X-Frame-Options", "value": "DENY" },
     { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
     { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },

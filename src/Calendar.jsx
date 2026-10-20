@@ -10,6 +10,8 @@ import useCalendarDrag from './useCalendarDrag';
 import TaskflowPanel from './TaskflowPanel';
 import { taskflowCalendarEvents } from './taskflow-data';
 import {CalendarPlanning} from './ProductivityUI.jsx';
+import HourCalendar from './HourCalendar.jsx';
+import {scheduleTask} from './productivity';
 
 export default function Calendar({ d, mut, open, user, taskflow, toast=()=>{} }) {
   const [month, setMonth] = useState(() => today().slice(0, 7)), [day, setDay] = useState(today);
@@ -17,6 +19,11 @@ export default function Calendar({ d, mut, open, user, taskflow, toast=()=>{} })
   const [eventId, setEventId] = useState(null), inspector = useRef(null);
   const [moveDate, setMoveDate] = useState(''), [moveMessage, setMoveMessage] = useState('');
   const moveItem = (id, from, to) => {
+    if(to.includes('|')&&(id.startsWith('task-')||id.startsWith('unscheduled-'))){
+      const [date,time]=to.split('|'),taskId=id.replace(/^(task-|unscheduled-)/,'');
+      try{mut(n=>scheduleTask(n,taskId,date,time,n.tasks.find(t=>t.id===taskId)?.durationMinutes||60));setDay(date);setMonth(date.slice(0,7));setMoveMessage('Work block moved to '+date+' '+time+'.');}catch(e){setMoveMessage(e.message);}return;
+    }
+    to=to.split('|')[0];
     if (from === to&&!id.startsWith('unscheduled-')) return;
     try {
       let changed = false;
@@ -57,7 +64,7 @@ export default function Calendar({ d, mut, open, user, taskflow, toast=()=>{} })
     <p className="mobile-calendar-hint">Select a date to see its events below, or switch to Agenda for full titles.</p>
     <p className="calendar-move-status" role="status" aria-live="polite">{drag ? 'Moving ' + drag.title + (over ? ' to ' + over : ' — drop on a calendar date; Escape cancels') : moveMessage}</p>
     <CalendarPlanning d={d} mut={mut} day={day} taskflow={taskflow} toast={toast} dragProps={dragProps}/>
-    <section className="calendar-board"><div className="month-toolbar"><div className="month-title"><button className="icon-button" aria-label="Previous month" onClick={() => changeMonth(-1)}>‹</button><h2 aria-live="polite">{new Date(month + '-15T12:00:00').toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</h2><button className="icon-button" aria-label="Next month" onClick={() => changeMonth(1)}>›</button></div><div className="month-actions"><button className="ghost sm" onClick={() => { setMonth(today().slice(0, 7)); setDay(today()); }}>Today</button><div className="view-switch" aria-label="Calendar view"><button aria-pressed={view === 'month'} onClick={() => setView('month')}>Month</button><button aria-pressed={view === 'agenda'} onClick={() => setView('agenda')}>Agenda</button></div><button className="ghost sm" onClick={() => exportEvents(inMonth, 'solodesk-' + month)}>Export month</button></div></div>
+    <section className="calendar-board"><div className="month-toolbar"><div className="month-title"><button className="icon-button" aria-label="Previous month" onClick={() => changeMonth(-1)}>‹</button><h2 aria-live="polite">{new Date(month + '-15T12:00:00').toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</h2><button className="icon-button" aria-label="Next month" onClick={() => changeMonth(1)}>›</button></div><div className="month-actions"><button className="ghost sm" onClick={() => { setMonth(today().slice(0, 7)); setDay(today()); }}>Today</button><div className="view-switch" aria-label="Calendar view"><button aria-pressed={view === 'month'} onClick={() => setView('month')}>Month</button><button aria-pressed={view === 'agenda'} onClick={() => setView('agenda')}>Agenda</button><button aria-pressed={view === 'week'} onClick={() => setView('week')}>Week</button><button aria-pressed={view === 'day'} onClick={() => setView('day')}>Day</button></div><button className="ghost sm" onClick={() => exportEvents(inMonth, 'solodesk-' + month)}>Export month</button></div></div>
       {view === 'month' ? <><div className="weekdays" aria-hidden="true">{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x => <span key={x}>{x}</span>)}</div><div className="month-grid" role="group" aria-label={month + ' calendar'}>{monthDays(month).map(date => {
         const items = events.filter(e => onDay(e, date));
         return <div {...cellProps(date)} className={'month-cell' + (over === date ? ' drop-target' : '') + (date.slice(0, 7) !== month ? ' outside-month' : '') + (date === day ? ' selected-day' : '')} key={date}>
@@ -65,7 +72,7 @@ export default function Calendar({ d, mut, open, user, taskflow, toast=()=>{} })
           {items.slice(0, 3).map(event => <button key={event.id} data-priority={event.priority} className={'month-chip event-' + event.type + (event.source === 'taskflow' ? ' taskflow-priority' : '') + (event.source !== 'taskflow' ? ' can-drag' : '')} {...dragProps(event,date)} title={event.title + (event.source !== 'taskflow' ? ' · Drag to reschedule' : ' · Read only')} onClick={() => { setDay(date); setEventId(event.id); }}>{event.type === 'taskflow-event' ? 'Google · ' : event.source === 'taskflow' ? 'TF · ' : ''}{event.allDay ? '' : new Date(event.start).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}) + ' '}{event.title}</button>)}
           {items.length > 3 && <button className="more-events" onClick={() => { setDay(date); }}>+{items.length - 3} more</button>}
         </div>;
-      })}</div></> : <div className="month-agenda">{inMonth.length ? inMonth.map(event => <div className="month-agenda-group" key={event.id}><span>{new Date(event.start.length === 10 ? event.start + 'T12:00:00' : event.start).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})}</span>{eventRow(event)}</div>) : <div className="empty"><p>No dated work in this month.</p></div>}</div>}
+      })}</div></> : ['week','day'].includes(view)?<HourCalendar events={events} day={day} view={view} setDay={date=>{setDay(date);setMonth(date.slice(0,7));}} mut={mut} d={d} dragProps={dragProps} cellProps={cellProps} onEvent={setEventId} toast={toast}/> : <div className="month-agenda">{inMonth.length ? inMonth.map(event => <div className="month-agenda-group" key={event.id}><span>{new Date(event.start.length === 10 ? event.start + 'T12:00:00' : event.start).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})}</span>{eventRow(event)}</div>) : <div className="empty"><p>No dated work in this month.</p></div>}</div>}
     </section>
     <div className="calendar-legend"><span><i className="event-project" />Projects</span><span><i className="event-task" />Tasks & deadlines</span><span><i className="event-taskflow-quest" />TaskFlow quests</span><span><i className="event-taskflow-event" />Google Calendar via TaskFlow</span></div>
     <section className="day-agenda"><div className="section-head"><h2>{new Date(day + 'T12:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}</h2><span className="b">{dayEvents.length} events</span></div>{dayEvents.length ? dayEvents.map(eventRow) : <div className="empty"><p>A little breathing room. No work scheduled for this day.</p><button className="btn" onClick={() => open('task',{due:day})}>Plan a task</button></div>}</section>

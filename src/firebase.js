@@ -14,6 +14,7 @@ const config = {
 export const workspaceCollection = 'solodeskWorkspaces';
 export const configured = !!(config.apiKey && config.projectId && config.appId && config.authDomain);
 const app = configured ? initializeApp(config) : null;
+export const firebaseOptions=config;
 export const auth = app ? getAuth(app) : null;
 export const db = app ? getFirestore(app) : null;
 export const provider = new GoogleAuthProvider();
