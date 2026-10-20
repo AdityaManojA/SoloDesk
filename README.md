@@ -1,5 +1,11 @@
 # SoloDesk
 
+## Original MVP & credit
+
+SoloDesk builds on the original [SoloDesk MVP](https://github.com/nainanijo/Solodesk-MVP), created by [NainaNijo on GitHub](https://github.com/nainanijo).
+
+Big shoutout to her for creating the MVP and laying the foundation for this project!
+
 A freelancer business manager for clients, projects, tasks, invoices, payments and reports. The interface now matches the supplied TaskFlow reference: cream surfaces, ink outlines, flat pastels, rounded controls and a floating navigation dock. The original React/Firebase data model and hash routes are retained. Calendar exports now turn project timelines and dated tasks into scheduler events.
 
 **Status:** frontend deployed on 19 October 2026 to https://taskflow-solodesk.web.app in `taskflow-dailytracker`, separately from TaskFlow's existing Hosting site. Both SoloDesk Hosting domains are authorized for Firebase Authentication. All 34 automated tests and the production build passed. The read-only TaskFlow share feed is deployed; a real-account round trip is pending. Live sign-in and Firestore saves still need an account-level check. The integration API is not deployed and no external calendar provider is connected yet.
