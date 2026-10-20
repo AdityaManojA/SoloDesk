@@ -1,6 +1,6 @@
 # Planning & productivity guide
 
-Open [SoloDesk](https://taskflow-solodesk.web.app) and sign in, or choose **Explore the demo** to try sample data. Demo changes stay in your browser. The workspace toolbar and **More** menu provide access to the tools below on desktop and mobile.
+Open [SoloDesk](https://taskflow-solodesk.web.app) and sign in, or choose **Explore the demo** to try sample data. Demo changes stay in your browser. Use **Commands** in the header or **More** on desktop and mobile. **Calendar → Daily plan** opens the planner; **Projects → Project templates** and **Invoices → Recurring drafts** keep related tools together. **More → Data & connections → Backup & restore** contains JSON backups and individual CSV exports. **More → Recovery** contains Undo and Trash. Settings groups business details, appearance, getting started, connections and account controls.
 
 | Tool | How to use it | Example |
 | --- | --- | --- |

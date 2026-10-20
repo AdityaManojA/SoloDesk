@@ -1,6 +1,6 @@
 # Client portal setup
 
-Sign in to SoloDesk as the workspace owner, open **Clients**, then open a client and scroll to **Client portal**.
+Sign in to SoloDesk as the workspace owner, open **Clients**, then open a client and choose **Access → Client portal**.
 
 1. Enter the client's **email**. This is their username.
 2. For a new account, enter an **initial password with at least 12 characters**. For someone who already uses this Firebase project, choose **Link existing account**; their current password is kept, and their email must be verified. Google sign-in is also available on the portal.

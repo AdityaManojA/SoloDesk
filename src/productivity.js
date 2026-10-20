@@ -36,16 +36,17 @@ export function repeatCompletedTasks(before,after){
 }
 
 export function recordActivity(before,after,now=new Date().toISOString()){
-  const rows=[];
+  const rows=[],afterProjects=new Map(after.projects.map(p=>[p.id,p])),beforeProjects=new Map(before.projects.map(p=>[p.id,p]));
   for(const kind of collections){
+    const previous=new Map(before[kind].map(item=>[item.id,item])),current=new Set(after[kind].map(item=>item.id));
     for(const item of after[kind]){
-      const old=before[kind].find(x=>x.id===item.id);
+      const old=previous.get(item.id);
       if(JSON.stringify(old)===JSON.stringify(item))continue;
-      const client=item.client||(kind==='clients'?item.id:after.projects.find(p=>p.id===item.project)?.client)||'';
+      const client=item.client||(kind==='clients'?item.id:afterProjects.get(item.project)?.client)||'';
       const action=!old?'Created':kind==='tasks'&&old.status!=='Done'&&item.status==='Done'?'Completed':kind==='invoices'&&old.pays?.length<item.pays?.length?'Recorded payment for':'Updated';
       rows.push({id:rid(),at:now,kind,recordId:item.id,client,title:item.name||item.title||item.no,action});
     }
-    for(const item of before[kind])if(!after[kind].some(x=>x.id===item.id))rows.push({id:rid(),at:now,kind,recordId:item.id,client:kind==='clients'?item.id:item.client||before.projects.find(p=>p.id===item.project)?.client||'',title:item.name||item.title||item.no,action:'Moved to Trash'});
+    for(const item of before[kind])if(!current.has(item.id))rows.push({id:rid(),at:now,kind,recordId:item.id,client:kind==='clients'?item.id:item.client||beforeProjects.get(item.project)?.client||'',title:item.name||item.title||item.no,action:'Moved to Trash'});
   }
   after.activity=[...rows,...(after.activity||[])].slice(0,500);
 }
@@ -126,7 +127,8 @@ export function scheduleTask(workspace,id,day,time='09:00',minutes=60){
 
 export function searchWorkspace(workspace,feed,query){
   const terms=query.trim().toLowerCase().split(/\s+/).filter(Boolean);if(!terms.length)return [];
-  const rows=collections.flatMap(kind=>workspace[kind].map(item=>({kind,id:item.id,title:item.name||item.title||item.no,detail:[item.email,item.notes,item.status,workspace.clients.find(c=>c.id===item.client)?.name,workspace.projects.find(p=>p.id===item.project)?.name].filter(Boolean).join(' · '),path:kind==='projects'?'#/projects':'#/'+kind+'/'+item.id})));
+  const clients=new Map(workspace.clients.map(c=>[c.id,c])),projects=new Map(workspace.projects.map(p=>[p.id,p]));
+  const rows=collections.flatMap(kind=>workspace[kind].map(item=>({kind,id:item.id,title:item.name||item.title||item.no,detail:[item.email,item.notes,item.status,clients.get(item.client)?.name,projects.get(item.project)?.name].filter(Boolean).join(' · '),path:kind==='projects'?'#/projects':'#/'+kind+'/'+item.id})));
   rows.push(...(feed?.quests||[]).map(q=>({kind:'TaskFlow quest',id:q.id,title:q.title,detail:q.notes||'',url:'https://taskflow-dailytracker.web.app/'})),...(feed?.events||[]).map(e=>({kind:'Google event via TaskFlow',id:e.id,title:e.title,detail:e.where||'',url:e.url||'https://taskflow-dailytracker.web.app/'})));
   return rows.filter(row=>terms.every(term=>(row.title+' '+row.detail+' '+row.kind).toLowerCase().includes(term))).slice(0,50);
 }

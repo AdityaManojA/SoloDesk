@@ -2,12 +2,13 @@ import {useEffect,useRef,useState} from 'react';
 import {addDays} from './lib';
 import {onDay,localDay} from './calendar-view';
 import {scheduleTask} from './productivity';
+import {useScrollMemory} from './ViewState.jsx';
 
-export default function HourCalendar({events,day,view,setDay,mut,d,dragProps,cellProps,onEvent,toast}){
+export default function HourCalendar({events,day,view,setDay,mut,d,dragProps,cellProps,onEvent,toast,showNavigation=true}){
   const scroll=useRef(null),resize=useRef(null),[resizing,setResizing]=useState(null);
   const weekday=(new Date(day+'T12:00:00').getDay()+6)%7,first=view==='week'?addDays(day,-weekday):day;
   const days=Array.from({length:view==='week'?7:1},(_,i)=>addDays(first,i));
-  useEffect(()=>{if(scroll.current)scroll.current.scrollTop=8*62;},[view]);
+  useScrollMemory(scroll,'calendar.hour-scroll',8*62);
   useEffect(()=>{
     const move=e=>{if(resize.current&&e.pointerId===resize.current.pointerId){e.preventDefault();const r=resize.current;setResizing({id:r.id,minutes:Math.max(5,Math.min(1440,Math.round((r.minutes+(e.clientY-r.y)/62*60)/15)*15))});}};
     const end=e=>{const r=resize.current;if(!r||e.pointerId!==r.pointerId)return;resize.current=null;setResizing(null);if(e.type==='pointercancel')return;const minutes=Math.max(5,Math.min(1440,Math.round((r.minutes+(e.clientY-r.y)/62*60)/15)*15));mut(n=>{const t=n.tasks.find(t=>'task-'+t.id===r.id);if(t)t.durationMinutes=minutes;});toast('Work duration updated.');};
@@ -15,7 +16,7 @@ export default function HourCalendar({events,day,view,setDay,mut,d,dragProps,cel
     document.addEventListener('pointermove',move,{passive:false});document.addEventListener('pointerup',end);document.addEventListener('pointercancel',end);document.addEventListener('keydown',cancel);
     return()=>{document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',end);document.removeEventListener('pointercancel',end);document.removeEventListener('keydown',cancel);};
   },[mut]);
-  return <><div className="week-controls"><button className="ghost sm" onClick={()=>setDay(addDays(day,view==='week'?-7:-1))}>Previous {view}</button><strong>{days[0]}{view==='week'?' — '+days.at(-1):''}</strong><button className="ghost sm" onClick={()=>setDay(addDays(day,view==='week'?7:1))}>Next {view}</button></div><p className="mu">Drag a task’s ⠿ handle to an hourly cell. Drag its bottom edge to resize (15-minute steps). Open details for exact start times and keyboard-friendly editing. Shared events are read-only.</p><div className="timeline-scroll" ref={scroll}><div className={'hour-grid '+(view==='day'?'day-only':'')}><div className="hour-head">Time</div>{days.map(date=><div className="hour-head" key={date}>{new Date(date+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'})}</div>)}<div className="hour-label">All day</div>{days.map(date=><div className="hour-all-day" key={date} {...cellProps(date)}>{events.filter(e=>e.allDay&&onDay(e,date)).map(e=><button className="ghost sm" key={e.id} {...dragProps(e,date)} onClick={()=>onEvent(e.id)}>{e.title}</button>)}</div>)}{Array.from({length:24},(_,hour)=><HourRow key={hour} hour={hour} days={days} events={events} dragProps={dragProps} cellProps={cellProps} onEvent={onEvent} resizing={resizing} resize={resize}/>)}</div></div></>;
+  return <>{showNavigation&&<div className="week-controls"><button className="ghost sm" onClick={()=>setDay(addDays(day,view==='week'?-7:-1))}>Previous {view}</button><strong>{days[0]}{view==='week'?' — '+days.at(-1):''}</strong><button className="ghost sm" onClick={()=>setDay(addDays(day,view==='week'?7:1))}>Next {view}</button></div>}<p className="mu">Drag a task’s ⠿ handle to an hourly cell. Drag its bottom edge to resize (15-minute steps). Open details for exact start times and keyboard-friendly editing. Shared events are read-only.</p><div className="timeline-scroll" ref={scroll}><div className={'hour-grid '+(view==='day'?'day-only':'')}><div className="hour-head">Time</div>{days.map(date=><div className="hour-head" key={date}>{new Date(date+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'})}</div>)}<div className="hour-label">All day</div>{days.map(date=><div className="hour-all-day" key={date} {...cellProps(date)}>{events.filter(e=>e.allDay&&onDay(e,date)).map(e=><button className="ghost sm" key={e.id} {...dragProps(e,date)} onClick={()=>onEvent(e.id)}>{e.title}</button>)}</div>)}{Array.from({length:24},(_,hour)=><HourRow key={hour} hour={hour} days={days} events={events} dragProps={dragProps} cellProps={cellProps} onEvent={onEvent} resizing={resizing} resize={resize}/>)}</div></div></>;
 }
 function HourRow({hour,days,events,dragProps,cellProps,onEvent,resizing,resize}){
   const time=String(hour).padStart(2,'0')+':00';

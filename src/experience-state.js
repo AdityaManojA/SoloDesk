@@ -11,5 +11,5 @@ export const tourSteps=[
   {page:'tasks',target:'.page-tasks .hd > .btn',title:'Give each task a next step',text:'Set a **priority** and **deadline**. Shared **TaskFlow quests** stay **read-only**.'},
   {page:'calendar',target:'.page-calendar .view-switch',title:'Make room for your work',text:'Use **Month** or **Agenda**. **Drag** SoloDesk work, or open it → **Move to date**. Edit shared events in their **source app**.'},
   {page:'invoices',target:'.page-invoices .hd > .btn',title:'From draft to paid',text:'Create a **draft** → mark it **sent** → **record payment**. Reports use recorded payments.'},
-  {page:'settings',target:'[data-tour="replay"] .experience-actions > button:first-child',title:'Make this desk yours',text:'Open **Settings → Onboarding & tour** to restart anytime. Find more tools in **More**.'},
+  {page:'settings',target:'[data-settings="getting-started"] > summary',title:'Make this desk yours',text:'Open **Settings → Getting started** to restart onboarding or the tour. Find your other tools in **More**.'},
 ];
