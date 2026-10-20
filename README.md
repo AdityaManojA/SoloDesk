@@ -2,9 +2,9 @@
 
 ## Original MVP & credit
 
-SoloDesk builds on the original [SoloDesk MVP](https://github.com/nainanijo/Solodesk-MVP), created by [NainaNijo on GitHub](https://github.com/nainanijo).
+SoloDesk builds on the [SoloDesk MVP](https://github.com/nainanijo/Solodesk-MVP), created by [NainaNijo on GitHub](https://github.com/nainanijo).
 
-Big shoutout to her for creating the MVP and laying the foundation for this project!
+Big shoutout to her for laying the foundation for this project!
 
 ## License
 
