@@ -14,6 +14,26 @@ A freelancer business manager for clients, projects, tasks, invoices, payments a
 
 **Status:** frontend deployed on 19 October 2026 to https://taskflow-solodesk.web.app in `taskflow-dailytracker`, separately from TaskFlow's existing Hosting site. Both SoloDesk Hosting domains are authorized for Firebase Authentication. All 34 automated tests and the production build passed. The read-only TaskFlow share feed is deployed; a real-account round trip is pending. Live sign-in and Firestore saves still need an account-level check. The integration API is not deployed and no external calendar provider is connected yet.
 
+## Screenshots
+
+Captured from the deployed app using **demo data**. [View all 12 screenshots](docs/screenshots/README.md), including sign-in, projects, invoices, reports and the guided tour.
+
+### Desktop dashboard
+
+![SoloDesk dashboard](docs/screenshots/02-dashboard-desktop.png)
+
+### Calendar
+
+![SoloDesk full-month calendar](docs/screenshots/04-calendar-desktop.png)
+
+### Dark mode
+
+![SoloDesk dark dashboard](docs/screenshots/07-dashboard-dark.png)
+
+### Mobile & onboarding
+
+<img src="docs/screenshots/08-dashboard-mobile.png" alt="SoloDesk mobile dashboard" width="280"> <img src="docs/screenshots/11-onboarding-mobile.png" alt="SoloDesk visual onboarding on mobile" width="280">
+
 ## Run locally
 
 Use Node **24.12 or newer** for the existing Firebase 13 browser SDK’s declared engine requirement. This session used Node 22.20: install, build and tests passed, but npm reported Firebase engine warnings. The separate Cloud Functions package targets Node 22.
