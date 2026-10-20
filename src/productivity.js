@@ -74,6 +74,17 @@ export function restoreTrash(workspace,id){
     if(change.after===null&&current)throw new Error('A record with this ID already exists. Nothing was restored.');
     if(change.after!==null&&(!current||change.fields.some(key=>JSON.stringify(current[key])!==JSON.stringify(change.after[key]))))throw new Error('A linked record changed after deletion. Undo those changes before restoring this bundle.');
   }
+  // Validate against the entire restored bundle before changing anything. A task
+  // deleted before its client must not be restored with dangling relationships.
+  const restored=structuredClone(workspace);
+  for(const change of entry.changes){
+    if(change.after===null)(restored[change.list] ||= []).push(structuredClone(change.before));
+    else{const current=restored[change.list].find(x=>x.id===change.before.id);for(const key of change.fields){if(Object.hasOwn(change.before,key))current[key]=structuredClone(change.before[key]);else delete current[key];}}
+  }
+  for(const change of entry.changes){
+    const row=restored[change.list].find(x=>x.id===change.before.id);
+    if(row.client&&!restored.clients.some(c=>c.id===row.client)||row.project&&!restored.projects.some(p=>p.id===row.project))throw new Error('Restore the linked client or project from Trash first. Nothing was restored.');
+  }
   for(const change of entry.changes){
     if(change.after===null)workspace[change.list].push(structuredClone(change.before));
     else{const current=workspace[change.list].find(x=>x.id===change.before.id);for(const key of change.fields){if(Object.hasOwn(change.before,key))current[key]=structuredClone(change.before[key]);else delete current[key];}}
@@ -157,6 +168,14 @@ export function finishFocus(workspace,now=Date.now()){
   const ms=(t.elapsedMs||0)+(t.startedAt?Math.max(0,now-t.startedAt):0);
   if(ms>=1000)workspace.focusSessions=[{id:rid(),taskId:t.taskId,title:t.title,project:t.project,at:new Date(now).toISOString(),seconds:Math.min(86400,Math.floor(ms/1000))},...(workspace.focusSessions||[])];
   workspace.focusTimer=null;return true;
+}
+export function focusProjectTotals(workspace){
+  const totals=new Map();
+  for(const session of workspace.focusSessions||[]){
+    const name=workspace.projects.find(p=>p.id===session.project)?.name||'No project';
+    totals.set(name,(totals.get(name)||0)+session.seconds);
+  }
+  return [...totals];
 }
 export function clientTimeline(workspace,id){
   const projects=new Set(workspace.projects.filter(p=>p.client===id).map(p=>p.id));

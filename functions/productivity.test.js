@@ -1,11 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fresh} from '../src/lib.js';
-import {nextRepeat,repeatCompletedTasks,trashRecord,restoreTrash,recordActivity,conflicts,freeSlots,scheduleTask,searchWorkspace,parseTemplateLines,applyProjectTemplate,generateInvoiceDrafts,clientTimeline,finishFocus,trashReusable} from '../src/productivity.js';
+import {nextRepeat,repeatCompletedTasks,trashRecord,restoreTrash,recordActivity,conflicts,freeSlots,scheduleTask,searchWorkspace,parseTemplateLines,applyProjectTemplate,generateInvoiceDrafts,clientTimeline,finishFocus,focusProjectTotals,trashReusable} from '../src/productivity.js';
 import {moveCalendarItem} from '../src/calendar-move.js';
 
 const fixture=()=>({...fresh(),clients:[{id:'c',name:'Studio'},{id:'other',name:'Elsewhere'}],projects:[{id:'p',name:'Launch',client:'c'}],tasks:[{id:'t',title:'Review',project:'p',client:'c',status:'Todo',due:'2026-01-31',repeat:'monthly'}],invoices:[{id:'i',no:'INV-0008',client:'c',issue:'2026-01-01',due:'2026-01-15',state:'sent',tax:0,items:[{desc:'Design',qty:1,price:100}],pays:[{id:'pay',amt:20,date:'2026-01-02'}]}]});
 const event=(id,start,end,availability='busy')=>({id,title:id,start,end,availability,allDay:false});
+
+test('restoring a task refuses missing parents until their bundle is restored',()=>{
+  const w=fixture();trashRecord(w,'tasks','t');const taskEntry=w.trash[0].id;trashRecord(w,'clients','c');const clientEntry=w.trash[0].id;
+  const before=structuredClone(w);assert.throws(()=>restoreTrash(w,taskEntry),/linked client or project/);assert.deepEqual(w,before);
+  restoreTrash(w,clientEntry);restoreTrash(w,taskEntry);assert.equal(w.tasks[0].client,'c');assert.equal(w.tasks[0].project,'p');
+});
+
+test('focus totals handle names matching Object prototype properties',()=>{
+  const w=fixture();w.projects[0].name='__proto__';w.projects.push({id:'special',name:'constructor'});
+  w.focusSessions=[{project:'p',seconds:60},{project:'p',seconds:30},{project:'special',seconds:45}];
+  assert.deepEqual(focusProjectTotals(w),[['__proto__',90],['constructor',45]]);
+});
 test('monthly recurrence preserves day 31 through short months and weekdays skip weekends',()=>{
   assert.equal(nextRepeat('2026-01-31','monthly',31),'2026-02-28');
   assert.equal(nextRepeat('2026-02-28','monthly',31),'2026-03-31');

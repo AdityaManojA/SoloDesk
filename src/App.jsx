@@ -19,6 +19,7 @@ import { createWorkspaceSaves } from './workspace-saves';
 import { prepareClient, prepareInvoice, nextInvoiceNumber } from './invoice-input';
 import {WorkspaceSearch,Planner,Trash,Timeline,Templates,RecurringInvoices,Focus} from './ProductivityUI.jsx';
 import {repeatCompletedTasks,recordActivity,trashRecord,frequencies} from './productivity';
+import {assertWorkspaceSize} from './workspace-size';
 import * as L from './lib';
 const { rid, num, today, addDays, calc, status, money, fresh } = L;
 
@@ -36,7 +37,7 @@ function logoFile(file) {
   return new Promise((res, rej) => {
     const im = new Image(), u = URL.createObjectURL(file);
     im.onload = () => {
-      const k = Math.min(1, 240 / im.width), c = document.createElement('canvas');
+      const k = Math.min(1, 240 / im.width, 240 / im.height), c = document.createElement('canvas');
       c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
       c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
       URL.revokeObjectURL(u);
@@ -413,9 +414,9 @@ export default function App() {
   useEffect(()=>{if(!experienceReady){setExperience(null);return;}if(!wasSeen(localStorage,onboardingKey(experienceOwner)))setExperience('onboarding');},[experienceOwner,experienceReady]);
   const taskflow = useTaskflow(user?.uid, demo);
   const dataRef = useRef(null), toastTimer = useRef(), loadVersion = useRef(0), mainRef = useRef(null), saves = useRef(null);
-  if (!saves.current) saves.current=createWorkspaceSaves((owner,value)=>setDoc(doc(fdb,workspaceCollection,owner),{json:JSON.stringify(value)}),state=>{
+  if (!saves.current) saves.current=createWorkspaceSaves((owner,value)=>{assertWorkspaceSize(value);return setDoc(doc(fdb,workspaceCollection,owner),{json:JSON.stringify(value)});},(state,error)=>{
     setSaving(state);
-    if (state==='error') {clearTimeout(toastTimer.current);setMsg('Changes are not saved. Use Retry in the top bar.');toastTimer.current=setTimeout(()=>setMsg(''),4500);}
+    if (state==='error') {clearTimeout(toastTimer.current);setMsg(error?.code==='workspace-too-large'?error.message:'Changes are not saved. Use Retry in the top bar.');toastTimer.current=setTimeout(()=>setMsg(''),error?.code==='workspace-too-large'?15000:4500);}
   });
   const [theme, setTheme] = useState(() => localStorage.getItem('sd_theme') || 'light');
   useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem('sd_theme', theme); }, [theme]);
@@ -456,7 +457,8 @@ export default function App() {
   const mut = fn => {
     const before=dataRef.current;if(!before)return;const n=structuredClone(before);fn(n);repeatCompletedTasks(before,n);
     if(JSON.stringify(before)===JSON.stringify(n))return;
-    recordActivity(before,n);undoHistory.current=[...undoHistory.current.slice(-19),structuredClone(before)];setUndoCount(undoHistory.current.length);apply(n);
+    recordActivity(before,n);
+    undoHistory.current=[...undoHistory.current.slice(-19),structuredClone(before)];setUndoCount(undoHistory.current.length);apply(n);
     if (demo) { try { localStorage.setItem('sd_demo', JSON.stringify(n)); } catch { toast('Browser storage is full. Export your data before leaving.'); } }
     else persist(n);
   };

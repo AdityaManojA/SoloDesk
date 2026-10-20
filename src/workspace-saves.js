@@ -18,8 +18,8 @@ export function createWorkspaceSaves(write,onState) {
       return operation.then(saved=>{
         if (session===current && current.revision===revision) onState('saved');
         return saved;
-      },()=>{
-        if (session===current && current.revision===revision) onState('error');
+      },error=>{
+        if (session===current && current.revision===revision) onState('error',error);
         return false;
       });
     },

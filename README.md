@@ -16,6 +16,8 @@ A freelancer business manager for clients, projects, tasks, invoices, payments a
 
 ## Planning & productivity
 
+Latest maintenance: [bug and security review — 20 October 2026](qa/security-review-2026-10-20.md). **96 tests and the production build pass**; browser security headers and recovery/focus/save-limit fixes are deployed. The review also records remaining concurrent-editing and account-level verification gaps.
+
 The workspace now includes a **Daily planner**, scheduling **conflicts and free-time suggestions**, a calendar **unscheduled task tray**, **global search** (Ctrl/Command K), **Undo & Trash**, **recurring tasks and invoice drafts**, **project templates with draft invoice milestones**, **client activity timelines**, and a **focus timer with project totals**. Access these from the workspace toolbar, header search or **More**; task recurrence and focus are also available in task details/editing. No payment follow-up messages were added.
 
 Undo retains 20 changes for the current session; Trash persists in the workspace. Completing a repeating task creates its next occurrence. Recurring invoices require **Generate due drafts** and remain unsent drafts. Focus uses elapsed wall-clock time and logs on Finish. **92 tests and the build pass**; see [verification and limits](qa/productivity-2026-10-20.md).
