@@ -1,8 +1,9 @@
 // Pure business logic: money, invoice maths, statuses, reports, CSV and PDF.
 export const rid = () => Math.random().toString(36).slice(2, 10);
 export const num = (v) => parseFloat(v) || 0;
-export const today = () => new Date().toISOString().slice(0, 10);
-export const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+export const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+export const addDays = (d, n) => { const x = new Date(d + 'T12:00:00'); x.setDate(x.getDate() + n); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
+export const reissuedInvoice = (invoice, id, no, issue = today()) => ({ ...structuredClone(invoice), id, no, state: 'draft', pays: [], issue, due: invoice.due >= issue ? invoice.due : addDays(issue, 14) });
 export const fresh = () => ({ clients: [], projects: [], tasks: [], invoices: [], seq: 0, settings: { biz: '', email: '', phone: '', addr: '', pay: '', cur: 'USD' } });
 let CUR = 'USD';
 export const setCur = (c) => { CUR = c || 'USD'; };
@@ -23,11 +24,12 @@ export const allPays = (d) => d.invoices.flatMap((i) => i.pays.map((p) => ({ ...
 export const months = (a, b) => { const r = []; let [y, m] = a.slice(0, 7).split('-').map(Number); for (let k = 0; k < 120; k++) { const key = `${y}-${String(m).padStart(2, '0')}`; r.push(key); if (key >= b.slice(0, 7)) break; if (++m > 12) { m = 1; y++; } } return r; };
 export const revBy = (ks, pays) => ks.map((k) => ({ k, l: new Date(k + '-15').toLocaleString(undefined, { month: 'short' }), v: pays.filter((p) => p.date.slice(0, 7) === k).reduce((s, p) => s + num(p.amt), 0) }));
 export const cname = (d, id) => d.clients.find((c) => c.id === id)?.name || '—';
-export const csv = (rows) => rows.map((r) => r.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+export const csv = (rows) => '\uFEFF' + rows.map((r) => r.map((v) => { let value = String(v ?? ''); if (/^[\s]*[=+\-@]/.test(value)) value = "'" + value; return `"${value.replace(/"/g, '""')}"`; }).join(',')).join('\r\n');
 export const download = (name, data, type) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], { type })); a.download = name; a.click(); URL.revokeObjectURL(a.href); };
 export const exporters = (d) => ({
   clients: [['Name', 'Email', 'Phone', 'Address', 'Notes', 'Archived'], ...d.clients.map((c) => [c.name, c.email, c.phone, c.address, c.notes, c.arch ? 'yes' : 'no'])],
-  tasks: [['Title', 'Status', 'Priority', 'Due', 'Client'], ...d.tasks.map((k) => [k.title, k.status, k.priority, k.due, cname(d, k.client)])],
+  projects: [['Name', 'Client', 'Status', 'Start date', 'End date'], ...d.projects.map(p => [p.name, cname(d, p.client), p.status, p.start, p.end])],
+  tasks: [['Title', 'Status', 'Priority', 'Due', 'Client', 'Project', 'Scheduled start (UTC)', 'Duration (minutes)'], ...d.tasks.map((k) => [k.title, k.status, k.priority, k.due, cname(d, k.client), d.projects.find(p => p.id === k.project)?.name || '', k.scheduledAt, k.durationMinutes])],
   invoices: [['Number', 'Client', 'Status', 'Issued', 'Due', 'Total', 'Paid', 'Balance'], ...d.invoices.map((i) => { const c = calc(i); return [i.no, cname(d, i.client), status(i), i.issue, i.due, c.total.toFixed(2), c.paid.toFixed(2), c.bal.toFixed(2)]; })],
   payments: [['Invoice', 'Client', 'Date', 'Amount', 'Note'], ...allPays(d).map((p) => [p.inv.no, cname(d, p.inv.client), p.date, p.amt, p.note])],
 });

@@ -1,0 +1,362 @@
+[
+  {
+    "page": "Dashboard · SoloDesk",
+    "width": 390,
+    "scrollWidth": 375,
+    "overflow": []
+  },
+  {
+    "page": "Clients · SoloDesk",
+    "width": 390,
+    "scrollWidth": 375,
+    "overflow": []
+  },
+  {
+    "page": "Projects · SoloDesk",
+    "width": 390,
+    "scrollWidth": 375,
+    "overflow": []
+  },
+  {
+    "page": "Tasks · SoloDesk",
+    "width": 390,
+    "scrollWidth": 375,
+    "overflow": []
+  },
+  {
+    "page": "Invoices · SoloDesk",
+    "width": 390,
+    "scrollWidth": 375,
+    "overflow": []
+  },
+  {
+    "page": "Calendar · SoloDesk",
+    "width": 390,
+    "scrollWidth": 375,
+    "overflow": []
+  },
+  {
+    "page": "Reports · SoloDesk",
+    "width": 390,
+    "scrollWidth": 375,
+    "overflow": []
+  },
+  {
+    "page": "Settings · SoloDesk",
+    "width": 390,
+    "scrollWidth": 375,
+    "overflow": []
+  },
+  {
+    "page": "Integrations · SoloDesk",
+    "width": 390,
+    "scrollWidth": 375,
+    "overflow": []
+  },
+  {
+    "page": "More · SoloDesk",
+    "width": 390,
+    "scrollWidth": 375,
+    "overflow": []
+  },
+  {
+    "page": "Privacy Policy · SoloDesk",
+    "width": 390,
+    "scrollWidth": 375,
+    "overflow": []
+  },
+  {
+    "page": "Cookies & storage · SoloDesk",
+    "width": 390,
+    "scrollWidth": 375,
+    "overflow": []
+  },
+  {
+    "page": "Dashboard · SoloDesk",
+    "width": 430,
+    "scrollWidth": 415,
+    "overflow": []
+  },
+  {
+    "page": "Clients · SoloDesk",
+    "width": 430,
+    "scrollWidth": 415,
+    "overflow": []
+  },
+  {
+    "page": "Projects · SoloDesk",
+    "width": 430,
+    "scrollWidth": 415,
+    "overflow": []
+  },
+  {
+    "page": "Tasks · SoloDesk",
+    "width": 430,
+    "scrollWidth": 415,
+    "overflow": []
+  },
+  {
+    "page": "Invoices · SoloDesk",
+    "width": 430,
+    "scrollWidth": 415,
+    "overflow": []
+  },
+  {
+    "page": "Calendar · SoloDesk",
+    "width": 430,
+    "scrollWidth": 415,
+    "overflow": []
+  },
+  {
+    "page": "Reports · SoloDesk",
+    "width": 430,
+    "scrollWidth": 415,
+    "overflow": []
+  },
+  {
+    "page": "Settings · SoloDesk",
+    "width": 430,
+    "scrollWidth": 415,
+    "overflow": []
+  },
+  {
+    "page": "Integrations · SoloDesk",
+    "width": 430,
+    "scrollWidth": 415,
+    "overflow": []
+  },
+  {
+    "page": "More · SoloDesk",
+    "width": 430,
+    "scrollWidth": 415,
+    "overflow": []
+  },
+  {
+    "page": "Privacy Policy · SoloDesk",
+    "width": 430,
+    "scrollWidth": 415,
+    "overflow": []
+  },
+  {
+    "page": "Cookies & storage · SoloDesk",
+    "width": 430,
+    "scrollWidth": 415,
+    "overflow": []
+  },
+  {
+    "page": "Dashboard · SoloDesk",
+    "width": 768,
+    "scrollWidth": 753,
+    "overflow": []
+  },
+  {
+    "page": "Clients · SoloDesk",
+    "width": 768,
+    "scrollWidth": 753,
+    "overflow": []
+  },
+  {
+    "page": "Projects · SoloDesk",
+    "width": 768,
+    "scrollWidth": 753,
+    "overflow": []
+  },
+  {
+    "page": "Tasks · SoloDesk",
+    "width": 768,
+    "scrollWidth": 753,
+    "overflow": []
+  },
+  {
+    "page": "Invoices · SoloDesk",
+    "width": 768,
+    "scrollWidth": 753,
+    "overflow": []
+  },
+  {
+    "page": "Calendar · SoloDesk",
+    "width": 768,
+    "scrollWidth": 753,
+    "overflow": []
+  },
+  {
+    "page": "Reports · SoloDesk",
+    "width": 768,
+    "scrollWidth": 753,
+    "overflow": []
+  },
+  {
+    "page": "Settings · SoloDesk",
+    "width": 768,
+    "scrollWidth": 753,
+    "overflow": []
+  },
+  {
+    "page": "Integrations · SoloDesk",
+    "width": 768,
+    "scrollWidth": 753,
+    "overflow": []
+  },
+  {
+    "page": "More · SoloDesk",
+    "width": 768,
+    "scrollWidth": 753,
+    "overflow": []
+  },
+  {
+    "page": "Privacy Policy · SoloDesk",
+    "width": 768,
+    "scrollWidth": 753,
+    "overflow": []
+  },
+  {
+    "page": "Cookies & storage · SoloDesk",
+    "width": 768,
+    "scrollWidth": 753,
+    "overflow": []
+  },
+  {
+    "page": "Dashboard · SoloDesk",
+    "width": 320,
+    "scrollWidth": 305,
+    "overflow": []
+  },
+  {
+    "page": "Clients · SoloDesk",
+    "width": 320,
+    "scrollWidth": 305,
+    "overflow": []
+  },
+  {
+    "page": "Projects · SoloDesk",
+    "width": 320,
+    "scrollWidth": 305,
+    "overflow": []
+  },
+  {
+    "page": "Tasks · SoloDesk",
+    "width": 320,
+    "scrollWidth": 305,
+    "overflow": []
+  },
+  {
+    "page": "Invoices · SoloDesk",
+    "width": 320,
+    "scrollWidth": 305,
+    "overflow": []
+  },
+  {
+    "page": "Calendar · SoloDesk",
+    "width": 320,
+    "scrollWidth": 305,
+    "overflow": []
+  },
+  {
+    "page": "Reports · SoloDesk",
+    "width": 320,
+    "scrollWidth": 305,
+    "overflow": []
+  },
+  {
+    "page": "Settings · SoloDesk",
+    "width": 320,
+    "scrollWidth": 305,
+    "overflow": []
+  },
+  {
+    "page": "Integrations · SoloDesk",
+    "width": 320,
+    "scrollWidth": 305,
+    "overflow": []
+  },
+  {
+    "page": "More · SoloDesk",
+    "width": 320,
+    "scrollWidth": 305,
+    "overflow": []
+  },
+  {
+    "page": "Privacy Policy · SoloDesk",
+    "width": 320,
+    "scrollWidth": 305,
+    "overflow": []
+  },
+  {
+    "page": "Cookies & storage · SoloDesk",
+    "width": 320,
+    "scrollWidth": 305,
+    "overflow": []
+  },
+  {
+    "page": "Dashboard · SoloDesk",
+    "width": 360,
+    "scrollWidth": 345,
+    "overflow": []
+  },
+  {
+    "page": "Clients · SoloDesk",
+    "width": 360,
+    "scrollWidth": 345,
+    "overflow": []
+  },
+  {
+    "page": "Projects · SoloDesk",
+    "width": 360,
+    "scrollWidth": 345,
+    "overflow": []
+  },
+  {
+    "page": "Tasks · SoloDesk",
+    "width": 360,
+    "scrollWidth": 345,
+    "overflow": []
+  },
+  {
+    "page": "Invoices · SoloDesk",
+    "width": 360,
+    "scrollWidth": 345,
+    "overflow": []
+  },
+  {
+    "page": "Calendar · SoloDesk",
+    "width": 360,
+    "scrollWidth": 345,
+    "overflow": []
+  },
+  {
+    "page": "Reports · SoloDesk",
+    "width": 360,
+    "scrollWidth": 345,
+    "overflow": []
+  },
+  {
+    "page": "Settings · SoloDesk",
+    "width": 360,
+    "scrollWidth": 345,
+    "overflow": []
+  },
+  {
+    "page": "Integrations · SoloDesk",
+    "width": 360,
+    "scrollWidth": 345,
+    "overflow": []
+  },
+  {
+    "page": "More · SoloDesk",
+    "width": 360,
+    "scrollWidth": 345,
+    "overflow": []
+  },
+  {
+    "page": "Privacy Policy · SoloDesk",
+    "width": 360,
+    "scrollWidth": 345,
+    "overflow": []
+  },
+  {
+    "page": "Cookies & storage · SoloDesk",
+    "width": 360,
+    "scrollWidth": 345,
+    "overflow": []
+  }
+]

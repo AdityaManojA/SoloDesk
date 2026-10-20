@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <title>SoloDesk SD monogram</title>
+  <rect x="2" y="2" width="60" height="60" rx="17" fill="#FFD66B" stroke="#1E1B18" stroke-width="3"/>
+  <path d="M28 20h-7a6 6 0 0 0 0 12h2a6 6 0 0 1 0 12h-8M36 20h5a12 12 0 0 1 0 24h-5V20Z" stroke="#1E1B18" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

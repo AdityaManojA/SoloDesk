@@ -1,7 +1,15 @@
 {
   "projects": {
-    "solodesk": "solodesk-b1032"
+    "solodesk": "taskflow-dailytracker"
   },
-  "targets": {},
+  "targets": {
+    "taskflow-dailytracker": {
+      "hosting": {
+        "solodesk": [
+          "taskflow-solodesk"
+        ]
+      }
+    }
+  },
   "etags": {}
 }

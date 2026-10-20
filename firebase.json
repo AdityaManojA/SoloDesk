@@ -1,4 +1,5 @@
 {
-  "hosting": { "site": "solodesk" , "public": "dist", "ignore": ["firebase.json", "**/.*", "**/node_modules/**"], "rewrites": [{ "source": "**", "destination": "/index.html" }] },
+  "functions": [{ "source": "functions", "codebase": "default", "ignore": ["node_modules", ".git", "*.test.js"] }],
+  "hosting": { "target": "solodesk", "public": "dist", "ignore": ["firebase.json", "**/.*", "**/node_modules/**"], "rewrites": [{ "source": "**", "destination": "/index.html" }] },
   "firestore": { "rules": "firestore.rules" }
 }

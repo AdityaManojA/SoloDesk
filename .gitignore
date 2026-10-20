@@ -2,4 +2,12 @@ node_modules
 dist
 .env
 .env.local
+.env.*
+!.env.example
 .firebase
+
+functions/.env.*
+!functions/.env.example
+functions/.secret.local
+firebase-debug.log
+ui-debug.log

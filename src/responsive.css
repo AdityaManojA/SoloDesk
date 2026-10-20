@@ -1,0 +1,120 @@
+/* Shared layouts: let content shrink and wrap instead of overflowing the page. */
+.page-content,.hd>*,.grid2>*,.cards>*,.integration-grid>*,.calendar-board,.day-agenda,.sheet,.dlg,.row>div,.section-head>div{min-width:0}
+.row b,.row small,.project-card h3,.event-inspector h2,.event-inspector p,.sheet,.connection-notice,.key-list,.taskflow-status{overflow-wrap:anywhere}
+.calendar-drag-hint,.calendar-move-status{font-size:13px;color:var(--mu);margin:0 0 12px}
+.calendar-move-status{min-height:22px;color:var(--tx);font-weight:650}
+.month-chip.can-drag{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.month-chip.can-drag:active,.calendar-drag-handle:active{cursor:grabbing}
+.month-cell.drop-target{background:var(--bg);box-shadow:inset 0 0 0 3px var(--ac)}
+.calendar-agenda-row{display:flex;align-items:stretch;gap:8px;margin-bottom:12px;min-width:0}
+.calendar-agenda-row>.calendar-agenda-item{flex:1;min-width:0;margin-bottom:0}
+.calendar-drag-handle{width:44px;min-width:44px;padding:0;border:2px solid var(--ln);border-radius:12px;background:var(--sf);color:var(--tx);font-size:28px;cursor:grab;touch-action:none;user-select:none}
+.calendar-drag-preview{position:fixed;z-index:120;pointer-events:none;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:8px 12px;border:2px solid var(--ln);border-radius:10px;background:var(--butter);color:var(--tx);font-size:12px;font-weight:700;box-shadow:0 6px 22px #0003}
+.calendar-move-form{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;border-top:1px solid var(--gridline);padding-top:18px}
+.calendar-move-form label{flex:1;min-width:160px;margin:0}
+.calendar-move-form>p{flex-basis:100%;margin:0}
+.event-inspector{bottom:132px;max-height:min(70dvh,calc(100dvh - 244px))}
+
+@media screen and (max-width:768px){
+  .page-calendar>.page-kicker{display:none}
+  .mobile-calendar-hint{font-size:12px;color:var(--mu)}
+  html{scroll-padding-bottom:125px}
+  main{padding-bottom:calc(140px + env(safe-area-inset-bottom,0px))}
+  input,select,textarea,.select-trigger{font-size:16px;min-width:0}
+  input:not([type=checkbox]):not([type=hidden]),.select-trigger{min-height:48px}
+  button,a,input,textarea,select{touch-action:manipulation}
+  .month-chip.can-drag,.calendar-drag-handle{touch-action:none}
+  .icon-button,.topbar-right .icon-button,.signout-button,.date-trigger{min-width:44px;min-height:44px}
+  .btn,.ghost,.sm,.select-option{min-height:44px}
+  .hd{align-items:flex-start}
+  .hd .end{justify-content:flex-start}
+  .list-toolbar{flex-wrap:wrap;gap:12px}
+  .list-toolbar .search-field{flex-basis:100%}
+  .list-toolbar>.select-control{max-width:none;flex:1;min-width:140px}
+  .filter-summary{white-space:normal;margin-right:0;text-align:right}
+  .row{flex-wrap:wrap;gap:12px}
+  .row .grow{flex-basis:50%}
+  .task-row>select{max-width:100%}
+  .card b,.cards b{overflow-wrap:anywhere}
+  .calendar-heading .end{width:100%}
+  .calendar-controls label{min-width:0;flex-basis:calc(50% - 8px)}
+  .calendar-controls .select-trigger{padding:10px;font-size:14px}
+  .calendar-controls .calendar-completed{flex-basis:100%}
+  .calendar-completed input{width:22px;height:22px}
+  .month-title{justify-content:space-between;width:100%}
+  .month-title h2{min-width:0;font-size:20px}
+  .month-actions{flex-wrap:wrap}
+  .month-actions .ghost,.view-switch button{min-height:44px}
+  .day-number{width:100%;height:36px;border-radius:10px;margin-bottom:5px}
+  .month-chip{min-height:28px;height:auto;font-size:10px;padding:4px 3px;line-height:1.4;margin-bottom:5px}
+  .month-cell{min-height:115px}
+  .more-events{min-height:28px;width:100%}
+  .calendar-agenda-item{gap:10px;padding:12px}
+  .calendar-agenda-item .grow{overflow-wrap:anywhere}
+  .calendar-agenda-item>.icon{display:none}
+  .agenda-time{min-width:45px;font-size:11px}
+  .day-agenda .section-head{align-items:flex-start;gap:12px}
+  .day-agenda h2{font-size:22px}
+  .calendar-help a{flex-shrink:1;flex-wrap:wrap}
+  .event-inspector{left:12px;right:12px;width:auto;bottom:calc(120px + env(safe-area-inset-bottom,0px));max-height:calc(100dvh - 228px - env(safe-area-inset-bottom,0px));overscroll-behavior:contain}
+  .event-inspector p{overflow-wrap:anywhere}
+  .event-inspector .section-head{gap:10px}
+  .ov{padding:12px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px))}
+  .dlg{padding:20px 18px 0;max-height:calc(100dvh - 24px);overscroll-behavior:contain;scroll-padding-bottom:100px}
+  .dialog-title{gap:10px;align-items:flex-start}
+  .dialog-title h2{font-size:25px;overflow-wrap:anywhere}
+  .dialog-title>.icon-button{flex-shrink:0}
+  .dlg .end{padding-bottom:max(16px,env(safe-area-inset-bottom,0px))}
+  .workspace-footer{flex-wrap:wrap;gap:16px;align-items:flex-start}
+  .workspace-footer a{max-width:none;text-align:left}
+  .login-layout{grid-template-columns:minmax(0,1fr)}
+  .login-story,.login-panel{min-width:0}
+  .login-story h1{overflow-wrap:anywhere}
+  .endpoint-row{align-items:flex-start;flex-wrap:wrap}
+}
+@media screen and (max-width:600px){
+  .grid2{grid-template-columns:minmax(0,1fr);gap:0}
+  .provider-guide .grid2{gap:20px}
+  .ln{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) 44px;gap:8px;margin-bottom:16px}
+  .ln>input:first-child{grid-column:1/-1}
+  .ln>.ghost{min-width:44px;min-height:48px}
+  .cards{flex-wrap:wrap}
+  .cards>.card{flex-basis:100%}
+  .sheet{padding:18px}
+  .sheet table{min-width:380px}
+  .sheet .tw{overscroll-behavior-x:contain}
+  .sh-top{gap:18px}
+  .sh-r{text-align:left}
+  .invoice-summary{grid-template-columns:1fr}
+  .invoice-summary>div{border-right:0;border-bottom:2px solid var(--ln);padding:15px 18px}
+  .invoice-summary strong{font-size:28px;margin-top:4px}
+  .invoice-summary small{font-size:12px}
+  .calendar-move-form>.btn{width:100%}
+  .calendar-drag-hint,.calendar-move-status{font-size:12px}
+  .topbar{gap:10px}
+  .topbar-right{gap:6px}
+  .topbar .save-state{font-size:10px;max-width:85px;text-align:center;white-space:normal}
+}
+@media screen and (max-width:360px){
+  .topbar{padding-left:12px;padding-right:12px}
+  .header-brand .brand-lockup{gap:6px;font-size:20px}
+  .header-brand .brand-lockup>img{width:32px;height:32px}
+  .topbar .save-state{max-width:56px;font-size:9px}
+  .metric strong{font-size:25px}
+  .metric-label{font-size:11px;overflow-wrap:anywhere}
+  .metric small{font-size:11px;overflow-wrap:anywhere}
+  .page-intro{flex-wrap:wrap}
+  .calendar-controls label{flex-basis:100%}
+  .calendar-controls .select-trigger{font-size:16px}
+  .month-title{gap:4px}
+  .month-title h2{font-size:18px}
+  .month-cell{padding:4px 1px}
+  .month-chip{font-size:9px;padding:4px 2px}
+  .calendar-drag-handle{width:36px;min-width:36px}
+  .calendar-agenda-item{flex-wrap:wrap}
+  .calendar-agenda-item .grow{flex-basis:100%}
+  .login-story{padding:24px 20px;gap:22px}
+  .login-story h1{font-size:38px}
+  .login-panel{padding:30px 20px}
+}
+@media print{.calendar-drag-handle,.calendar-drag-preview,.calendar-move-form,.calendar-drag-hint,.calendar-move-status{display:none!important}}

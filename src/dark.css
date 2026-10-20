@@ -1,0 +1,114 @@
+/* A dedicated dark palette. Light mode keeps the original TaskFlow styling. */
+:root[data-theme=dark] {
+  color-scheme:dark;
+  --bg:#14171b; --sf:#1d2229; --tx:#f1eee8; --mu:#b8c0cc;
+  --ln:#657487; --gridline:#39424e; --ac:#f3cc71; --on:#191b20;
+  --bar:#8cbcd6; --sky:#223747; --coral:#442c31; --mint:#263d34;
+  --lav:#352f47; --butter:#403923; --lemon:#403923; --orange:#473426;
+  --priority-medium:#403923; --action:#f3cc71; --action-ink:#191b20;
+  --hover:#2b333e; --focus:#a8d5ff;
+}
+:root[data-theme=dark] body {background:var(--bg);color:var(--tx)}
+:root[data-theme=dark] ::selection {background:#566c88;color:#fff}
+:root[data-theme=dark] :focus-visible {outline:3px solid var(--focus);outline-offset:4px}
+:root[data-theme=dark] .topbar {background:var(--bg);border-bottom:1px solid var(--gridline)}
+:root[data-theme=dark] .header-brand>span {background:var(--action);color:var(--action-ink);border-color:var(--action)}
+:root[data-theme=dark] .btn {background:var(--action);color:var(--action-ink);border-color:var(--action)}
+:root[data-theme=dark] .btn:hover {background:#ffdc91;border-color:#ffdc91}
+:root[data-theme=dark] .ghost,
+:root[data-theme=dark] .icon-button {background:var(--sf);color:var(--tx)}
+:root[data-theme=dark] .ghost:hover,
+:root[data-theme=dark] .icon-button:hover {background:var(--hover);border-color:#a2b2c7;color:var(--tx)}
+:root[data-theme=dark] .card,
+:root[data-theme=dark] .project-card,
+:root[data-theme=dark] .project-preview,
+:root[data-theme=dark] .row,
+:root[data-theme=dark] .attention-panel,
+:root[data-theme=dark] .calendar-board {border-width:1.5px}
+:root[data-theme=dark] .metric {border-width:1.5px!important}
+:root[data-theme=dark] .metric small,
+:root[data-theme=dark] .row small,
+:root[data-theme=dark] .project-card small,
+:root[data-theme=dark] .project-preview small,
+:root[data-theme=dark] .project-card-bottom,
+:root[data-theme=dark] .calendar-agenda-item small {color:#c4cbd5}
+:root[data-theme=dark] .metric-label {color:#e0e6ee}
+:root[data-theme=dark] .metric-label .icon {color:#afc5da}
+:root[data-theme=dark] .attention-panel .eyebrow,
+:root[data-theme=dark] .attention-invoice small {color:#e8d4a7}
+:root[data-theme=dark] .attention-invoice {border-top-color:#736747}
+:root[data-theme=dark] .demo-badge {background:#353122;color:#f6d98e;border-color:#8c7846}
+:root[data-theme=dark] .chart-bar {fill:var(--bar);stroke:#aed2e6;stroke-width:1}
+:root[data-theme=dark] .chart-bar:last-child {fill:#91c6aa;stroke:#b3dcc7}
+:root[data-theme=dark] .chart-bar:hover {fill:var(--action);stroke:var(--action)}
+:root[data-theme=dark] .chart-foot i {background:var(--bar)}
+:root[data-theme=dark] .b {background:#292f38;color:#e2e7ef;border-color:#657487}
+:root[data-theme=dark] .b-Overdue {background:#442c31;color:#ffc1b8;border-color:#ad7376}
+:root[data-theme=dark] .b-Paid {background:#263d34;color:#b9e7c7;border-color:#719a83}
+:root[data-theme=dark] .b-Sent,
+:root[data-theme=dark] .b-Partiallypaid {background:#223747;color:#bddff5;border-color:#7398b0}
+:root[data-theme=dark] input,
+:root[data-theme=dark] select,
+:root[data-theme=dark] textarea {background:#171c22;color:var(--tx);border-color:var(--ln)}
+:root[data-theme=dark] input::placeholder,
+:root[data-theme=dark] textarea::placeholder {color:#aeb8c6;opacity:1}
+:root[data-theme=dark] input:focus,
+:root[data-theme=dark] select:focus,
+:root[data-theme=dark] textarea:focus {border-color:var(--focus);box-shadow:0 0 0 3px #a8d5ff33}
+:root[data-theme=dark] select {background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23c4cbd5' stroke-width='2'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+:root[data-theme=dark] option {background:#1d2229;color:#f1eee8}
+:root[data-theme=dark] input[type=checkbox] {accent-color:var(--action)}
+:root[data-theme=dark] input[type=file]::file-selector-button {background:var(--hover);color:var(--tx);border:1px solid var(--ln);border-radius:6px;padding:6px 10px;margin-right:12px}
+:root[data-theme=dark] .search-field {background:#171c22}
+:root[data-theme=dark] .search-field input {background:transparent}
+:root[data-theme=dark] .task-check:hover {background:var(--hover);border-color:var(--focus)}
+:root[data-theme=dark] .chk[aria-pressed=true] {background:#a7d4b6;border-color:#a7d4b6}
+:root[data-theme=dark] .chk[aria-pressed=true]:after {border-color:#16251c}
+:root[data-theme=dark] .progress-track {background:#171c22}
+:root[data-theme=dark] .progress-track span {background:#a7d4b6}
+:root[data-theme=dark] .inline-error {background:#3f262b;border-color:#c58a8c;color:#ffd0c8}
+:root[data-theme=dark] .save-state.saved:before {background:#a7d4b6}
+:root[data-theme=dark] .ov {background:#05080dba;backdrop-filter:blur(5px)}
+:root[data-theme=dark] .dlg,
+:root[data-theme=dark] .dlg .end {background:#20262e}
+:root[data-theme=dark] .dlg {box-shadow:0 24px 80px #0009}
+:root[data-theme=dark] .toast {background:#293340;border-color:#8aa1bc;color:var(--tx);box-shadow:0 8px 30px #0005}
+:root[data-theme=dark] .bnav {background:#20262e;border-color:#657487;box-shadow:0 12px 40px #0007}
+:root[data-theme=dark] .bnav>a {color:#c3cbd6}
+:root[data-theme=dark] .bnav>a.on {color:var(--action)}
+:root[data-theme=dark] .bnav>a.on .dock-icon {background:var(--action);color:var(--action-ink);border-color:var(--action)}
+:root[data-theme=dark] .bnav>a:hover .dock-icon {background:var(--hover);color:var(--tx)}
+:root[data-theme=dark] .dock-add {background:var(--action);color:var(--action-ink)}
+:root[data-theme=dark] .dock-add:focus-visible {outline-color:var(--focus)}
+:root[data-theme=dark] .weekdays {background:#252c34;color:#d5dce5;border-color:var(--gridline)}
+:root[data-theme=dark] .selected-day {background:#27323f;box-shadow:inset 0 0 0 2px var(--focus)}
+:root[data-theme=dark] .day-number.is-today {background:var(--action);color:var(--action-ink)}
+:root[data-theme=dark] .day-number:hover {border-color:var(--focus)}
+:root[data-theme=dark] .view-switch button[aria-pressed=true] {background:var(--action);color:var(--action-ink)}
+:root[data-theme=dark] .month-chip {border-color:#7398b0;color:#e4f3fd}
+:root[data-theme=dark] .month-chip.event-project {border-color:#9a87b6;color:#e7dcfa}
+:root[data-theme=dark] .month-chip:hover,
+:root[data-theme=dark] .calendar-agenda-item:hover {background:var(--hover);color:var(--tx)}
+:root[data-theme=dark] .event-inspector {box-shadow:0 14px 60px #0009}
+:root[data-theme=dark] .event-inspector:focus {outline-color:var(--focus)}
+:root[data-theme=dark] .login-story {background:#20313f;color:var(--tx);border-color:var(--ln)}
+:root[data-theme=dark] .login-story .wordmark,
+:root[data-theme=dark] .login-story h1 em {color:var(--tx)}
+:root[data-theme=dark] .login-story p,
+:root[data-theme=dark] .login-story>small,
+:root[data-theme=dark] .login-story .eyebrow {color:#c4d1dc}
+:root[data-theme=dark] .login-tags span {background:#2b3d4c;color:#e1eaf2;border-color:#71889a}
+:root[data-theme=dark] .code-block {background:#12171d;color:#dbe8f5;border:1px solid var(--ln)}
+:root[data-theme=dark] .method {color:#a7d4b6}
+:root[data-theme=dark] .sheet {background:var(--sf);color:var(--tx);border-color:var(--ln)}
+:root[data-theme=dark] .sheet small,
+:root[data-theme=dark] .sheet .sm-t {color:var(--mu)}
+:root[data-theme=dark] .sheet th {background:#29313c;color:#c8d2df}
+:root[data-theme=dark] .sheet th,
+:root[data-theme=dark] .sheet td,
+:root[data-theme=dark] .sheet .sh-top {border-color:var(--ln)}
+@media print {
+  :root[data-theme=dark] body {background:#fff;color:#192b3a}
+  :root[data-theme=dark] .sheet {--tx:#192b3a;--mu:#53606b;--ln:#b5bdc4;background:#fff;color:#192b3a}
+  :root[data-theme=dark] .sheet th {background:#f2f4f6;color:#465562}
+}

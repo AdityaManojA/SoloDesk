@@ -1,0 +1,169 @@
+{
+  "date": "2026-10-19",
+  "mode": "local demo",
+  "checks": [
+    [
+      "Next month",
+      true
+    ],
+    [
+      "Client/type filters",
+      true
+    ],
+    [
+      "Include completed",
+      true
+    ],
+    [
+      "Calendar opens linked task editor",
+      true
+    ],
+    [
+      "Required client name",
+      true
+    ],
+    [
+      "Client search",
+      true
+    ],
+    [
+      "Archive client",
+      true
+    ],
+    [
+      "Project date validation",
+      true
+    ],
+    [
+      "Client/project mismatch validation",
+      true
+    ],
+    [
+      "Complete task",
+      true
+    ],
+    [
+      "Task deletion confirmation",
+      true
+    ],
+    [
+      "Combined task filters",
+      true
+    ],
+    [
+      "Empty filter result",
+      true
+    ],
+    [
+      "Add/remove invoice line",
+      true
+    ],
+    [
+      "Invoice due-date validation",
+      true
+    ],
+    [
+      "Invoice tax total",
+      true
+    ],
+    [
+      "Overpayment rejected",
+      true
+    ],
+    [
+      "Partial payment balance",
+      true
+    ],
+    [
+      "Paid invoice prevents further payments",
+      true
+    ],
+    [
+      "Void invoice",
+      true
+    ],
+    [
+      "Invoice reissue creates new draft",
+      true
+    ],
+    [
+      "Report uses October payments",
+      true
+    ],
+    [
+      "Project search/status",
+      true
+    ],
+    [
+      "Project status updates filtered list",
+      true
+    ],
+    [
+      "Logo upload",
+      true
+    ],
+    [
+      "Invalid logo handled",
+      true
+    ],
+    [
+      "Account deletion confirmation",
+      true
+    ],
+    [
+      "Demo sign-out",
+      true
+    ],
+    [
+      "Create menu Client",
+      true
+    ],
+    [
+      "Create menu Project",
+      true
+    ],
+    [
+      "Create menu Task",
+      true
+    ],
+    [
+      "Create menu Invoice",
+      true
+    ]
+  ],
+  "downloads": [
+    {
+      "label": "Clients · CSV",
+      "path": "C:\\Users\\adity\\Downloads\\solodesk-clients.csv"
+    },
+    {
+      "label": "Projects · CSV",
+      "path": "C:\\Users\\adity\\Downloads\\solodesk-projects (1).csv"
+    },
+    {
+      "label": "Tasks · CSV",
+      "path": "C:\\Users\\adity\\Downloads\\solodesk-tasks.csv"
+    },
+    {
+      "label": "Invoices · CSV",
+      "path": "C:\\Users\\adity\\Downloads\\solodesk-invoices.csv"
+    },
+    {
+      "label": "Payments · CSV",
+      "path": "C:\\Users\\adity\\Downloads\\solodesk-payments.csv"
+    },
+    {
+      "label": "Export all data · JSON",
+      "path": "C:\\Users\\adity\\Downloads\\solodesk-workspace.json"
+    },
+    {
+      "label": "Export events · JSON",
+      "path": "C:\\Users\\adity\\Downloads\\solodesk-events (1).json"
+    },
+    {
+      "label": "Export calendar · ICS",
+      "path": "C:\\Users\\adity\\Downloads\\solodesk-calendar (1).ics"
+    }
+  ],
+  "singleEvent": "C:\\Users\\adity\\Downloads\\solodesk-task-concept.ics"
+}

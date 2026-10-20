@@ -1,0 +1,19 @@
+.taskflow-feed{margin:28px 0}.taskflow-feed .section-head{align-items:center;flex-wrap:wrap}.taskflow-feed h3{margin:6px 0 0}.taskflow-feed>p{font-size:13px;line-height:1.8}.taskflow-list{display:grid;gap:12px}.taskflow-item{padding:18px;border:1px solid var(--ln);border-radius:14px;background:var(--bg)}.taskflow-item-title{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.taskflow-item-title b{overflow-wrap:anywhere}.taskflow-item p{margin:8px 0 0;font-size:13px}.taskflow-item details{margin:14px 0 0;padding:12px}.taskflow-item summary{font-size:12px}.taskflow-item li{font-size:13px;overflow-wrap:anywhere}.taskflow-notes{white-space:pre-wrap;overflow-wrap:anywhere}.event-taskflow-quest,.event-taskflow-event{background:var(--mint)}.month-chip.event-taskflow-quest,.month-chip.event-taskflow-event{border-style:dashed}.month-chip.event-taskflow-event{background:var(--orange)}:root[data-theme=dark] .month-chip.event-taskflow-quest{color:#c9efd6;border-color:#81b092}:root[data-theme=dark] .month-chip.event-taskflow-event{color:#ffe0ba;border-color:#c79a6d}.taskflow-source-note{font-size:12px;color:var(--mu);line-height:1.8}
+.calendar-legend{flex-wrap:wrap;row-gap:10px}
+/* TaskFlow's six priority hues, from TaskFlow-controls/app/css/app.css. */
+.taskflow-priority[data-priority=P1]{--quest-bg:#f4918a;--quest-outline:#1e1b18}
+.taskflow-priority[data-priority=P2]{--quest-bg:#f9b77e;--quest-outline:#1e1b18}
+.taskflow-priority[data-priority=P3]{--quest-bg:#ffe08a;--quest-outline:#1e1b18}
+.taskflow-priority[data-priority=P4]{--quest-bg:#b9e7cc;--quest-outline:#1e1b18}
+.taskflow-priority[data-priority=P5]{--quest-bg:#a9d6f0;--quest-outline:#1e1b18}
+.taskflow-priority[data-priority=P6]{--quest-bg:#d4c4f2;--quest-outline:#1e1b18}
+:root .taskflow-priority[data-priority]{background:var(--quest-bg);border-color:var(--quest-outline);color:#1e1b18}
+.taskflow-item.taskflow-priority{border-width:2px}
+.taskflow-item.taskflow-priority>.mu{color:inherit}
+:root[data-theme=dark] .taskflow-priority[data-priority=P1]{--quest-bg:#482c31;--quest-outline:#f4918a}
+:root[data-theme=dark] .taskflow-priority[data-priority=P2]{--quest-bg:#473426;--quest-outline:#f9b77e}
+:root[data-theme=dark] .taskflow-priority[data-priority=P3]{--quest-bg:#403923;--quest-outline:#ffe08a}
+:root[data-theme=dark] .taskflow-priority[data-priority=P4]{--quest-bg:#263d34;--quest-outline:#b9e7cc}
+:root[data-theme=dark] .taskflow-priority[data-priority=P5]{--quest-bg:#223747;--quest-outline:#a9d6f0}
+:root[data-theme=dark] .taskflow-priority[data-priority=P6]{--quest-bg:#352f47;--quest-outline:#d4c4f2}
+:root[data-theme=dark] .taskflow-priority[data-priority]{background:var(--quest-bg);border-color:var(--quest-outline);color:#f1eee8}
