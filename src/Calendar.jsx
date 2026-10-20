@@ -9,14 +9,15 @@ import { moveCalendarItem } from './calendar-move';
 import useCalendarDrag from './useCalendarDrag';
 import TaskflowPanel from './TaskflowPanel';
 import { taskflowCalendarEvents } from './taskflow-data';
+import {CalendarPlanning} from './ProductivityUI.jsx';
 
-export default function Calendar({ d, mut, open, user, taskflow }) {
+export default function Calendar({ d, mut, open, user, taskflow, toast=()=>{} }) {
   const [month, setMonth] = useState(() => today().slice(0, 7)), [day, setDay] = useState(today);
   const [client, setClient] = useState(''), [type, setType] = useState(''), [completed, setCompleted] = useState(false), [view, setView] = useState('month');
   const [eventId, setEventId] = useState(null), inspector = useRef(null);
   const [moveDate, setMoveDate] = useState(''), [moveMessage, setMoveMessage] = useState('');
   const moveItem = (id, from, to) => {
-    if (from === to) return;
+    if (from === to&&!id.startsWith('unscheduled-')) return;
     try {
       let changed = false;
       mut(workspace => { changed = moveCalendarItem(workspace,id,from,to); });
@@ -55,6 +56,7 @@ export default function Calendar({ d, mut, open, user, taskflow }) {
     <p className="calendar-drag-hint">Drag a SoloDesk item to another date. On touch screens, drag the item or its ⠿ handle. Open details for “Move to date”.</p>
     <p className="mobile-calendar-hint">Select a date to see its events below, or switch to Agenda for full titles.</p>
     <p className="calendar-move-status" role="status" aria-live="polite">{drag ? 'Moving ' + drag.title + (over ? ' to ' + over : ' — drop on a calendar date; Escape cancels') : moveMessage}</p>
+    <CalendarPlanning d={d} mut={mut} day={day} taskflow={taskflow} toast={toast} dragProps={dragProps}/>
     <section className="calendar-board"><div className="month-toolbar"><div className="month-title"><button className="icon-button" aria-label="Previous month" onClick={() => changeMonth(-1)}>‹</button><h2 aria-live="polite">{new Date(month + '-15T12:00:00').toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</h2><button className="icon-button" aria-label="Next month" onClick={() => changeMonth(1)}>›</button></div><div className="month-actions"><button className="ghost sm" onClick={() => { setMonth(today().slice(0, 7)); setDay(today()); }}>Today</button><div className="view-switch" aria-label="Calendar view"><button aria-pressed={view === 'month'} onClick={() => setView('month')}>Month</button><button aria-pressed={view === 'agenda'} onClick={() => setView('agenda')}>Agenda</button></div><button className="ghost sm" onClick={() => exportEvents(inMonth, 'solodesk-' + month)}>Export month</button></div></div>
       {view === 'month' ? <><div className="weekdays" aria-hidden="true">{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x => <span key={x}>{x}</span>)}</div><div className="month-grid" role="group" aria-label={month + ' calendar'}>{monthDays(month).map(date => {
         const items = events.filter(e => onDay(e, date));

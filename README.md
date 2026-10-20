@@ -12,7 +12,13 @@ Original contributions by AdityaManojA are available under the [MIT License](LIC
 
 A freelancer business manager for clients, projects, tasks, invoices, payments and reports. The interface now matches the supplied TaskFlow reference: cream surfaces, ink outlines, flat pastels, rounded controls and a floating navigation dock. The original React/Firebase data model and hash routes are retained. Calendar exports now turn project timelines and dated tasks into scheduler events.
 
-**Status:** frontend deployed on 19 October 2026 to https://taskflow-solodesk.web.app in `taskflow-dailytracker`, separately from TaskFlow's existing Hosting site. Both SoloDesk Hosting domains are authorized for Firebase Authentication. All 34 automated tests and the production build passed. The read-only TaskFlow share feed is deployed; a real-account round trip is pending. Live sign-in and Firestore saves still need an account-level check. The integration API is not deployed and no external calendar provider is connected yet.
+**Status:** frontend deployed to https://taskflow-solodesk.web.app in `taskflow-dailytracker`, separately from TaskFlow’s Hosting site. The 20 October 2026 productivity update passes all **92 automated tests** and the production build. TaskFlow quests and its shared Google events are read-only in SoloDesk. Live sign-in/cloud-save round trips still need an account-level check. The standalone integration API and background server functions are not deployed on the Spark plan.
+
+## Planning & productivity
+
+The workspace now includes a **Daily planner**, scheduling **conflicts and free-time suggestions**, a calendar **unscheduled task tray**, **global search** (Ctrl/Command K), **Undo & Trash**, **recurring tasks and invoice drafts**, **project templates with draft invoice milestones**, **client activity timelines**, and a **focus timer with project totals**. Access these from the workspace toolbar, header search or **More**; task recurrence and focus are also available in task details/editing. No payment follow-up messages were added.
+
+Undo retains 20 changes for the current session; Trash persists in the workspace. Completing a repeating task creates its next occurrence. Recurring invoices require **Generate due drafts** and remain unsent drafts. Focus uses elapsed wall-clock time and logs on Finish. **92 tests and the build pass**; see [verification and limits](qa/productivity-2026-10-20.md).
 
 ## Screenshots
 

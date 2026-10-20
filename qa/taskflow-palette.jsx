@@ -13,6 +13,6 @@ data.events=[{id:'google-call',title:'Google · Planning call',tier:2,allDay:fal
 const feed=normalizeTaskflow(data);
 function Preview(){
   const [dark,setDark]=useState(false);
-  return <main><h1>TaskFlow shared calendar</h1><p>QA preview · sample cards and Google events · no account or database access</p><button className="ghost" onClick={()=>{document.documentElement.dataset.theme=dark?'light':'dark';setDark(!dark)}}>{dark?'Light':'Dark'} preview</button><TaskflowPanel taskflow={{status:'ready',data:feed}}/><Calendar d={{tasks:[],projects:[],clients:[]}} mut={()=>{}} open={()=>{}} taskflow={{status:'ready',data:feed}}/></main>;
+  return <main><h1>TaskFlow shared calendar</h1><p>QA preview · sample cards and Google events · no account or database access</p><button className="ghost" onClick={()=>{document.documentElement.dataset.theme=dark?'light':'dark';setDark(!dark)}}>{dark?'Light':'Dark'} preview</button><TaskflowPanel taskflow={{status:'ready',data:feed}}/><Calendar d={{tasks:[],projects:[],clients:[],invoices:[],settings:{cur:'USD'}}} mut={()=>{}} open={()=>{}} taskflow={{status:'ready',data:feed}}/></main>;
 }
 createRoot(document.getElementById('root')).render(<Preview/>);

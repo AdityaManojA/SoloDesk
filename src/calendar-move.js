@@ -14,6 +14,11 @@ const shiftDay = (value, delta) => {
 // fromDay is the cell grabbed, so dragging the middle of a project keeps its span intact.
 export function moveCalendarItem(workspace, eventId, fromDay, toDay) {
   if (!validDay(fromDay) || !validDay(toDay)) throw new Error('Choose a valid calendar date.');
+  if(eventId.startsWith('unscheduled-')){
+    const task=workspace.tasks.find(t=>'unscheduled-'+t.id===eventId);
+    if(!task||task.status==='Done'||task.scheduledAt||task.due)throw new Error('This task is no longer in the unscheduled tray.');
+    task.due=toDay;return true;
+  }
   const delta = Math.round((Date.parse(toDay + 'T12:00:00Z') - Date.parse(fromDay + 'T12:00:00Z')) / 86400000);
   let record, patch;
   if (eventId.startsWith('task-')) {

@@ -17,12 +17,14 @@ import Experience, { InstallNotice, ReplayIntroduction } from './Experience';
 import { wasSeen, rememberSeen, onboardingKey } from './experience-state';
 import { createWorkspaceSaves } from './workspace-saves';
 import { prepareClient, prepareInvoice, nextInvoiceNumber } from './invoice-input';
+import {WorkspaceSearch,Planner,Trash,Timeline,Templates,RecurringInvoices,Focus} from './ProductivityUI.jsx';
+import {repeatCompletedTasks,recordActivity,trashRecord,frequencies} from './productivity';
 import * as L from './lib';
 const { rid, num, today, addDays, calc, status, money, fresh } = L;
 
-const NAV = [['dash', 'Dashboard'], ['clients', 'Clients'], ['projects', 'Projects'], ['tasks', 'Tasks'], ['calendar', 'Calendar'], ['invoices', 'Invoices'], ['reports', 'Reports'], ['integrations', 'Integrations'], ['settings', 'Settings']];
+const NAV = [['dash', 'Dashboard'], ['clients', 'Clients'], ['projects', 'Projects'], ['tasks', 'Tasks'], ['calendar', 'Calendar'], ['invoices', 'Invoices'], ['reports', 'Reports'], ['integrations', 'Integrations'], ['settings', 'Settings'],['planner','Daily planner'],['templates','Project templates'],['recurring','Recurring drafts'],['focus','Focus timer'],['trash','Trash']];
 const MOB = [['dash', 'Home'], ['tasks', 'Tasks'], ['calendar', 'Calendar'], ['more', 'More']];
-const MORE = [['clients', 'Clients'], ['projects', 'Projects'], ['invoices', 'Invoices'], ['reports', 'Reports'], ['integrations', 'Integrations'], ['settings', 'Settings']];
+const MORE = [['planner','Daily planner'],['templates','Project templates'],['recurring','Recurring drafts'],['focus','Focus timer'],['trash','Trash'],['clients', 'Clients'], ['projects', 'Projects'], ['invoices', 'Invoices'], ['reports', 'Reports'], ['integrations', 'Integrations'], ['settings', 'Settings']];
 
 /* ---------- routing (hash based, so the browser back button works) ---------- */
 const parse = () => { const pathPage = window.location.pathname.replace(/\/$/, '').slice(1); const [p, id] = (window.location.hash.slice(2) || (['privacy', 'cookies'].includes(pathPage) ? pathPage : 'dash')).split('/'); return { page: p || 'dash', id }; };
@@ -145,6 +147,7 @@ function ClientPage({ d, mut, open, id, removeItem }) {
         <button className="ghost danger sm" onClick={() => removeItem('clients',id)}>Delete client</button>
       </div></div>
     <div className="card">{info.length ? info.map(([k, v]) => <p key={k} style={{ margin: '4px 0', whiteSpace: 'pre-line' }}><small>{k}</small><br />{v}</p>) : <p className="mu">No contact details yet.</p>}</div>
+    <Timeline d={d} client={id}/>
     <div className="hd" style={{ marginTop: 16 }}><h3 style={{ margin: 0 }}>Projects</h3><button className="ghost sm" onClick={() => open('project', { client: id })}>+ Project</button></div>
     {d.projects.filter((p) => p.client === id).map((p) => <button type="button" className="row project-row" key={p.id} onClick={() => open('project', p)}><b>{p.name}</b><span className="b">{p.status}</span></button>)}
     {!d.projects.some((p) => p.client === id) && <p className="mu">No projects yet.</p>}
@@ -197,10 +200,10 @@ function Tasks({ d, mut, open, taskflow, removeItem }) {
   </>);
 }
 
-function TaskPage({ d, mut, open, ask, id, removeItem }) {
+function TaskPage({ d, mut, open, ask, id, removeItem, toast }) {
   const k = d.tasks.find((x) => x.id === id);
   if (!k) return <><Back to="tasks" label="Tasks" /><Empty m="This task could not be found." /></>;
-  const rows = [['Status', k.status], ['Due date', k.due || 'No due date'], ['Priority', k.priority || 'None'], ['Scheduled', k.scheduledAt ? new Date(k.scheduledAt).toLocaleString() + ' · ' + (k.durationMinutes || 60) + ' minutes' : 'Not scheduled']];
+  const rows = [['Status', k.status], ['Due date', k.due || 'No due date'], ['Priority', k.priority || 'None'], ['Repeats', k.repeat||'Does not repeat'], ['Scheduled', k.scheduledAt ? new Date(k.scheduledAt).toLocaleString() + ' · ' + (k.durationMinutes || 60) + ' minutes' : 'Not scheduled']];
   return (<>
     <Back to="tasks" label="Tasks" />
     <div className="hd"><h1>{k.title}</h1>
@@ -213,6 +216,7 @@ function TaskPage({ d, mut, open, ask, id, removeItem }) {
       {k.client && <p style={{ margin: '4px 0' }}><small>Client</small><br /><a href={'#/clients/' + k.client} style={{ fontWeight: 700 }}>{L.cname(d, k.client)}</a></p>}
       {k.project && <p style={{ margin: '4px 0' }}><small>Project</small><br />{d.projects.find((p) => p.id === k.project)?.name || '—'}</p>}
     </div>
+    <Focus d={d} mut={mut} toast={toast} taskId={id}/>
     <p><button className="btn" onClick={() => toggleTask(mut, id)}>{k.status === 'Done' ? 'Mark not done' : 'Mark complete'}</button></p>
   </>);
 }
@@ -403,6 +407,7 @@ export default function App() {
   const [demo, setDemo] = useState(() => sessionStorage.getItem('sd_demo_active') === '1');
   const [user, setUser] = useState(configured ? undefined : null), [d, setD] = useState(null), [route, setRoute] = useState(parse), [dlg, setDlg] = useState(null), [msg, setMsg] = useState(''), [err, setErr] = useState('');
   const [saving, setSaving] = useState('saved');
+  const undoHistory=useRef([]),[undoCount,setUndoCount]=useState(0);
   const [signingOut, setSigningOut] = useState(false), [experience,setExperience] = useState(null);
   const experienceOwner=demo?'demo':user?.uid, experienceReady=!!d && !!experienceOwner;
   useEffect(()=>{if(!experienceReady){setExperience(null);return;}if(!wasSeen(localStorage,onboardingKey(experienceOwner)))setExperience('onboarding');},[experienceOwner,experienceReady]);
@@ -426,7 +431,7 @@ export default function App() {
     return () => window.removeEventListener('beforeunload',warn);
   }, [demo,saving]);
   useEffect(() => { document.title = !demo && user === null && !['privacy','cookies'].includes(route.page) ? 'Sign in · SoloDesk' : `${NAV.find(([k]) => k === route.page)?.[1] || ({more: 'More', privacy: 'Privacy Policy', cookies: 'Cookies & storage'})[route.page] || 'Dashboard'} · SoloDesk`; }, [route.page,user,demo]);
-  const apply = (value) => { dataRef.current = value; setD(value); };
+  const apply = (value) => { if(value===null){undoHistory.current=[];setUndoCount(0);} dataRef.current = value; setD(value); };
   const load = async (u) => {
     const request = ++loadVersion.current;
     setErr(''); apply(null);
@@ -449,10 +454,13 @@ export default function App() {
   const ask = (m, fn, options = {}) => setDlg({ k: 'ask', v: { m, fn, ...options } });
   const persist = n => { void saves.current.save(n); };
   const mut = fn => {
-    const n = structuredClone(dataRef.current); fn(n); apply(n);
+    const before=dataRef.current;if(!before)return;const n=structuredClone(before);fn(n);repeatCompletedTasks(before,n);
+    if(JSON.stringify(before)===JSON.stringify(n))return;
+    recordActivity(before,n);undoHistory.current=[...undoHistory.current.slice(-19),structuredClone(before)];setUndoCount(undoHistory.current.length);apply(n);
     if (demo) { try { localStorage.setItem('sd_demo', JSON.stringify(n)); } catch { toast('Browser storage is full. Export your data before leaving.'); } }
     else persist(n);
   };
+  const undo=()=>{const previous=undoHistory.current.pop();if(!previous)return;setUndoCount(undoHistory.current.length);apply(previous);if(demo){try{localStorage.setItem('sd_demo',JSON.stringify(previous));}catch{toast('Browser storage is full.');}}else persist(previous);toast('Last workspace change undone.');};
   const finishLogout = async () => {
     if (signingOut) return;
     setSigningOut(true);
@@ -486,12 +494,12 @@ export default function App() {
   const removeItem = (kind,id,invoiceId) => {
     const info = deletionInfo(dataRef.current,kind,id,invoiceId);
     if (!info) return;
-    ask(info.message,()=>{mut(n=>deleteRecord(n,kind,id,invoiceId)); if(kind !== 'payments' && route.id===id) nav(kind); toast('Deleted from SoloDesk.');},{label:info.label,danger:true,title:info.label+'?'});
+    ask(info.message.replace('This cannot be undone.','You can restore this deletion from Trash.'),()=>{mut(n=>trashRecord(n,kind,id,invoiceId)); if(kind !== 'payments' && route.id===id) nav(kind); toast('Moved to Trash. Restore it from More → Trash, or use Undo.');},{label:'Move to Trash',danger:true,title:'Move to Trash?'});
   };
   const closeExperience=()=>{if(experience==='onboarding')rememberSeen(localStorage,onboardingKey(experienceOwner));setExperience(null);};
   const startTour=()=>{rememberSeen(localStorage,onboardingKey(experienceOwner));setExperience('tour');};
   const startOnboarding=()=>setExperience('onboarding');
-  const close = () => setDlg(null), P = { d, mut, open, ask, toast, user, logout, demo, saving, signingOut, taskflow, removeItem, startOnboarding, startTour, id: route.id };
+  const close = () => setDlg(null), P = { d, mut, open, ask, toast, user, logout, demo, saving, signingOut, taskflow, removeItem, startOnboarding, startTour, undo, undoCount, id: route.id };
   const v = dlg?.v || {};
   const save = (list, o) => {
     if (list === 'clients') {const result=prepareClient(o);if(result.error)return toast(result.error);o=result.client;}
@@ -503,7 +511,10 @@ export default function App() {
       const project = d.projects.find(p => p.id === o.project);
       if (project?.client && o.client && project.client !== o.client) return toast('Choose the client linked to this project, or leave the client empty.');
       if (project?.client && !o.client) o.client = project.client;
+      if(o.repeat&&!frequencies.some(([id])=>id===o.repeat))return toast('Choose a valid repeat frequency.');
+      if(o.scheduledAt&&!Number.isFinite(Date.parse(o.scheduledAt)))return toast('Choose a valid scheduled time.');
       o.scheduledAt = o.scheduledAt ? new Date(o.scheduledAt).toISOString() : '';
+      if(o.repeat)o.repeatAnchor=o.repeat===v.repeat&&o.due===v.due&&v.repeatAnchor?v.repeatAnchor:Number((o.due||(o.scheduledAt?localDateTime(o.scheduledAt).slice(0,10):today())).slice(-2));
       o.durationMinutes = Math.min(1440, Math.max(5, num(o.durationMinutes) || 60));
     }
     mut((n) => { if (v.id) Object.assign(n[list].find((x) => x.id === v.id), o); else n[list].push({ id: rid(), ...(list === 'clients' ? { arch: false } : {}), ...o }); }); close(); };
@@ -519,10 +530,16 @@ export default function App() {
       <nav aria-label="Main">{NAV.map(([k,t]) => <a key={k} href={'#/' + k} className={page === k ? 'on' : ''} aria-current={page === k ? 'page' : undefined}><Icon name={k} /><span>{t}</span>{k === 'tasks' && d.tasks.filter(x => x.status !== 'Done').length > 0 && <span className="nav-count">{d.tasks.filter(x => x.status !== 'Done').length}</span>}</a>)}</nav>
       <div className="sidebar-bottom"><div className="sidebar-note"><span className="eyebrow">INDEPENDENT, TOGETHER.</span><p>A place for the business<br />behind your craft.</p></div><button className="profile-button" onClick={logout}><span className="avatar">{(user?.displayName || d.settings.biz || 'You').slice(0,1)}</span><span><b>{demo ? 'Demo explorer' : user?.displayName || 'Your account'}</b><small>{demo ? 'Exit demo' : 'Sign out'}</small></span><Icon name="logout" size={17} /></button></div>
     </aside>
-    <div className="app-body"><header className="topbar"><a className="header-brand" href="#/dash"><BrandLogo /></a><div className="breadcrumb">Workspace <span>/</span> <b>{NAV.find(([k]) => k === page)?.[1] || 'More'}</b>{route.id && <><span>/</span><span>Details</span></>}</div><div className="topbar-right">{demo ? <span className="demo-badge">LOCAL DEMO · SAMPLE DATA</span> : <span className={'save-state ' + saving} role="status">{saving === 'saving' ? 'Saving…' : saving === 'error' ? <button className="ghost sm" onClick={() => persist(dataRef.current)}>Retry save</button> : 'All changes saved'}</span>}<span className="topbar-date">{new Date().toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</span><a className="icon-button header-link" href="#/reports" aria-label="View reports"><Icon name="reports" /></a><a className="icon-button header-link" href="#/settings" aria-label="Open settings"><Icon name="settings" /></a><button className="icon-button" aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}><Icon name={theme === 'dark' ? 'sun' : 'moon'} /></button><button type="button" className="ghost danger sm signout-button" aria-label="Sign out of SoloDesk" disabled={signingOut} onClick={logout}><Icon name="logout" size={18} /><span>{signingOut ? 'Signing out…' : 'Sign out'}</span></button></div></header>
+    <div className="app-body"><header className="topbar"><a className="header-brand" href="#/dash"><BrandLogo /></a><div className="breadcrumb">Workspace <span>/</span> <b>{NAV.find(([k]) => k === page)?.[1] || 'More'}</b>{route.id && <><span>/</span><span>Details</span></>}</div><div className="topbar-right"><WorkspaceSearch d={d} taskflow={taskflow} Modal={Modal} openProject={p=>open('project',p)}/>{demo ? <span className="demo-badge">LOCAL DEMO · SAMPLE DATA</span> : <span className={'save-state ' + saving} role="status">{saving === 'saving' ? 'Saving…' : saving === 'error' ? <button className="ghost sm" onClick={() => persist(dataRef.current)}>Retry save</button> : 'All changes saved'}</span>}<span className="topbar-date">{new Date().toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</span><a className="icon-button header-link" href="#/reports" aria-label="View reports"><Icon name="reports" /></a><a className="icon-button header-link" href="#/settings" aria-label="Open settings"><Icon name="settings" /></a><button className="icon-button" aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}><Icon name={theme === 'dark' ? 'sun' : 'moon'} /></button><button type="button" className="ghost danger sm signout-button" aria-label="Sign out of SoloDesk" disabled={signingOut} onClick={logout}><Icon name="logout" size={18} /><span>{signingOut ? 'Signing out…' : 'Sign out'}</span></button></div></header>
     <main ref={mainRef} id="workspace" tabIndex={-1}>
       <div className={'page-content page-'+page} key={page + (route.id || '')}>
       {page !== 'dash' && <div className="page-kicker"><span className="eyebrow">{({clients:'GOOD WORK STARTS WITH PEOPLE',projects:'FROM FIRST BRIEF TO FINAL DELIVERY',tasks:'MAKE SPACE FOR WHAT MATTERS',invoices:'THE BUSINESS OF GETTING PAID',reports:'FOLLOW THE NUMBERS',settings:'MAKE YOURSELF AT HOME',calendar:'MAKE ROOM FOR YOUR WORK',integrations:'YOUR WORKSPACE, WITHOUT WALLS'})[page] || 'YOUR WORKSPACE'}</span><p>{({clients:'The people you build with. All in one place.',projects:'Keep the moving pieces in perspective.',tasks:'A little structure for your next big thing.',invoices:'Clear invoices. Less chasing. Better flow.',reports:'A considered look at your business.',settings:'The details that make this desk yours.',calendar:'Your clients, projects and tasks. In one view.',integrations:'Take your data further. Connect your other tools.'})[page]}</p></div>}
+      <div className="work-tools"><a className="ghost sm" href="#/planner">Daily planner</a><a className="ghost sm" href="#/templates">Templates</a><a className="ghost sm" href="#/focus">Focus</a><button type="button" className="ghost sm" disabled={!undoCount} title="Undo the latest workspace change · up to 20 changes in this session" onClick={undo}>Undo{undoCount?' · '+undoCount:''}</button><a className="ghost sm" href="#/trash">Trash{d.trash?.length?' · '+d.trash.length:''}</a></div>
+      {page === 'planner' && <Planner {...P}/>}
+      {page === 'templates' && <Templates {...P}/>}
+      {page === 'recurring' && <RecurringInvoices {...P}/>}
+      {page === 'focus' && <><h1>Focus on your work</h1><Focus {...P}/></>}
+      {page === 'trash' && <Trash {...P}/>}
       {page === 'dash' && <Dash {...P} />}
       {page === 'clients' && (route.id ? <ClientPage {...P} /> : <Clients {...P} />)}
       {page === 'projects' && <Projects {...P} />}
@@ -548,7 +565,7 @@ export default function App() {
     {dlg?.k === 'task' && <Modal title={v.id ? 'Edit task' : 'New task'} onDelete={v.id ? () => removeItem('tasks',v.id) : undefined} onClose={close} onSubmit={(o) => save('tasks', o)}>
       <Fld l="Title" name="title" required defaultValue={v.title} />
       <div className="grid2"><Sel l="Status" name="status" o={['Todo', 'In progress', 'Done']} defaultValue={v.status || 'Todo'} /><Sel l="Priority" name="priority" o={[['', 'None'], 'Low', 'Medium', 'High']} defaultValue={v.priority || ''} /></div>
-      <Fld l="Due date (optional)" name="due" type="date" defaultValue={v.due} /><Sel l="Client" name="client" o={cOpts} defaultValue={v.client || ''} />
+      <Sel l="Repeat task after completion" name="repeat" o={frequencies} defaultValue={v.repeat||''}/><p className="form-help">Completing this task creates one next occurrence. Existing completed occurrences stay in history.</p><Fld l="Due date (optional)" name="due" type="date" defaultValue={v.due} /><Sel l="Client" name="client" o={cOpts} defaultValue={v.client || ''} />
       <Sel l="Project" name="project" o={[['', '— none —'], ...d.projects.map((p) => [p.id, p.name])]} defaultValue={v.project || ''} /><h3>Put it on your calendar</h3><p className="mu form-help">Choose a time to reserve a work block. Otherwise, a due date appears as an all-day deadline. Times use your device’s timezone ({Intl.DateTimeFormat().resolvedOptions().timeZone}).</p><div className="grid2"><Fld l="Scheduled start (optional)" name="scheduledAt" type="datetime-local" defaultValue={localDateTime(v.scheduledAt)} /><Fld l="Duration (minutes)" name="durationMinutes" type="number" min="5" max="1440" step="5" defaultValue={v.durationMinutes || 60} /></div></Modal>}
     {dlg?.k === 'invoice' && <InvForm v={v} d={d} mut={mut} close={close} toast={toast} removeItem={removeItem} />}
     {dlg?.k === 'pay' && (() => { const b = calc(v).bal; return <Modal title="Record payment" onClose={close} onSubmit={(o) => {
