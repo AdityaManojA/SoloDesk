@@ -1,3 +1,4 @@
+import {BrandMark} from './BrandLogo';
 import {useId,useState,useSyncExternalStore} from 'react';
 import {installController,installPlatform} from './install-controller';
 import './install.css';
@@ -8,7 +9,7 @@ export default function InstallApp({compact=false,initialExpanded=false}) {
   const id=useId();
   const add=()=>{setShow(true);if(state.canPrompt) void installController.prompt();};
   return <section className={'install-app '+(compact?'install-compact':'card')} aria-label="Add SoloDesk to your device">
-    <div className="install-intro"><img src="/brand/solodesk-mark.svg" width="44" height="44" alt=""/><div><h3>{state.installed?'SoloDesk is ready on this device':'Keep your desk one tap away'}</h3><p>Open SoloDesk from your Home Screen, desktop or app launcher.</p></div></div>
+    <div className="install-intro"><BrandMark size={44}/><div><h3>{state.installed?'SoloDesk is ready on this device':'Keep your desk one tap away'}</h3><p>Open SoloDesk from your Home Screen, desktop or app launcher.</p></div></div>
     {!state.installed && <div className="install-actions"><button type="button" className="btn" aria-expanded={show} aria-controls={id} disabled={state.busy} onClick={add}>{state.busy?'Opening install…':'Add to Home Screen'}</button>{show && <button type="button" className="ghost" onClick={()=>setShow(false)}>Hide instructions</button>}</div>}
     <p role="status" className="install-status">{state.message || (state.installed ? 'You can keep using your existing Google account and workspace.' : '')}</p>
     {show && !state.installed && <div id={id} className="install-guide"><div className="install-platforms" role="group" aria-label="Choose your device">{[['ios','iPhone / iPad'],['android','Android'],['desktop','Desktop']].map(([value,label])=><button type="button" className="ghost sm" key={value} aria-pressed={platform===value} onClick={()=>setPlatform(value)}>{label}</button>)}</div>

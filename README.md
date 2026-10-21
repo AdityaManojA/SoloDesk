@@ -1,5 +1,9 @@
 # SoloDesk
 
+![SoloDesk Throughline logo](public/brand/solodesk-logo.png)
+
+**Throughline branding:** [Download the logo and app-icon pack](https://taskflow-solodesk.web.app/brand/solodesk-throughline-brand-kit.zip), or open Settings → Appearance. Includes SVGs, transparent PNG wordmarks, light/dark icons and phone/desktop install sizes. [Verification](qa/throughline-brand-2026-10-21.md).
+
 ## Original MVP & credit
 
 SoloDesk builds on the [SoloDesk MVP](https://github.com/nainanijo/Solodesk-MVP), created by [NainaNijo on GitHub](https://github.com/nainanijo).
@@ -52,7 +56,7 @@ Captured from the deployed app on **20 October 2026** using **demo data**. [View
 
 ### Desktop dashboard
 
-![SoloDesk dashboard](docs/screenshots/02-dashboard-desktop.png)
+![SoloDesk dashboard with Throughline branding](qa/screenshots/throughline-dashboard.png)
 
 ### Calendar
 
