@@ -14,7 +14,7 @@ const republish = (d, user, clientId, toast) => import('./ClientPortal.jsx').the
 // While SoloDesk is open, copy client answers from the portal onto their items, then refresh that portal.
 export function useApprovalSync({ d, mut, user, demo, toast }) {
   const latest = useRef(d); latest.current = d;
-  const clients = !d ? '' : [...new Set(approvalItems(d).filter(x => x.row.approval.state === 'pending').map(x => approvalClient(d, x.row)).filter(Boolean))].sort().join(',');
+  const clients = !d ? '' : [...new Set(approvalItems(d).map(x => approvalClient(d, x.row)).filter(Boolean))].sort().join(',');
   useEffect(() => {
     if (demo || !user || !db || !clients) return;
     const offs = clients.split(',').map(clientId => onSnapshot(collection(db, 'solodeskPortals', user.uid, 'shares', clientId, 'responses'), snap => {

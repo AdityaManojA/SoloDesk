@@ -26,14 +26,17 @@ test('client answers apply only after the latest request, for that client', () =
   assert.deepEqual(applyResponses(w, 'x', [{ taskId: 't1', decision: 'approved', at: '2026-10-25T11:00:00.000Z' }]), []);
   assert.deepEqual(applyResponses(w, 'c', [{ taskId: 't1', decision: 'changes', comment: 'Bigger logo', at: '2026-10-25T11:00:00.000Z' }]), ['t1']);
   assert.deepEqual([w.tasks[0].approval.state, w.tasks[0].approval.comment], ['changes', 'Bigger logo']);
-  assert.deepEqual(applyResponses(w, 'c', [{ taskId: 't1', decision: 'approved', at: '2026-10-25T12:00:00.000Z' }]), []);
+  // the client changes their mind later: the newer answer wins, an older or equal one does not
+  assert.deepEqual(applyResponses(w, 'c', [{ taskId: 't1', decision: 'approved', at: '2026-10-25T12:00:00.000Z' }]), ['t1']);
+  assert.equal(w.tasks[0].approval.state, 'approved');
+  assert.deepEqual(applyResponses(w, 'c', [{ taskId: 't1', decision: 'changes', at: '2026-10-25T11:30:00.000Z' }]), []);
 });
 
 test('the portal shares chosen docs, client links, project tasks and approvals only', () => {
   const w = ws(); requestApproval(w, 't2');
   const s = publishablePortal(w, 'c', ['p'], [], ['d1', 'd2', 'd3']);
   assert.deepEqual(s.tasks.map(t => t.id), ['t1', 't2']);
-  assert.deepEqual(s.approvalIds, ['t2']);
+  assert.deepEqual(s.approvalIds, ['t2']);  // only t2 was sent for approval
   assert.deepEqual(s.docs.map(x => x.id), ['d1', 'd2']);
   assert.equal(s.docs[0].requirements[0].title, 'Fast');
   assert.deepEqual(s.links, [{ label: 'Site', url: 'https://hytz.co/' }]);

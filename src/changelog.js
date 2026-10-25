@@ -2,6 +2,10 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
+  {version:'1.12',released:true,date:'2026-10-26',title:'Open a task in the client portal',highlights:[
+    ['Open a task','In their portal, clients click a task to open it: its due date and steps, the approval (with Approve or Request changes) and the comments, all in one place.'],
+    ['Change an answer','Clients can change an approval answer later (Change my answer). The newest answer is what you see in SoloDesk.'],
+  ],fixes:[]},
   {version:'1.11',released:true,date:'2026-10-26',title:'Client portal fixes',highlights:[
     ['Meetings open in Gmail','Request a meeting opens a ready-to-send Gmail message in the browser. Clients who prefer their own email app can use the link next to it.'],
   ],fixes:[

@@ -35,13 +35,15 @@ export function withdrawApproval(workspace, id) {
   if (found) delete found.row.approval;
 }
 
-// Copy client answers onto their items. Only an answer given after the latest request counts.
+// Copy client answers onto their items. Only an answer given after the latest request counts, and a client
+// can change their mind: an answer newer than the one already recorded replaces it.
 export function applyResponses(workspace, clientId, responses) {
   const changed = [];
   for (const r of responses) {
     const found = findItem(workspace, r.taskId), row = found?.row;
     const at = typeof r.at === 'string' ? r.at : r.at?.toDate?.().toISOString();
-    if (!row?.approval || row.approval.state !== 'pending' || !DECISIONS.includes(r.decision) || !at || at < row.approval.requestedAt) continue;
+    if (!row?.approval || !DECISIONS.includes(r.decision) || !at || at < row.approval.requestedAt) continue;
+    if (row.approval.state !== 'pending' && (!row.approval.decidedAt || at <= row.approval.decidedAt)) continue;
     if (approvalClient(workspace, row) !== clientId) continue;
     row.approval = { ...row.approval, state: r.decision, comment: String(r.comment || '').slice(0, 1000), decidedAt: at };
     if (found.kind === 'prd') row.status = r.decision === 'approved' ? 'Approved' : 'In review';

@@ -1106,3 +1106,13 @@ input[type=radio]{border-radius:50%!important}
 .thread-form{grid-template-columns:1fr}
 .thread-form textarea{width:100%}
 .thread-form .btn{justify-self:end}
+
+/* portal: a task card opens with its approval and comments */
+.portal-task-row{cursor:pointer;border-radius:14px;user-select:none}
+.portal-task-row:hover{background:color-mix(in srgb,var(--hero) 8%,transparent)}
+.portal-task-row:focus-visible{outline:2px solid var(--tx);outline-offset:2px}
+.task-open{display:grid;gap:12px;padding:0 12px 14px}
+.task-open-meta{margin:0;color:var(--mu);font-size:13px}
+.approval-card.compact{border-width:1.5px;padding:14px;border-radius:18px;box-shadow:none}
+.approval-card.compact h3,.approval-card.compact .approval-project{display:none}
+.task-open .task-thread{padding:0}

@@ -2,6 +2,11 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.12 — 26 October 2026 · Open a task in the client portal
+
+- **Open a task.** Clients click a task in their portal to open its due date, steps, approval (Approve / Request changes) and comments together.
+- **Change an answer.** Clients can change an approval answer later; the newest answer wins in SoloDesk.
+
 ## 1.11 — 26 October 2026 · Client portal fixes
 
 - **Meetings open in Gmail.** Request a meeting opens a ready-to-send Gmail message in the browser, with a link to use the device's email app instead.
