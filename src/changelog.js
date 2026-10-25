@@ -10,7 +10,7 @@ export const changelog=[
     ['Client and project notes','Keep notes, checklists and dated reminders on each client and project. Reminders also show on Home.'],
     ['Project pages','Every project now has its own page with tasks, notes and files.'],
     ['Files & docs','Write PRDs in SoloDesk, turn their requirements into tasks, and link files from Drive, OneDrive, Notion or Figma.'],
-    ['Live Excel sync','Link a Microsoft Excel workbook to a project or client. Task edits flow both ways and SoloDesk asks before overwriting anything. Available once your workspace administrator switches it on.'],
+    ['Live Excel sync (coming soon)','Link a Microsoft Excel workbook to a project or client, with task edits flowing both ways and SoloDesk asking before it overwrites anything. The panel is in Files & docs and switches on in an upcoming update.'],
     ['Public profile','A mini portfolio with your links and chosen clients at your own address. Private by default.'],
     ['Edit invoices on the page','Change the invoice number, title, your details, bill-to and bank details right on a draft invoice, and save bank details as your default.'],
     ['What’s new','Release notes like these, in Settings, and a short note after each update.'],

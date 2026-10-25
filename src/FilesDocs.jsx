@@ -27,6 +27,8 @@ function useSync(uid) {
 
 function ExcelSync({ scope, user, demo, toast }) {
   const live = configured && !demo && user;
+  // Switched on at build time once the server part is deployed (needs the Blaze plan): VITE_EXCEL_SYNC=on
+  if (import.meta.env.VITE_EXCEL_SYNC !== 'on') return <div className="card" style={{ display: 'grid', gap: 10, alignContent: 'start' }}><div className="block-head" style={{ margin: 0 }}><h3>Connected spreadsheet</h3><span className="chip sand">Coming soon</span></div><p style={{ margin: 0 }}>Soon you can link a Microsoft Excel workbook to this {scope.kind}. Task names, statuses, due dates and priorities will stay in step both ways, and logged hours will go to the sheet.</p><p className="notice soft" style={{ margin: 0 }}>Until then, link the workbook below under Documents so everyone can open it from here.</p></div>;
   const { account, links, ready } = useSync(live ? user.uid : null);
   const [url, setUrl] = useState(''), [sheet, setSheet] = useState('SoloDesk tasks'), [busy, setBusy] = useState('');
   const mine = links.filter(l => l.scope?.kind === scope.kind && l.scope?.id === scope.id);

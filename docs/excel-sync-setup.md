@@ -39,6 +39,6 @@ How it runs (code in `functions/excel-*.js`, client in `src/excel-sync-client.js
 5. **Deploy, in this order:**
    - Firestore rules — copy `firestore.rules` to TaskFlow's copy first so both stay identical, then `firebase deploy --only firestore:rules --project taskflow-dailytracker`.
    - Functions — only the Excel group: `firebase deploy --only functions:excel --project taskflow-dailytracker`.
-   - Hosting — `firebase deploy --only hosting:solodesk --project taskflow-dailytracker` (adds the functions origin to the page's security policy).
+   - Hosting — add `VITE_EXCEL_SYNC=on` to `.env.local` (until then the panel shows "Coming soon"), run `npm run build`, then `firebase deploy --only hosting:solodesk --project taskflow-dailytracker`.
 
-The in-app screens (connect, link a sheet, conflicts) are designed in Figma and will be built after design approval.
+The in-app screens (connect Microsoft, link a workbook, sync status, conflicts, column mapping) are in every client's and project's **Files & docs** tab. They show "Coming soon" until `VITE_EXCEL_SYNC=on` is set at build time.
