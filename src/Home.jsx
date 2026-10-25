@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Icon from './Icon';
 import Shape from './Shapes.jsx';
 import * as L from './lib';
 import { recentWork, allWork } from './recents';
 import { TASKFLOW_URL } from './taskflow-data';
+import { NoteEditor, noteMode } from './NotesKeep.jsx';
 const { today, addDays, money, calc, status, num } = L;
 
 const tones = ['sand', 'hero', 'sage'];
@@ -45,6 +46,48 @@ export function WorkTile({ d, entry, tone, shape }) {
   return <a className={'tile ' + tone} href={TASKFLOW_URL} target="_blank" rel="noopener noreferrer">{deco}{top}<span className="tile-title">{row.title}</span><span className="tile-meta">{row.due ? 'Due ' + new Date(row.due + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }) : 'No due date'}{left ? ` · ${left} subtask${left === 1 ? '' : 's'} left` : ''}</span><span className="chip white" style={{ alignSelf: 'flex-start', marginTop: 'auto' }}>Open in TaskFlow ↗</span></a>;
 }
 
+// An editable "Jump back in" card: clicking edits the item right here instead of leaving Home.
+function EditTile({ d, entry, tone, shape, open, mut, onNote }) {
+  const { kind, row, at } = entry;
+  const stop = e => e.stopPropagation();
+  const deco = shape && <Shape kind={shape[0]} color={shape[1]} size={120} style={{ position: 'absolute', ...shape[2] }} />;
+  const label = { note: 'Note', task: 'Task', project: 'Project', client: 'Client' }[kind];
+  const act = () => kind === 'note' ? onNote(row.id) : open(kind, row);
+  const top = <div className="tile-top"><span>{label}</span><span className="chip white">Edited {ago(at).toLowerCase()}</span></div>;
+  let body;
+  if (kind === 'note') {
+    const items = (row.checklist || []).filter(c => !c.done);
+    body = <><span className="tile-title">{row.title || (row.body || '').split('\n')[0].slice(0, 60) || 'Untitled note'}</span>
+      {noteMode(row) === 'checklist' ? <div className="tile-checks">{items.slice(0, 3).map(c => <span key={c.id} className="tile-check"><button type="button" className="check-box" role="checkbox" aria-checked="false" aria-label={'Tick ' + c.title} onClick={e => { stop(e); mut(w => { const x = w.notes.find(n => n.id === row.id)?.checklist.find(y => y.id === c.id); if (x) x.done = true; }); }} /><span>{c.title}</span></span>)}{items.length > 3 && <small>+{items.length - 3} more</small>}{!items.length && <small>All ticked</small>}</div>
+        : <span className="tile-meta tile-snippet">{row.title ? (row.body || '').slice(0, 140) : (row.body || '').split('\n').slice(1).join(' ').slice(0, 140)}</span>}
+      {(row.client || row.project) && <span className="tile-meta">{[L.cname(d, row.client), d.projects.find(p => p.id === row.project)?.name].filter(x => x && x !== '—').join(' · ')}</span>}</>;
+  } else if (kind === 'task') {
+    const done = row.status === 'Done';
+    body = <><span className="tile-task"><button type="button" className="check-box" role="checkbox" aria-checked={done} aria-label={(done ? 'Mark not done: ' : 'Mark done: ') + row.title} onClick={e => { stop(e); mut(w => { const t = w.tasks.find(x => x.id === row.id); t.status = t.status === 'Done' ? 'Todo' : 'Done'; }); }}>{done && <Icon name="check" size={14} />}</button><span className="tile-title" style={done ? { textDecoration: 'line-through' } : null}>{row.title}</span></span>
+      <span className="tile-meta">{[L.cname(d, row.client) !== '—' && L.cname(d, row.client), row.due && 'Due ' + new Date(row.due + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' }), row.priority && row.priority + ' priority'].filter(Boolean).join(' · ') || 'No client or date yet'}</span></>;
+  } else if (kind === 'project') {
+    const tasks = d.tasks.filter(t => t.project === row.id && !t.arch), done = tasks.filter(t => t.status === 'Done').length;
+    body = <><span className="tile-title">{row.name}</span><span className="tile-meta">{row.client ? L.cname(d, row.client) : 'No client'} · {done} of {tasks.length} tasks complete</span><MiniBars done={done} total={tasks.length} /><a className="tile-link" href={'#/projects/' + row.id} onClick={stop}>Open project →</a></>;
+  } else {
+    const projects = d.projects.filter(p => p.client === row.id).length, todos = openTodos(d, row.id);
+    body = <><span className="tile-title">{row.name}</span><span className="tile-meta">{todos ? `${todos} open to-do${todos === 1 ? '' : 's'}` : 'No open to-dos'} · {projects} project{projects === 1 ? '' : 's'}</span><a className="tile-link" href={'#/clients/' + row.id} onClick={stop}>Open client →</a></>;
+  }
+  return <div className={'tile edit-tile ' + tone} role="button" tabIndex={0} aria-label={'Edit ' + label.toLowerCase() + ' ' + (row.title || row.name || '')} onClick={act} onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); act(); } }}>{deco}{top}{body}</div>;
+}
+
+// TaskFlow quests are a small pill on Home, opening a compact list. TaskFlow stays the place to edit them.
+function TaskflowPill({ taskflow }) {
+  const [show, setShow] = useState(false), ref = useRef(null);
+  const quests = taskflow?.status === 'ready' ? taskflow.data.quests : [];
+  useEffect(() => { if (!show) return; const close = e => { if (!ref.current?.contains(e.target)) setShow(false); }; const key = e => { if (e.key === 'Escape') setShow(false); }; document.addEventListener('pointerdown', close); document.addEventListener('keydown', key); return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', key); }; }, [show]);
+  if (!quests.length) return null;
+  const sorted = [...quests].sort((a, b) => (a.due || '9').localeCompare(b.due || '9'));
+  return <span className="tf-pill-wrap" ref={ref}>
+    <button type="button" className="tf-pill" aria-expanded={show} onClick={() => setShow(!show)} title="TaskFlow quests"><i aria-hidden="true" />TaskFlow · {quests.length}</button>
+    {show && <span className="tf-pop" role="dialog" aria-label="TaskFlow quests">{sorted.slice(0, 8).map(q => <span key={q.id} className="tf-row"><span>{q.title}</span><small>{q.due ? new Date(q.due + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : ''}</small></span>)}{quests.length > 8 && <small>+{quests.length - 8} more</small>}<a className="text-link" href={TASKFLOW_URL} target="_blank" rel="noopener noreferrer">Open TaskFlow ↗</a></span>}
+  </span>;
+}
+
 function MiniCalendar({ d }) {
   const t = today(), [month, setMonth] = useState(t.slice(0, 7));
   const first = new Date(month + '-01T12:00:00'), lead = (first.getDay() + 6) % 7, days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
@@ -60,9 +103,10 @@ function MiniCalendar({ d }) {
   </div>;
 }
 
-export function Home({ d, open, user, taskflow }) {
+export function Home({ d, open, user, taskflow, mut, toast }) {
+  const [noteId, setNoteId] = useState(null), note = (d.notes || []).find(n => n.id === noteId);
   const t = today(), hidden = d.settings.dashboardHidden || [];
-  const recents = recentWork(d, { quests: taskflow?.data?.quests || [] });
+  const recents = recentWork(d);
   const pays = L.allPays(d), month = t.slice(0, 7), last = addDays(t.slice(0, 8) + '01', -1).slice(0, 7);
   const sum = m => pays.filter(p => p.date.slice(0, 7) === m).reduce((s, p) => s + num(p.amt), 0);
   const rev = sum(month), prev = sum(last), change = prev ? Math.round((rev - prev) / prev * 100) : null;
@@ -81,11 +125,12 @@ export function Home({ d, open, user, taskflow }) {
   return <section className="home">
     <div className="home-grid">
       <div className="home-main">
-        <div className="hello"><h1>{greeting()}{name ? ', ' + name : ''}</h1><p>{dueToday.length} task{dueToday.length === 1 ? '' : 's'} due today · {overdue.length} invoice{overdue.length === 1 ? '' : 's'} overdue{reminders.length ? ` · ${reminders.length} reminder${reminders.length === 1 ? '' : 's'}` : ''}.</p></div>
+        <div className="hello"><h1>{greeting()}{name ? ', ' + name : ''}</h1><p>{dueToday.length} task{dueToday.length === 1 ? '' : 's'} due today · {overdue.length} invoice{overdue.length === 1 ? '' : 's'} overdue{reminders.length ? ` · ${reminders.length} reminder${reminders.length === 1 ? '' : 's'}` : ''}. <TaskflowPill taskflow={taskflow} /></p></div>
         {!hidden.includes('metrics') && <div>
           <div className="block-head"><h2>Jump back in</h2><a href="#/work">View all work →</a></div>
-          {recents.length ? <div className="tile-row">{recents.map((e, i) => <WorkTile key={e.kind + e.row.id} d={d} entry={e} tone={tones[i]} shape={shapes[i]} />)}</div>
-            : <div className="tile sand"><span className="tile-title">Your recent work shows up here</span><span className="tile-meta">Add a client or project and edit it — the three most recent stay at the top.</span><button className="btn sm" style={{ alignSelf: 'flex-start' }} onClick={() => open('client')}>Add a client</button></div>}
+          {recents.length ? <div className="tile-row">{recents.map((e, i) => <EditTile key={e.kind + e.row.id} d={d} entry={e} tone={tones[i]} shape={shapes[i]} open={open} mut={mut} onNote={id => setNoteId(noteId === id ? null : id)} />)}</div>
+            : <div className="tile sand"><span className="tile-title">Your recent work shows up here</span><span className="tile-meta">Notes, tasks, projects and clients you edit show up here, newest first.</span><button className="btn sm" style={{ alignSelf: 'flex-start' }} onClick={() => open('client')}>Add a client</button></div>}
+          {note && <div className="card home-note-editor"><NoteEditor key={note.id} note={note} autoFocus edit={fn => mut(w => { const n = (w.notes || []).find(x => x.id === note.id); if (n) fn(n); })} labels={<a className="keep-tool" href={'#/notes/' + note.id}>Open in Notes</a>} /><button type="button" className="ghost sm" style={{ alignSelf: 'flex-end' }} onClick={() => setNoteId(null)}>Done</button></div>}
         </div>}
         {!hidden.includes('overview') && <div className="tile-row overview-row">
           <a className="tile sage" href="#/reports" style={{ minHeight: 230 }}>

@@ -18,12 +18,12 @@ test('only changed or new records get a fresh timestamp',()=>{
   assert.equal(after.projects[0].updatedAt,undefined);
 });
 
-test('editing a client note moves that client to the top, quests and projects mix in by time',()=>{
-  const w=fixture();w.projects[0].updatedAt='2026-10-20T00:00:00Z';w.clients[1].updatedAt='2026-10-21T00:00:00Z';
+test('jump back in lists the SoloDesk items edited most recently, never TaskFlow quests',()=>{
+  const w=fixture();w.projects[0].updatedAt='2026-10-20T00:00:00Z';w.clients[1].updatedAt='2026-10-21T00:00:00Z';w.tasks[0].updatedAt='2026-10-23T00:00:00Z';
   w.notes=[{id:'n',title:'Kickoff',client:'a',checklist:[],updatedAt:'2026-10-24T00:00:00Z'}];
-  const quests=[{id:'x',title:'Ship v1.2',updatedAt:Date.parse('2026-10-22T00:00:00Z')}];
-  assert.deepEqual(recentWork(w,{quests}).map(e=>e.kind+':'+e.row.id),['client:a','quest:x','client:b']);
-  assert.ok(!recentWork(w,{limit:10}).some(e=>e.row.id==='old'||e.row.id==='q'),'archived clients and completed projects stay out');
+  assert.deepEqual(recentWork(w).map(e=>e.kind+':'+e.row.id),['note:n','task:t','client:b']);
+  w.clients[0].arch=true;w.clients[0].updatedAt='2026-10-25T00:00:00Z';
+  assert.ok(!recentWork(w,{limit:10}).some(e=>e.row.id==='a'),'archived clients stay out');
 });
 
 test('all work splits active projects, clients and completed work',()=>{

@@ -25,6 +25,8 @@ const paths = {
   left: 'M19 12H5 M11 6l-6 6 6 6',
   sync: 'M21 12a9 9 0 1 1-3-6.7L21 8 M21 3v5h-5',
   bolt: 'M13 2 4 14h7l-1 8 9-12h-7z',
+  zoomIn: 'M10.5 3a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15 M21 21l-5.2-5.2 M7.5 10.5h6 M10.5 7.5v6',
+  zoomOut: 'M10.5 3a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15 M21 21l-5.2-5.2 M7.5 10.5h6',
   check: 'M5 12l4 4L19 6', logout: 'M9 3H4v18h5 M9 12h12 M16 7l5 5-5 5', more: 'M5 5h14 M5 12h14 M5 19h14',
 };
 export default function Icon({ name, size = 20, ...props }) {

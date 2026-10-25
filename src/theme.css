@@ -480,3 +480,59 @@ label{color:var(--tx)}
 @media(max-width:700px){.topbar .header-actions .workspace-search{width:38px!important;padding:0!important;justify-content:center;min-width:0}}
 .project-actions>*{margin:0!important}
 .search-field input{border:0!important;box-shadow:none!important;background:transparent!important}
+
+/* ---------- 1.04 Home: editable recent cards and the TaskFlow pill ---------- */
+.edit-tile{cursor:pointer}
+.edit-tile:focus-visible{outline:3px solid var(--tx);outline-offset:2px}
+.edit-tile .check-box{width:20px;height:20px;border:1.5px solid #141414!important;color:#FFFDF8;flex-shrink:0}
+.edit-tile .check-box[aria-checked=true]{background:#141414}
+.tile-task{display:flex;align-items:center;gap:10px;min-width:0}
+.tile-task .tile-title{min-width:0;overflow-wrap:anywhere}
+.tile-checks{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.tile-check{display:flex;align-items:center;gap:8px;min-width:0}
+.tile-check span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile-snippet{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line}
+.tile-link{margin-top:auto;font-size:13px;font-weight:600;color:#141414;text-decoration:none;align-self:flex-start;border-radius:999px;padding:4px 10px;background:#FFFDF8}
+.tile-link:hover{background:#FFFDF8cc}
+.tf-pill-wrap{position:relative;display:inline-block;margin-left:6px;vertical-align:middle}
+.tf-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ln);background:var(--sf);color:var(--mu);border-radius:999px;padding:2px 10px;font:600 12px var(--font-body);cursor:pointer}
+.tf-pill i{width:7px;height:7px;border-radius:50%;background:var(--sage-deep)}
+.tf-pill:hover,.tf-pill[aria-expanded=true]{color:var(--tx);border-color:var(--tx)}
+.tf-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:20;width:280px;background:var(--sf);border-radius:16px;box-shadow:0 10px 30px #14141422,0 0 0 1px var(--ln);padding:10px;display:flex;flex-direction:column;gap:4px}
+.tf-row{display:flex;gap:8px;align-items:baseline;justify-content:space-between;padding:5px 6px;border-radius:8px;font-size:13px;color:var(--tx)}
+.tf-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tf-row small{color:var(--mu);flex-shrink:0}
+.tf-pop .text-link{padding:6px;font-size:13px}
+/* Note fields are plain writing surfaces: no form-field box or focus ring (overrides the global input focus). */
+.keep-editor .keep-title:focus,.keep-editor .keep-body:focus,.keep-item input:focus,.add-row input:focus{border:0!important;box-shadow:none!important;outline:none}
+.keep-body{min-height:44px}
+.keep-editor .keep-link{max-width:220px;height:32px;font-size:13px!important;padding:4px 28px 4px 12px!important;background-color:var(--card)!important;border-color:transparent!important}
+.keep-dialog{border-radius:24px}
+/* ---------- 1.04 notes: Apple Notes-style split view and nested checklists ---------- */
+.notes-split{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px;align-items:start;min-height:70vh}
+.notes-index{display:flex;flex-direction:column;gap:10px;position:sticky;top:84px;max-height:calc(100vh - 110px)}
+.notes-index-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.notes-index-head h1{margin:0;font-size:34px}
+.notes-index-head span{display:flex;gap:4px;align-items:center}
+.notes-filter{align-self:flex-start}
+.notes-rows{display:flex;flex-direction:column;gap:4px;overflow-y:auto;padding-right:4px}
+.note-row{display:flex;flex-direction:column;gap:2px;text-align:left;border:0;background:transparent;border-radius:14px;padding:10px 12px;cursor:pointer;font:inherit;color:var(--tx)}
+.note-row:hover{background:var(--card)}
+.note-row[aria-current]{background:var(--sand);color:#141414}
+.note-row b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.note-row small{font-size:12px;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.note-row[aria-current] small{color:#3b3630}
+.note-row small span{font-weight:600;margin-right:4px}
+.note-row-tags{display:flex;gap:4px;margin-top:4px}
+.note-row-tags i{font-style:normal;font-size:11px;padding:2px 8px}
+.notes-pane{min-width:0}
+.notes-paper{background:var(--sf);border-radius:var(--radius);padding:28px 32px;min-height:60vh;display:flex;flex-direction:column}
+.notes-paper .keep-editor{flex:1}
+.notes-paper .keep-title{font-size:32px!important;font-weight:600!important}
+.notes-paper .keep-body{min-height:40vh}
+.notes-back{display:none;align-self:flex-start;margin-bottom:8px}
+.notes-empty{background:var(--card);border-radius:var(--radius);padding:40px;text-align:center;color:var(--mu);display:grid;gap:12px;justify-items:center}
+.keep-hint{margin:8px 0 0;font-size:12px;color:var(--mu);opacity:.8}
+.keep-item .check-box{border-radius:50%!important}
+.home-note-editor{margin-top:14px;display:flex;flex-direction:column;gap:8px;background:var(--sf)!important}
+@media(max-width:760px){.notes-split{grid-template-columns:1fr}.notes-index{position:static;max-height:none}.notes-split.show-note .notes-index{display:none}.notes-split:not(.show-note) .notes-pane{display:none}.notes-back{display:inline-flex}.notes-paper{padding:18px}}

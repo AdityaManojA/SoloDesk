@@ -2,6 +2,16 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
+  {version:'1.04',released:false,date:'',title:'Edit what you were working on, right from Home',highlights:[
+    ['Jump back in, editable','Home now shows the notes, tasks, projects and clients you edited most recently. Open a note, tick a checklist item or a task, or edit a project or client without leaving Home.'],
+    ['TaskFlow, tucked away','Your TaskFlow quests sit in a small pill next to the greeting; tap it for a quick list.'],
+    ['Checklists like Apple Notes','Type an item, press Enter for the next one, Tab to make a sub-item and Shift+Tab to move it back. Ticking an item ticks its sub-items, and items stay where you put them.'],
+    ['Notes, side by side','The Notes page lists your notes on the left and opens the one you pick on the right, ready to type. On Home, a note opens right under your recent work.'],
+    ['Zoom buttons in the calendar','Clear Zoom in and Zoom out buttons, plus Ctrl/⌘ + scroll or a trackpad pinch over the calendar.'],
+  ],fixes:[
+    'Note fields no longer show a form-style box when you type in them.',
+    'Text typed just before closing a note is no longer lost, and notes save less often while you type.',
+  ]},
   {version:'1.03',released:true,date:'2026-10-25',title:'A clearer calendar, Keep-style notes and a tidier workspace',highlights:[
     ['Calendar, rebuilt','Zoom from the whole year down to a single day, like Google or Apple Calendar. A “What you’re working on” timeline shows every client’s projects across the period, and the day view explains what is due, scheduled and running.'],
     ['Notes like Google Keep','Take a note, or switch on the checklist and press Enter for each new item. Ticked items move to the bottom, any item can have a reminder date, and every note — including client and project notes — is on the Notes page.'],

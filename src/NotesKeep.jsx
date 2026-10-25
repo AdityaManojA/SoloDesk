@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from './Icon';
 import { rid, today } from './lib';
 import { trashReusable } from './productivity';
+import { shiftLevel, toggleItem, insertAfter, removeItem, linesToItems, itemsToLines } from './checklist';
 import { ago } from './Home.jsx';
 
 // Notes work like Google Keep: a title and free text, or a checklist where Enter adds the next item.
@@ -10,48 +11,60 @@ const shortDay = day => new Date(day + 'T12:00:00').toLocaleDateString(undefined
 export const noteMode = n => n.mode || ((n.checklist || []).length && !n.body ? 'checklist' : 'text');
 export const newNote = (extra = {}) => ({ id: rid(), title: '', body: '', client: '', project: '', mode: 'text', checklist: [], createdAt: new Date().toISOString(), ...extra });
 
-// Text ↔ checklist, like Keep's "Show checkboxes" / "Hide checkboxes".
+// Text ↔ checklist. Indented lines become sub-items and back.
 export function toggleMode(note) {
-  if (noteMode(note) === 'text') {
-    const lines = (note.body || '').split('\n').map(x => x.replace(/^\s*[-*•☐☑]\s*/, '').trim()).filter(Boolean);
-    return { ...note, mode: 'checklist', body: '', checklist: [...(note.checklist || []), ...lines.map(title => ({ id: rid(), title, done: false }))] };
-  }
-  const lines = (note.checklist || []).map(c => c.title).filter(Boolean);
-  return { ...note, mode: 'text', body: [note.body, ...lines].filter(Boolean).join('\n'), checklist: [] };
+  if (noteMode(note) === 'text') return { ...note, mode: 'checklist', body: '', checklist: [...(note.checklist || []), ...linesToItems(note.body || '', rid)] };
+  return { ...note, mode: 'text', body: [note.body, itemsToLines(note.checklist || [])].filter(Boolean).join('\n'), checklist: [] };
 }
 
-function useDebounced(fn, ms = 600) {
-  const timer = useRef(), latest = useRef(fn); latest.current = fn;
-  useEffect(() => () => clearTimeout(timer.current), []);
-  return useMemo(() => ({ run: (...a) => { clearTimeout(timer.current); timer.current = setTimeout(() => latest.current(...a), ms); }, flush: (...a) => { clearTimeout(timer.current); latest.current(...a); } }), [ms]);
+// Saves after a pause in typing; anything still pending is saved when the editor closes.
+function useDebounced(fn, ms = 1200) {
+  const timer = useRef(), latest = useRef(fn), pending = useRef(null); latest.current = fn;
+  useEffect(() => () => { clearTimeout(timer.current); if (pending.current) latest.current(...pending.current); }, []);
+  return useMemo(() => ({
+    run: (...a) => { pending.current = a; clearTimeout(timer.current); timer.current = setTimeout(() => { pending.current = null; latest.current(...a); }, ms); },
+    flush: (...a) => { clearTimeout(timer.current); pending.current = null; latest.current(...a); },
+  }), [ms]);
 }
 
+// Apple Notes-style checklist: type, Enter for the next item, Tab / Shift+Tab to nest, all in place.
 function Checklist({ note, save }) {
-  const [items, setItems] = useState(note.checklist || []), refs = useRef({}), focusNext = useRef(null);
+  const [items, setItems] = useState(note.checklist || []), refs = useRef({}), focus = useRef(null);
   useEffect(() => { setItems(note.checklist || []); }, [note.id]);
-  useEffect(() => { const el = focusNext.current && refs.current[focusNext.current]; if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } focusNext.current = null; });
+  useEffect(() => { const f = focus.current, el = f && refs.current[f.id]; if (el) { el.focus(); const at = f.at === 'start' ? 0 : el.value.length; el.setSelectionRange(at, at); } focus.current = null; });
   const debounced = useDebounced(list => save(list));
   const commit = (list, now = false) => { setItems(list); now ? debounced.flush(list) : debounced.run(list); };
-  const t = today(), open = items.filter(c => !c.done), done = items.filter(c => c.done);
-  const row = c => <div key={c.id} className={'keep-item' + (c.done ? ' done' : '')}>
-    <button type="button" className="check-box" role="checkbox" aria-checked={!!c.done} aria-label={(c.done ? 'Untick ' : 'Tick ') + (c.title || 'item')} onClick={() => commit(items.map(x => x.id === c.id ? { ...x, done: !x.done } : x), true)}>{c.done && <Icon name="check" size={14} />}</button>
-    <input ref={el => { refs.current[c.id] = el; }} aria-label="List item" value={c.title} placeholder="List item"
-      onChange={e => commit(items.map(x => x.id === c.id ? { ...x, title: e.target.value } : x))}
-      onBlur={() => debounced.flush(items)}
-      onKeyDown={e => {
-        if (e.key === 'Enter') { e.preventDefault(); const id = rid(), i = items.findIndex(x => x.id === c.id); focusNext.current = id; commit([...items.slice(0, i + 1), { id, title: '', done: false }, ...items.slice(i + 1)], true); }
-        if (e.key === 'Backspace' && !c.title) { e.preventDefault(); const i = items.findIndex(x => x.id === c.id), prev = items.slice(0, i).reverse().find(x => !x.done); focusNext.current = prev?.id; commit(items.filter(x => x.id !== c.id), true); }
-      }} />
-    <label className={'keep-due' + (c.due ? ' set' + (c.due < t && !c.done ? ' late' : '') : '')} title="Reminder date">
-      {c.due ? shortDay(c.due) : <Icon name="bell" size={14} />}
-      <input type="date" aria-label={'Reminder for ' + (c.title || 'item')} value={c.due || ''} onChange={e => commit(items.map(x => x.id === c.id ? { ...x, due: e.target.value || undefined } : x), true)} />
-    </label>
-    <button type="button" className="icon-x" aria-label={'Delete ' + (c.title || 'item')} onClick={() => commit(items.filter(x => x.id !== c.id), true)}>×</button>
-  </div>;
+  const t = today();
+  const key = (e, c, i) => {
+    const el = e.currentTarget, atStart = el.selectionStart === 0 && el.selectionEnd === 0, level = c.level || 0;
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (!c.title) { if (level) { focus.current = { id: c.id }; commit(shiftLevel(items, c.id, -1), true); } else { focus.current = { id: items[i - 1]?.id }; commit(removeItem(items, c.id), true); } return; }
+      // Split at the caret, like a text editor: text after the caret moves to the new item.
+      const id = rid(), before = c.title.slice(0, el.selectionStart), after = c.title.slice(el.selectionEnd);
+      focus.current = { id, at: 'start' };
+      commit(insertAfter(items.map(x => x.id === c.id ? { ...x, title: before } : x), c.id, { id, title: after }), true);
+    } else if (e.key === 'Tab') {
+      e.preventDefault(); focus.current = { id: c.id, at: el.selectionStart === 0 ? 'start' : 'end' };
+      commit(shiftLevel(items, c.id, e.shiftKey ? -1 : 1), true);
+    } else if (e.key === 'Backspace' && atStart) {
+      if (level) { e.preventDefault(); focus.current = { id: c.id, at: 'start' }; commit(shiftLevel(items, c.id, -1), true); }
+      else if (i > 0) { e.preventDefault(); const prev = items[i - 1]; focus.current = { id: prev.id }; commit(removeItem(items.map(x => x.id === prev.id ? { ...x, title: x.title + c.title } : x), c.id), true); }
+    } else if (e.key === 'ArrowUp' && i > 0) { e.preventDefault(); focus.current = { id: items[i - 1].id }; setItems([...items]); }
+    else if (e.key === 'ArrowDown' && i < items.length - 1) { e.preventDefault(); focus.current = { id: items[i + 1].id }; setItems([...items]); }
+  };
   return <div className="keep-list">
-    {open.map(row)}
-    <div className="keep-item add"><Icon name="plus" size={16} /><input aria-label="Add a list item" placeholder="List item" value="" onChange={e => { const id = rid(); focusNext.current = id; commit([...items, { id, title: e.target.value, done: false }], true); }} /></div>
-    {done.length > 0 && <details className="keep-done" open><summary>{done.length} checked item{done.length === 1 ? '' : 's'}</summary>{done.map(row)}</details>}
+    {items.map((c, i) => <div key={c.id} className={'keep-item' + (c.done ? ' done' : '')} style={{ paddingLeft: 4 + (c.level || 0) * 30 }}>
+      <button type="button" className="check-box" role="checkbox" aria-checked={!!c.done} aria-label={(c.done ? 'Untick ' : 'Tick ') + (c.title || 'item')} onClick={() => commit(toggleItem(items, c.id), true)}>{c.done && <Icon name="check" size={13} />}</button>
+      <input ref={el => { refs.current[c.id] = el; }} aria-label={(c.level ? 'Sub-item' : 'List item') + (c.level ? ', level ' + (c.level + 1) : '')} value={c.title} placeholder={i === 0 ? 'List item' : ''}
+        onChange={e => commit(items.map(x => x.id === c.id ? { ...x, title: e.target.value } : x))} onBlur={() => debounced.flush(items)} onKeyDown={e => key(e, c, i)} />
+      <label className={'keep-due' + (c.due ? ' set' + (c.due < t && !c.done ? ' late' : '') : '')} title="Reminder date">
+        {c.due ? shortDay(c.due) : <Icon name="bell" size={14} />}
+        <input type="date" aria-label={'Reminder for ' + (c.title || 'item')} value={c.due || ''} onChange={e => commit(items.map(x => x.id === c.id ? { ...x, due: e.target.value || undefined } : x), true)} />
+      </label>
+    </div>)}
+    {!items.length && <div className="keep-item"><span className="check-box" aria-hidden="true" /><input autoFocus aria-label="First list item" placeholder="List item" value="" onChange={e => { const id = rid(); focus.current = { id }; commit([{ id, title: e.target.value, done: false, level: 0 }], true); }} /></div>}
+    <p className="keep-hint">Enter for a new item · Tab to indent · Shift+Tab to outdent</p>
   </div>;
 }
 
@@ -88,35 +101,51 @@ function NotePreview({ note, d, onOpen, onToggle }) {
   </article>;
 }
 
-// Notes page: every note in the workspace, newest first, with a Keep-style "Take a note…" bar.
+// Notes page, like Apple Notes: the list on the left, the open note on the right, edited in place.
 export function NotesPage({ d, mut, toast, id }) {
-  const [query, setQuery] = useState(''), [filter, setFilter] = useState('all'), [openId, setOpenId] = useState(null), [linkTo, setLinkTo] = useState('');
-  const notes = (d.notes || []).filter(n => filter === 'all' || (filter === 'clients' ? n.client : filter === 'projects' ? n.project : !n.client && !n.project))
-    .filter(n => !query || [n.title, n.body, ...(n.checklist || []).map(c => c.title)].join(' ').toLowerCase().includes(query.toLowerCase()))
-    .sort((a, b) => time(b.updatedAt || b.createdAt) - time(a.updatedAt || a.createdAt));
-  const create = mode => { const [kind, ref] = linkTo.split(':'); const project = kind === 'project' ? d.projects.find(p => p.id === ref) : null; const n = newNote({ mode, client: kind === 'client' ? ref : project?.client || '', project: project?.id || '' }); mut(w => { w.notes = [n, ...(w.notes || [])]; }); setOpenId(n.id); };
-  useEffect(() => { if (id === 'new') { create('text'); history.replaceState(null, '', '#/notes'); } }, [id]);
-  const open = (d.notes || []).find(n => n.id === openId);
-  const edit = fn => mut(w => { const n = (w.notes || []).find(x => x.id === openId); if (n) fn(n); });
-  const close = () => { if (open && !open.title && !open.body && !(open.checklist || []).length) mut(w => { w.notes = w.notes.filter(x => x.id !== open.id); }); setOpenId(null); };
-  useEffect(() => { if (!open) return; const k = e => { if (e.key === 'Escape') close(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); });
-  return <section>
-    <div className="page-head"><div className="grow"><h1>Notes</h1><p className="empty-note" style={{ margin: '6px 0 0' }}>All your notes and checklists, including the ones on clients and projects.</p></div></div>
-    <div className="keep-composer">
-      <button type="button" className="keep-composer-bar" onClick={() => create('text')}>Take a note…</button>
-      <button type="button" className="keep-tool" onClick={() => create('checklist')} title="New checklist" aria-label="New checklist"><Icon name="tasks" size={18} /></button>
-      <select aria-label="Link new notes to" value={linkTo} onChange={e => setLinkTo(e.target.value)} className="keep-link"><option value="">Not linked</option><optgroup label="Clients">{d.clients.filter(c => !c.arch).map(c => <option key={c.id} value={'client:' + c.id}>{c.name}</option>)}</optgroup><optgroup label="Projects">{d.projects.filter(p => !p.arch).map(p => <option key={p.id} value={'project:' + p.id}>{p.name}</option>)}</optgroup></select>
+  const [query, setQuery] = useState(''), [filter, setFilter] = useState('all'), [fresh, setFresh] = useState(null);
+  const all = [...(d.notes || [])].sort((a, b) => time(b.updatedAt || b.createdAt) - time(a.updatedAt || a.createdAt));
+  const [openId, setOpenId] = useState(() => id && id !== 'new' ? id : null);
+  const notes = all.filter(n => filter === 'all' || (filter === 'clients' ? n.client : filter === 'projects' ? n.project : !n.client && !n.project))
+    .filter(n => !query || [n.title, n.body, ...(n.checklist || []).map(c => c.title)].join(' ').toLowerCase().includes(query.toLowerCase()));
+  const select = nid => { setOpenId(nid); history.replaceState(null, '', '#/notes' + (nid ? '/' + nid : '')); };
+  const create = mode => { const n = newNote({ mode }); mut(w => { w.notes = [n, ...(w.notes || [])]; }); setFresh(n.id); select(n.id); };
+  useEffect(() => { if (id === 'new') create('text'); }, [id]);
+  const desktop = typeof window === 'undefined' || window.matchMedia('(min-width: 761px)').matches;
+  const open = all.find(n => n.id === openId) || (desktop ? all[0] : null);
+  const edit = fn => mut(w => { const n = (w.notes || []).find(x => x.id === open.id); if (n) fn(n); });
+  // A brand-new note that stays empty is discarded when you move on.
+  useEffect(() => () => { if (fresh) mut(w => { const n = (w.notes || []).find(x => x.id === fresh); if (n && !n.title && !n.body && !(n.checklist || []).some(c => c.title)) w.notes = w.notes.filter(x => x.id !== fresh); }); }, [fresh]);
+  const label = n => n.title || (n.body || '').split('\n')[0] || (n.checklist || []).find(c => c.title)?.title || 'New note';
+  const snippet = n => noteMode(n) === 'checklist' ? `${(n.checklist || []).filter(c => c.done).length}/${(n.checklist || []).length} done` : (n.title ? n.body : (n.body || '').split('\n').slice(1).join(' ')).slice(0, 80) || 'No additional text';
+  return <section className={'notes-split' + (open && !desktop ? ' show-note' : '')}>
+    <aside className="notes-index" aria-label="All notes">
+      <div className="notes-index-head"><h1>Notes</h1><span><button type="button" className="keep-tool" onClick={() => create('checklist')} title="New checklist" aria-label="New checklist"><Icon name="tasks" size={18} /></button><button type="button" className="btn sm" onClick={() => create('text')}><Icon name="plus" size={16} />New note</button></span></div>
+      <div className="search-field"><Icon name="search" size={16} /><input aria-label="Search notes" placeholder="Search" value={query} onChange={e => setQuery(e.target.value)} /></div>
+      <div className="tabs-pill notes-filter" role="group" aria-label="Show notes">{[['all', 'All'], ['clients', 'Clients'], ['projects', 'Projects'], ['unlinked', 'Other']].map(([k, l]) => <button key={k} type="button" aria-pressed={filter === k} onClick={() => setFilter(k)}>{l}</button>)}</div>
+      <div className="notes-rows">{notes.map(n => { const c = n.client && d.clients.find(x => x.id === n.client), p = n.project && d.projects.find(x => x.id === n.project);
+        return <button key={n.id} type="button" className="note-row" aria-current={open?.id === n.id ? 'true' : undefined} onClick={() => select(n.id)}>
+          <b>{label(n)}</b><small><span>{ago(time(n.updatedAt || n.createdAt))}</span> {snippet(n)}</small>{(c || p) && <span className="note-row-tags">{c && <i className="chip hero">{c.name}</i>}{p && <i className="chip sage">{p.name}</i>}</span>}</button>; })}
+        {!notes.length && <p className="empty-note">{all.length ? 'No notes match.' : 'No notes yet.'}</p>}</div>
+    </aside>
+    <div className="notes-pane">
+      {open ? <div className="notes-paper">
+        <button type="button" className="ghost sm notes-back" onClick={() => select(null)}>‹ All notes</button>
+        <NoteEditor key={open.id} note={open} edit={edit} autoFocus={open.id === fresh} onTrash={() => { mut(w => trashReusable(w, 'notes', open.id)); select(null); toast('Note moved to Trash.'); }}
+          labels={<select aria-label="Linked to" className="keep-link" value={open.project ? 'project:' + open.project : open.client ? 'client:' + open.client : ''} onChange={e => { const [k, r] = e.target.value.split(':'); const p = k === 'project' ? d.projects.find(x => x.id === r) : null; edit(n => { n.client = k === 'client' ? r : p?.client || ''; n.project = p?.id || ''; }); }}><option value="">Not linked</option><optgroup label="Clients">{d.clients.map(c => <option key={c.id} value={'client:' + c.id}>{c.name}</option>)}</optgroup><optgroup label="Projects">{d.projects.map(p => <option key={p.id} value={'project:' + p.id}>{p.name}</option>)}</optgroup></select>} />
+      </div> : <div className="notes-empty"><p>Pick a note on the left, or start a new one.</p><button type="button" className="btn" onClick={() => create('text')}>New note</button></div>}
     </div>
-    <div className="cal-toolbar" style={{ margin: '18px 0' }}>
-      <div className="tabs-pill" role="group" aria-label="Show notes">{[['all', 'All'], ['clients', 'Clients'], ['projects', 'Projects'], ['unlinked', 'Not linked']].map(([k, l]) => <button key={k} type="button" aria-pressed={filter === k} onClick={() => setFilter(k)}>{l}</button>)}</div>
-      <div className="search-field" style={{ marginLeft: 'auto', minWidth: 220 }}><Icon name="search" size={16} /><input aria-label="Search notes" placeholder="Search notes" value={query} onChange={e => setQuery(e.target.value)} /></div>
-    </div>
-    {notes.length ? <div className="keep-grid">{notes.map(n => <NotePreview key={n.id} note={n} d={d} onOpen={() => setOpenId(n.id)} onToggle={itemId => mut(w => { const c = w.notes.find(x => x.id === n.id).checklist.find(x => x.id === itemId); c.done = !c.done; })} />)}</div>
-      : <p className="empty-note">{(d.notes || []).length ? 'No notes match.' : 'Notes you take appear here.'}</p>}
-    {open && <div className="ov" onClick={close}><div className="dlg keep-dialog" role="dialog" aria-modal="true" aria-label="Edit note" onClick={e => e.stopPropagation()}>
-      <NoteEditor note={open} edit={edit} autoFocus onTrash={() => { mut(w => trashReusable(w, 'notes', open.id)); setOpenId(null); toast('Note moved to Trash.'); }}
-        labels={<select aria-label="Linked to" className="keep-link" value={open.project ? 'project:' + open.project : open.client ? 'client:' + open.client : ''} onChange={e => { const [k, r] = e.target.value.split(':'); const p = k === 'project' ? d.projects.find(x => x.id === r) : null; edit(n => { n.client = k === 'client' ? r : p?.client || ''; n.project = p?.id || ''; }); }}><option value="">Not linked</option><optgroup label="Clients">{d.clients.map(c => <option key={c.id} value={'client:' + c.id}>{c.name}</option>)}</optgroup><optgroup label="Projects">{d.projects.map(p => <option key={p.id} value={'project:' + p.id}>{p.name}</option>)}</optgroup></select>} />
-      <div className="end" style={{ margin: 0, padding: '12px 0 0', border: 0, background: 'none' }}><button type="button" className="btn sm" onClick={close}>Close</button></div>
-    </div></div>}
   </section>;
+}
+
+// A note opened in a dialog, from the Notes page or from Home. Empty new notes are discarded on close.
+export function NoteDialog({ note, d, mut, toast, onClose }) {
+  const edit = fn => mut(w => { const n = (w.notes || []).find(x => x.id === note.id); if (n) fn(n); });
+  const close = () => { const n = (d.notes || []).find(x => x.id === note.id); if (n && !n.title && !n.body && !(n.checklist || []).length) mut(w => { w.notes = w.notes.filter(x => x.id !== n.id); }); onClose(); };
+  useEffect(() => { const k = e => { if (e.key === 'Escape') close(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); });
+  return <div className="ov" onClick={close}><div className="dlg keep-dialog" role="dialog" aria-modal="true" aria-label="Edit note" onClick={e => e.stopPropagation()}>
+    <NoteEditor note={note} edit={edit} autoFocus onTrash={() => { mut(w => trashReusable(w, 'notes', note.id)); onClose(); toast('Note moved to Trash.'); }}
+      labels={<select aria-label="Linked to" className="keep-link" value={note.project ? 'project:' + note.project : note.client ? 'client:' + note.client : ''} onChange={e => { const [k, r] = e.target.value.split(':'); const p = k === 'project' ? d.projects.find(x => x.id === r) : null; edit(n => { n.client = k === 'client' ? r : p?.client || ''; n.project = p?.id || ''; }); }}><option value="">Not linked</option><optgroup label="Clients">{d.clients.map(c => <option key={c.id} value={'client:' + c.id}>{c.name}</option>)}</optgroup><optgroup label="Projects">{d.projects.map(p => <option key={p.id} value={'project:' + p.id}>{p.name}</option>)}</optgroup></select>} />
+    <div className="end" style={{ margin: 0, padding: '12px 0 0', border: 0, background: 'none' }}><button type="button" className="btn sm" onClick={close}>Done</button></div>
+  </div></div>;
 }

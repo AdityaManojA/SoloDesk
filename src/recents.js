@@ -23,12 +23,12 @@ export function touchedAt(workspace,kind,row){
 const ranked=rows=>rows.sort((a,b)=>b.at-a.at||b.index-a.index);
 const entries=(workspace,list,kind,keep=()=>true)=>(workspace[list]||[]).map((row,index)=>({kind,row,index,at:touchedAt(workspace,list,row)})).filter(e=>keep(e.row));
 
-export function recentWork(workspace,{quests=[],limit=3}={}){
-  return ranked([
-    ...entries(workspace,'clients','client',c=>!c.arch),
-    ...entries(workspace,'projects','project',p=>!p.arch&&p.status!=='Complete'),
-    ...quests.map((row,index)=>({kind:'quest',row,index,at:time(row.updatedAt)})),
-  ]).slice(0,limit);
+// Home's "Jump back in": the SoloDesk items you edited most recently — notes, tasks, projects and clients —
+// each ranked by its own last edit, so the thing you changed is the thing that shows.
+export function recentWork(workspace,{limit=3}={}){
+  const own=row=>time(row.updatedAt||row.createdAt);
+  const list=(name,kind,keep)=>(workspace[name]||[]).map((row,index)=>({kind,row,index,at:own(row)})).filter(e=>keep(e.row));
+  return ranked([...list('notes','note',()=>true),...list('tasks','task',t=>!t.arch),...list('projects','project',p=>!p.arch),...list('clients','client',c=>!c.arch)]).slice(0,limit);
 }
 
 export function allWork(workspace){

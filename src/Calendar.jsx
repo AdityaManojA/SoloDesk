@@ -50,7 +50,13 @@ export default function Calendar({ d, mut, open, user, taskflow, toast = () => {
   const edit = e => { const record = e.type === 'task' ? d.tasks.find(x => 'task-' + x.id === e.id) : d.projects.find(p => 'project-' + p.id === e.id); if (record) { setEventId(null); open(e.type, record); } };
   const zoomTo = (z, date) => { if (date) setDay(date); setZoom(z); };
   const step = by => setDay(shiftZoom(zoom, day, by));
-  const zoomIndex = ZOOMS.indexOf(zoom);
+  const zoomIndex = ZOOMS.indexOf(zoom), zoomArea = useRef(null), lastWheel = useRef(0);
+  // Ctrl/⌘ + scroll and trackpad pinch (which browsers report as Ctrl + wheel) zoom the calendar, not the page.
+  useEffect(() => {
+    const el = zoomArea.current; if (!el) return;
+    const wheel = e => { if (!e.ctrlKey && !e.metaKey) return; e.preventDefault(); const now = Date.now(); if (now - lastWheel.current < 350 || Math.abs(e.deltaY) < 2) return; lastWheel.current = now; setZoom(z => { const i = ZOOMS.indexOf(ZOOMS.includes(z) ? z : 'month'); return ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, i + (e.deltaY < 0 ? 1 : -1)))]; }); };
+    el.addEventListener('wheel', wheel, { passive: false }); return () => el.removeEventListener('wheel', wheel);
+  }, []);
   useEffect(() => { const keys = e => { if (e.target.closest('input,textarea,select,[contenteditable]') || document.querySelector('[role=dialog]')) return; const k = { y: 'year', m: 'month', w: 'week', d: 'day' }[e.key.toLowerCase()]; if (k && !e.metaKey && !e.ctrlKey && !e.altKey) setZoom(k); if (e.key === 't' || e.key === 'T') setDay(today()); if (e.key === 'ArrowLeft' && e.altKey) step(-1); if (e.key === 'ArrowRight' && e.altKey) step(1); }; window.addEventListener('keydown', keys); return () => window.removeEventListener('keydown', keys); });
   useEffect(() => {
     if (!selected) return;
@@ -65,7 +71,7 @@ export default function Calendar({ d, mut, open, user, taskflow, toast = () => {
   const chip = (e, date) => <button key={e.id} type="button" className={'cal-chip ' + chipTone(e)} style={{ '--tone': toneOf(e.client?.id) }} {...(e.source !== 'taskflow' ? dragProps(e, date) : {})} onClick={ev => { ev.stopPropagation(); setEventId(e.id); }} title={e.title}>
     {!e.allDay && <span className="cal-time">{clock(e.start)}</span>}<span className="cal-title">{e.title}</span></button>;
 
-  return <section className="calendar-b" aria-label="Calendar">
+  return <section className="calendar-b" aria-label="Calendar" ref={zoomArea}>
     <div className="page-head"><div className="grow"><h1>Calendar</h1><p className="empty-note" style={{ margin: '6px 0 0' }}>Zoom out to see the year, zoom in to plan the day. Keys: Y M W D, T for today.</p></div>
       <button className="ghost" onClick={() => exportEvents(inRange, `solodesk-${zoom}-${range.start}`)}>Export {ZOOM_LABEL[zoom].toLowerCase()} · ICS</button>
       <button className="btn" onClick={() => open('task', { due: zoom === 'day' ? day : undefined })}><Icon name="plus" size={18} />Add task</button></div>
@@ -75,9 +81,9 @@ export default function Calendar({ d, mut, open, user, taskflow, toast = () => {
       <div className="cal-step"><button className="icon-x" aria-label={'Previous ' + zoom} onClick={() => step(-1)}><Icon name="left" /></button><button className="icon-x" aria-label={'Next ' + zoom} onClick={() => step(1)}><Icon name="arrow" /></button></div>
       <h2 className="cal-label" aria-live="polite">{label}</h2>
       <div className="cal-zoom" role="group" aria-label="Zoom">
-        <button className="icon-x" aria-label="Zoom out" disabled={zoomIndex === 0} onClick={() => setZoom(ZOOMS[zoomIndex - 1])}>−</button>
+        <button type="button" className="zoom-btn" aria-label="Zoom out" title="Zoom out (Ctrl/⌘ + scroll down, or pinch)" disabled={zoomIndex === 0} onClick={() => setZoom(ZOOMS[zoomIndex - 1])}><Icon name="zoomOut" size={18} /><span>Zoom out</span></button>
         <div className="tabs-pill">{ZOOMS.map(z => <button key={z} type="button" aria-pressed={zoom === z} onClick={() => setZoom(z)}>{ZOOM_LABEL[z]}</button>)}</div>
-        <button className="icon-x" aria-label="Zoom in" disabled={zoomIndex === ZOOMS.length - 1} onClick={() => setZoom(ZOOMS[zoomIndex + 1])}>+</button>
+        <button type="button" className="zoom-btn" aria-label="Zoom in" title="Zoom in (Ctrl/⌘ + scroll up, or pinch)" disabled={zoomIndex === ZOOMS.length - 1} onClick={() => setZoom(ZOOMS[zoomIndex + 1])}><Icon name="zoomIn" size={18} /><span>Zoom in</span></button>
       </div>
       <div className="cal-filters">
         <Select aria-label="Show client" value={client} onChange={e => setClient(e.target.value)}><option value="">All clients</option>{d.clients.filter(c => !c.arch).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</Select>
