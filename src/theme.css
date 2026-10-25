@@ -1018,3 +1018,9 @@ input[type=radio]{border-radius:50%!important}
 .task-group-head small{color:var(--mu)}
 .task-group-head .grow{flex:1}
 .task-group-head .ghost{margin:0!important}
+/* quick add */
+.quick-add{display:grid;gap:14px}
+.quick-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.quick-actions .eyebrow{width:100%;margin:0}
+.quick-action{border:1px solid var(--ln);background:var(--card);color:var(--tx);border-radius:99px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.quick-action:hover{border-color:var(--tx)}

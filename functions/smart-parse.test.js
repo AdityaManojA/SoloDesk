@@ -75,3 +75,9 @@ test('smart typing keeps TaskFlow repeats', () => {
   assert.equal(parseTask('water plants every other day', W, NOW).repeat, 'alternate');
   assert.equal(parseTask('renew domain yearly', W, NOW).repeat, 'yearly');
 });
+
+test('a distinctive first word of a client name is enough', () => {
+  const t = parseTask('Call Whisky about the logo tomorrow', W, NOW);
+  assert.deepEqual([t.client, t.title], ['c1', 'Call Whisky about the logo']);
+  assert.equal(parseTask('Call the team', W, NOW).client, '');
+});

@@ -138,6 +138,12 @@ export function parseTask(text, workspace = {}, now = new Date()) {
   if (p) { project = p.item.id; client = p.item.client || ''; cut(p); chips.push({ kind: 'project', text: p.item.name }); }
   const c = findName(rest, clients, x => x.name);
   if (c && (!client || client === c.item.id)) { client = c.item.id; cut(c); chips.push({ kind: 'client', text: c.item.name }); }
+  else if (!client) {
+    // "Call Northstar" → Northstar Studio, when that first word belongs to one client only. The word stays in the title.
+    const first = name => (String(name || '').replace(/^(the|a|an)\s+/i, '').match(/^[^\s&,.]+/) || [''])[0].toLowerCase();
+    const hits = clients.filter(x => first(x.name).length >= 4 && new RegExp(`(^|\\s)${escapeRe(first(x.name))}(?=$|[\\s,.;:!?'’])`, 'i').test(rest));
+    if (hits.length === 1 && clients.filter(x => first(x.name) === first(hits[0].name)).length === 1) { client = hits[0].id; chips.push({ kind: 'client', text: hits[0].name }); }
+  }
   else if (client) { const owner = clients.find(x => x.id === client); if (owner) chips.push({ kind: 'client', text: owner.name, implied: true }); }
   const when = parseWhen(rest, now);
   const priority = when.tier === null ? '' : PRIORITY[when.tier];
