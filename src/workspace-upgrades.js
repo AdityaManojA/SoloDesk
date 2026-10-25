@@ -1,6 +1,7 @@
 import {fresh,calc} from './lib.js';
 import {assertWorkspaceSize} from './workspace-size.js';
-import {ACTION_COLOURS,isCustomColour} from './appearance.js';
+import {ACTION_COLOURS,isCustomColour,actionColour} from './appearance.js';
+import {validApproval,approvalClient} from './approvals.js';
 
 export function assertUnchanged(actual,expected){
   if(actual!==expected)throw Object.assign(new Error('This workspace changed in another tab or device. Export your pending changes before loading the latest version.'),{code:'workspace-conflict'});
@@ -47,6 +48,7 @@ export function validateWorkspace(input){
   if(w.docs!=null&&(!Array.isArray(w.docs)||w.docs.some(d=>!object(d)||typeof d.id!=='string'||typeof d.title!=='string'||!strings(d,['kind','url','status','client','project','problem','goals','outOfScope','updatedAt'])||d.requirements!=null&&!checklist(d.requirements))))throw new Error('Invalid documents.');
   if(w.settings.taxId!=null&&typeof w.settings.taxId!=='string'||!textGroup(w.settings.bank,['accountName','bankName','accountNumber','ifsc','swift','iban','upi']))throw new Error('Invalid business settings.');
   if(w.profile!=null&&(!object(w.profile)||!strings(w.profile,['username','name','headline','bio','location'])||['public','available'].some(k=>w.profile[k]!=null&&typeof w.profile[k]!=='boolean')||w.profile.links!=null&&(!Array.isArray(w.profile.links)||w.profile.links.some(l=>!object(l)||typeof l.label!=='string'||typeof l.url!=='string'))||w.profile.clients!=null&&(!Array.isArray(w.profile.clients)||w.profile.clients.some(id=>typeof id!=='string'))))throw new Error('Invalid profile.');
+  if(!w.tasks.every(t=>validApproval(t.approval)))throw new Error('Invalid task approval.');
   for(const a of w.activity||[])if(!strings(a,['at','kind','recordId','client','title','action']))throw new Error('Invalid activity history.');
   if(w.settings.dashboardHidden!=null&&(!Array.isArray(w.settings.dashboardHidden)||w.settings.dashboardHidden.some(x=>!['metrics','overview','work'].includes(x))))throw new Error('Invalid dashboard options.');
   if(w.focusTimer!=null&&(!object(w.focusTimer)||!strings(w.focusTimer,['taskId','title','project'])||!Number.isFinite(w.focusTimer.elapsedMs)||w.focusTimer.elapsedMs<0||w.focusTimer.startedAt!=null&&!Number.isFinite(w.focusTimer.startedAt)))throw new Error('Invalid focus timer.');
@@ -88,10 +90,15 @@ export function projectBudget(workspace,project){
   const seconds=(workspace.focusSessions||[]).filter(s=>s.project===project.id).reduce((sum,s)=>sum+Number(s.seconds||0),0),hours=seconds/3600,budget=Number(project.budgetHours)||0;
   return {hours,budget,remaining:Math.max(0,budget-hours),over:Math.max(0,hours-budget),value:hours*(Number(project.hourlyRate)||0)};
 }
-export function publishablePortal(workspace,clientId,projectIds,invoiceIds){
+// What a client sees in their portal. Only what you pick is copied out of your private workspace: the chosen
+// projects and their tasks, the chosen documents and sent invoices, the client's own links, and any task you sent
+// them for approval. Internal notes, other clients and payment instructions never leave the workspace.
+export function publishablePortal(workspace,clientId,projectIds,invoiceIds,docIds=[]){
   const client=workspace.clients.find(c=>c.id===clientId);if(!client)throw new Error('Choose a client.');
   const projects=workspace.projects.filter(p=>p.client===clientId&&projectIds.includes(p.id)).map(p=>({id:p.id,name:p.name,status:p.status,start:p.start||'',end:p.end||''}));
-  const tasks=workspace.tasks.filter(t=>projects.some(p=>p.id===t.project)&&(!t.client||t.client===clientId)).map(t=>({id:t.id,projectId:t.project,title:t.title,status:t.status,due:t.due||'',checklist:(t.checklist||[]).map(c=>({title:c.title,done:!!c.done}))}));
+  const approval=a=>a&&{state:a.state,note:a.note||'',requestedAt:a.requestedAt,decidedAt:a.decidedAt||'',comment:a.comment||''};
+  const tasks=workspace.tasks.filter(t=>!t.arch&&((projects.some(p=>p.id===t.project)&&(!t.client||t.client===clientId))||(t.approval&&approvalClient(workspace,t)===clientId))).map(t=>({id:t.id,projectId:projects.some(p=>p.id===t.project)?t.project:'',title:t.title,status:t.status,due:t.due||'',priority:t.priority||'',checklist:(t.checklist||[]).map(c=>({title:c.title,done:!!c.done})),...(t.approval?{approval:approval(t.approval)}:{})}));
   const invoices=workspace.invoices.filter(i=>i.client===clientId&&invoiceIds.includes(i.id)&&i.state==='sent').map(i=>({id:i.id,no:i.no,issue:i.issue,due:i.due,items:i.items.map(l=>({desc:l.desc,qty:l.qty,price:l.price})),tax:i.tax||0,total:calc(i).total,paid:calc(i).paid,balance:calc(i).bal}));
-  return {business:workspace.settings.biz||'SoloDesk',clientName:client.name,currency:workspace.settings.cur,projects,tasks,invoices,updatedAt:new Date().toISOString()};
+  const docs=(workspace.docs||[]).filter(x=>docIds.includes(x.id)&&(x.client===clientId||projects.some(p=>p.id===x.project))).map(x=>x.kind==='prd'?{id:x.id,kind:'prd',title:x.title,status:x.status||'Draft',projectId:x.project||'',problem:x.problem||'',goals:x.goals||'',outOfScope:x.outOfScope||'',requirements:(x.requirements||[]).map(r=>{const task=r.taskId&&workspace.tasks.find(t=>t.id===r.taskId);return {title:r.title,done:task?task.status==='Done':!!r.done};})}:{id:x.id,kind:'link',title:x.title,url:x.url,projectId:x.project||''});
+  return {business:workspace.settings.biz||'SoloDesk',clientName:client.name,currency:workspace.settings.cur,accent:actionColour(workspace.settings.actionColour).hex,links:(client.links||[]).map(l=>({label:l.label||'',url:l.url})),projects,tasks,docs,invoices,approvalIds:tasks.filter(t=>t.approval?.state==='pending').map(t=>t.id),updatedAt:new Date().toISOString()};
 }

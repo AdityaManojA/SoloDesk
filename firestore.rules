@@ -15,10 +15,27 @@ service cloud.firestore {
             (request.auth.token.get('email_verified', false) == true &&
              resource.data.recipientEmail == request.auth.token.get('email', '').lower()))));
       allow create, update: if request.auth != null && request.auth.uid == owner &&
-        request.resource.data.keys().hasOnly(['ownerUid','clientId','recipientUid','recipientEmail','projectIds','invoiceIds','data']) &&
+        request.resource.data.keys().hasOnly(['ownerUid','clientId','recipientUid','recipientEmail','projectIds','invoiceIds','docIds','data']) &&
         request.resource.data.ownerUid == owner && request.resource.data.clientId == client &&
         request.resource.data.recipientUid is string && request.resource.data.recipientEmail is string;
       allow delete: if request.auth != null && request.auth.uid == owner;
+      // Client approvals: the signed-in client answers a task the owner sent them (one document per task).
+      // Only tasks listed as waiting in the published share can be answered; the owner reads and clears them.
+      match /responses/{task} {
+        function share() { return get(/databases/$(database)/documents/solodeskPortals/$(owner)/shares/$(client)).data; }
+        function isClient() {
+          return request.auth != null && (share().recipientUid == request.auth.uid ||
+            (request.auth.token.get('email_verified', false) == true && share().recipientEmail == request.auth.token.get('email', '').lower()));
+        }
+        allow read: if request.auth != null && (request.auth.uid == owner || isClient());
+        allow create, update: if isClient() &&
+          request.resource.data.keys().hasOnly(['taskId','decision','comment','at','email']) &&
+          request.resource.data.taskId == task && task in share().data.get('approvalIds', []) &&
+          request.resource.data.decision in ['approved','changes'] &&
+          request.resource.data.comment is string && request.resource.data.comment.size() <= 1000 &&
+          request.resource.data.email is string && request.resource.data.at == request.time;
+        allow delete: if request.auth != null && request.auth.uid == owner;
+      }
     }
     // Solodesk public profiles (Profile → Public profile), one document per username. Anyone with the link can
     // open a single profile, signed in or not, but nobody can list them. Only the owner writes or deletes theirs.

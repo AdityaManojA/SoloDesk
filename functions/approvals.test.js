@@ -1,0 +1,43 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { requestApproval, withdrawApproval, applyResponses, validApproval } from '../src/approvals.js';
+import { publishablePortal, validateWorkspace } from '../src/workspace-upgrades.js';
+import { fresh } from '../src/lib.js';
+
+const ws = () => ({ ...fresh(), clients: [{ id: 'c', name: 'Hytz', links: [{ label: 'Site', url: 'https://hytz.co/' }] }, { id: 'x', name: 'Other' }],
+  projects: [{ id: 'p', name: 'Hytz Website', client: 'c', status: 'Active' }, { id: 'q', name: 'Private', client: 'c', status: 'Active' }],
+  tasks: [{ id: 't1', title: 'Homepage', status: 'Todo', project: 'p', notes: 'SECRET' }, { id: 't2', title: 'Logo', status: 'Todo', client: 'c' }, { id: 't3', title: 'No client', status: 'Todo' }],
+  docs: [{ id: 'd1', kind: 'prd', title: 'Site PRD', status: 'In review', client: 'c', project: 'p', problem: 'Slow', goals: '', outOfScope: '', requirements: [{ id: 'r', title: 'Fast', done: false }] }, { id: 'd2', kind: 'link', title: 'Drive', url: 'https://drive.google.com/x', client: 'c' }, { id: 'd3', kind: 'link', title: 'Other', url: 'https://x.co/', client: 'x' }] });
+
+test('sending for approval needs a client and records the request', () => {
+  const w = ws();
+  requestApproval(w, 't2', ' Please check ', new Date('2026-10-25T10:00:00Z'));
+  assert.deepEqual(w.tasks[1].approval, { state: 'pending', note: 'Please check', requestedAt: '2026-10-25T10:00:00.000Z' });
+  assert.throws(() => requestApproval(w, 't3'), /client/);
+  assert.ok(validateWorkspace(w));
+  withdrawApproval(w, 't2'); assert.equal(w.tasks[1].approval, undefined);
+  assert.ok(!validApproval({ state: 'maybe', requestedAt: 'x' }));
+});
+
+test('client answers apply only after the latest request, for that client', () => {
+  const w = ws();
+  requestApproval(w, 't1', '', new Date('2026-10-25T10:00:00Z'));
+  assert.deepEqual(applyResponses(w, 'c', [{ taskId: 't1', decision: 'approved', at: '2026-10-25T09:00:00.000Z' }]), []);
+  assert.deepEqual(applyResponses(w, 'x', [{ taskId: 't1', decision: 'approved', at: '2026-10-25T11:00:00.000Z' }]), []);
+  assert.deepEqual(applyResponses(w, 'c', [{ taskId: 't1', decision: 'changes', comment: 'Bigger logo', at: '2026-10-25T11:00:00.000Z' }]), ['t1']);
+  assert.deepEqual([w.tasks[0].approval.state, w.tasks[0].approval.comment], ['changes', 'Bigger logo']);
+  assert.deepEqual(applyResponses(w, 'c', [{ taskId: 't1', decision: 'approved', at: '2026-10-25T12:00:00.000Z' }]), []);
+});
+
+test('the portal shares chosen docs, client links, project tasks and approvals only', () => {
+  const w = ws(); requestApproval(w, 't2');
+  const s = publishablePortal(w, 'c', ['p'], [], ['d1', 'd2', 'd3']);
+  assert.deepEqual(s.tasks.map(t => t.id), ['t1', 't2']);
+  assert.deepEqual(s.approvalIds, ['t2']);
+  assert.deepEqual(s.docs.map(x => x.id), ['d1', 'd2']);
+  assert.equal(s.docs[0].requirements[0].title, 'Fast');
+  assert.deepEqual(s.links, [{ label: 'Site', url: 'https://hytz.co/' }]);
+  assert.match(s.accent, /^#/);
+  assert.ok(!JSON.stringify(s).includes('SECRET'));
+  assert.deepEqual(publishablePortal(w, 'c', ['p'], []).docs, []);
+});

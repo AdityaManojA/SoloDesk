@@ -34,11 +34,12 @@ import {assertUnchanged,validateWorkspace,blockers,validateDependencies,projectB
 import {ViewStateProvider,useViewState,PageFrame,DataNav} from './ViewState.jsx';
 import {CommandMenu} from './CommandMenu.jsx';
 import {SmartField,taskChips} from './SmartField.jsx';
+import {ApprovalsPage,ApprovalBox,useApprovalSync} from './Approvals.jsx';
 import {parseTask,parseProject,fmtDay} from './smart-parse';
 const Calendar=lazy(()=>import('./Calendar.jsx'));
 const Integrations=lazy(()=>import('./Integrations.jsx'));
 const portalView=name=>lazy(()=>import('./ClientPortal.jsx').then(module=>({default:module[name]})));
-const PortalManager=portalView('PortalManager'),ClientPortal=portalView('ClientPortal');
+const PortalManager=portalView('PortalManager'),ClientPortal=portalView('ClientPortal'),PortalPreview=portalView('PortalPreview');
 const toolView=name=>lazy(()=>import('./WorkspaceUpgrades.jsx').then(module=>({default:module[name]})));
 const Backups=toolView('Backups'),Notes=toolView('Notes'),DashboardOptions=toolView('DashboardOptions'),RecordExtras=toolView('RecordExtras');
 import './upgrades.css';
@@ -46,14 +47,14 @@ import './polish.css';
 import * as L from './lib';
 const { rid, num, today, addDays, calc, status, money, fresh } = L;
 
-const NAV = [['dash', 'Home'], ['work', 'All work'], ['clients', 'Clients'], ['projects', 'Projects'], ['tasks', 'Tasks'], ['calendar', 'Calendar'], ['invoices', 'Invoices'], ['reports', 'Reports'], ['integrations', 'Data & connections'], ['settings', 'Settings'],['planner','Daily planner'],['templates','Project templates'],['recurring','Recurring drafts'],['focus','Focus timer'],['trash','Trash'],['backups','Backup & restore'],['notes','Notes'],['profile','Profile']];
+const NAV = [['dash', 'Home'], ['work', 'All work'], ['clients', 'Clients'], ['projects', 'Projects'], ['tasks', 'Tasks'], ['calendar', 'Calendar'], ['invoices', 'Invoices'], ['reports', 'Reports'], ['integrations', 'Data & connections'], ['settings', 'Settings'],['planner','Daily planner'],['templates','Project templates'],['recurring','Recurring drafts'],['focus','Focus timer'],['trash','Trash'],['backups','Backup & restore'],['notes','Notes'],['profile','Profile'],['approvals','Approvals']];
 const MOB = [['dash', 'Home'], ['tasks', 'Tasks'], ['calendar', 'Calendar'], ['more', 'More']];
 const MORE = [['work','All work'],['clients','Clients'],['projects','Projects'],['invoices','Invoices'],['reports','Reports'],['notes','Notes'],['focus','Focus timer'],['integrations','Data & connections'],['profile','Profile'],['settings','Settings']];
 // Sidebar groups (desktop). Other tools stay reachable from their pages and from More.
-const GROUPS = [['General',['dash','clients','projects','tasks','calendar','invoices']],['Tools',['work','notes','planner','reports','integrations']],['Account',['profile','settings']]];
+const GROUPS = [['General',['dash','clients','projects','tasks','calendar','invoices']],['Tools',['work','approvals','notes','planner','reports','integrations']],['Account',['profile','settings']]];
 // The last breadcrumb names the record you are looking at.
 const crumbName = (d, page, id) => ({ clients: () => d.clients.find(x => x.id === id)?.name, projects: () => d.projects.find(x => x.id === id)?.name, tasks: () => d.tasks.find(x => x.id === id)?.title, invoices: () => d.invoices.find(x => x.id === id)?.no, notes: () => { const n = (d.notes || []).find(x => x.id === id); return n && (n.title || 'Note'); }, settings: () => ({ general: 'General', invoices: 'Invoices & bank', appearance: 'Appearance', data: 'Data & connections', 'whats-new': "What's new", account: 'Account' })[id] }[page]?.() || 'Details');
-const NAV_ICON = {dash:'home',work:'work',notes:'notes',planner:'planner',profile:'profile',focus:'focus'};
+const NAV_ICON = {dash:'home',work:'work',notes:'notes',planner:'planner',profile:'profile',focus:'focus',approvals:'approve'};
 
 /* ---------- routing (hash based, so the browser back button works) ---------- */
 const parse = () => {
@@ -243,7 +244,7 @@ function Tasks({ d, mut, open, taskflow, removeItem }) {
   </>);
 }
 
-function TaskPage({ d, mut, open, ask, id, removeItem, toast }) {
+function TaskPage({ d, mut, open, ask, id, removeItem, toast, user, demo }) {
   const k = d.tasks.find((x) => x.id === id);
   if (!k) return <><Back to="tasks" label="Tasks" /><Empty m="This task could not be found." /></>;
   const rows = [['Status', k.status], ['Due date', k.due || 'No due date'], ['Priority', k.priority || 'None'], ['Repeats', k.repeat||'Does not repeat'], ['Scheduled', k.scheduledAt ? new Date(k.scheduledAt).toLocaleString() + ' · ' + (k.durationMinutes || 60) + ' minutes' : 'Not scheduled']];
@@ -260,6 +261,7 @@ function TaskPage({ d, mut, open, ask, id, removeItem, toast }) {
       {k.project && <p style={{ margin: '4px 0' }}><small>Project</small><br />{d.projects.find((p) => p.id === k.project)?.name || '—'}</p>}
     </div>
     <Focus d={d} mut={mut} toast={toast} taskId={id}/>
+    <ApprovalBox d={d} mut={mut} user={user} demo={demo} task={k} toast={toast}/>
     <RecordExtras d={d} mut={mut} task={k} toast={toast}/>
     <p><button className="btn" onClick={() => toggleTask(mut, id)}>{k.status === 'Done' ? 'Mark not done' : 'Mark complete'}</button></p>
   </>);
@@ -637,7 +639,9 @@ export default function App() {
     return finishLogout();
   };
   const startDemo = () => { sessionStorage.setItem('sd_demo_active','1'); setDemo(true); };
+  useApprovalSync({ d, mut, user, demo, toast });
   L.setCur(d?.settings.cur);
+  if(route.page==='portal-preview')return <ScreenBoundary key="portal-preview"><Suspense fallback={<ScreenLoading label="Opening preview"/>}><PortalPreview/></Suspense></ScreenBoundary>;
   if(route.page==='u')return <ScreenBoundary key={'u-'+route.id}><PublicProfile username={route.id}/></ScreenBoundary>;
   if(route.page==='portal')return <ScreenBoundary key={'portal-'+route.id}><Suspense fallback={<ScreenLoading label="Opening client portal"/>}><ClientPortal owner={route.id}/></Suspense></ScreenBoundary>;
   if (['privacy', 'cookies'].includes(route.page)) return <LegalPage page={route.page} mainRef={mainRef} />;
@@ -683,7 +687,7 @@ export default function App() {
     <a className="skip-link" href="#workspace" onClick={e => { e.preventDefault(); mainRef.current?.focus(); }}>Skip to content</a>
     <aside className="sidebar" aria-label="SoloDesk">
       <a className="wordmark" href="#/dash">solodesk</a>
-      {GROUPS.map(([title,keys]) => <div key={title}><span className="nav-caption">{title}</span><nav aria-label={title}>{keys.map(k => { const t = NAV.find(([x]) => x === k)[1], on = page === k; return <a key={k} href={'#/' + k} className={on ? 'on' : ''} aria-current={on ? 'page' : undefined}><Icon name={NAV_ICON[k] || k} size={18} /><span>{t}</span>{k === 'tasks' && d.tasks.filter(x => x.status !== 'Done' && !x.arch).length > 0 && <span className="nav-count">{d.tasks.filter(x => x.status !== 'Done' && !x.arch).length}</span>}</a>; })}</nav></div>)}
+      {GROUPS.map(([title,keys]) => <div key={title}><span className="nav-caption">{title}</span><nav aria-label={title}>{keys.map(k => { const t = NAV.find(([x]) => x === k)[1], on = page === k; return <a key={k} href={'#/' + k} className={on ? 'on' : ''} aria-current={on ? 'page' : undefined}><Icon name={NAV_ICON[k] || k} size={18} /><span>{t}</span>{k === 'tasks' && d.tasks.filter(x => x.status !== 'Done' && !x.arch).length > 0 && <span className="nav-count">{d.tasks.filter(x => x.status !== 'Done' && !x.arch).length}</span>}{k === 'approvals' && d.tasks.some(x => x.approval?.state === 'changes' && !x.arch) && <span className="nav-count alert" title="Changes requested">{d.tasks.filter(x => x.approval?.state === 'changes' && !x.arch).length}</span>}</a>; })}</nav></div>)}
       <div className="sidebar-bottom"><div className="sidebar-user"><a className="sidebar-who" href="#/profile" title="Your profile"><span className="avatar">{(demo ? 'Demo' : user?.displayName || d.settings.biz || 'You').split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase()}</span><span className="who"><b>{demo ? 'Demo explorer' : user?.displayName || 'Your account'}</b><small>{demo ? 'Sample workspace' : user?.email || d.settings.biz || 'Signed in'}</small></span></a><button type="button" className="sidebar-logout" onClick={logout} aria-label={demo ? 'Exit demo' : 'Log out'} title={demo ? 'Exit demo' : 'Log out'}><Icon name="logout" size={16} /></button></div><a className="sidebar-version" href="#/settings/whats-new">SoloDesk {currentVersion()} · What’s new</a></div>
     </aside>
     <div className="app-body"><header className="topbar"><a className="header-brand" href="#/dash"><BrandLogo /></a><nav className="breadcrumb" aria-label="Breadcrumb"><a href="#/dash">Workspace</a> <span>/</span> {route.id ? <a href={'#/' + page}>{NAV.find(([k]) => k === page)?.[1] || 'More'}</a> : <b aria-current="page">{NAV.find(([k]) => k === page)?.[1] || 'More'}</b>}{route.id && <> <span>/</span> <b aria-current="page">{crumbName(d, page, route.id)}</b></>}</nav><div className="topbar-right">{demo ? <span className="demo-badge">LOCAL DEMO · SAMPLE DATA</span> : <span className={'save-state ' + saving} role="status">{saving === 'saving' ? 'Saving…' : ['error','conflict'].includes(saving) ? <button className="ghost sm" onClick={() => {if(saving!=='conflict')persist(dataRef.current);}}>Unsaved changes</button> : ''}</span>}<span className="topbar-date">{new Date().toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</span><div className="header-actions" role="group" aria-label="Workspace actions"><CommandMenu open={open} Modal={Modal} undo={undo} undoCount={undoCount}/><WorkspaceSearch d={d} taskflow={taskflow} Modal={Modal} openProject={p=>open('project',p)}/><span className="toolbar-divider" aria-hidden="true" /><a className="icon-button header-link" href="#/reports" aria-label="View reports" title="Reports"><Icon name="reports" size={18} /></a><a className="icon-button header-link" href="#/settings" aria-label="Open settings" title="Settings"><Icon name="settings" size={18} /></a><button className="icon-button" aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} title={theme === 'dark' ? 'Light mode' : 'Dark mode'} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}><Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} /></button><button type="button" className="ghost danger sm signout-button" aria-label="Sign out of SoloDesk" disabled={signingOut} onClick={logout}><Icon name="logout" size={18} /><span>{signingOut ? 'Signing out…' : 'Sign out'}</span></button></div></div></header>
@@ -695,6 +699,7 @@ export default function App() {
 
       {page === 'backups' && <Backups {...P}/>}
       {page === 'notes' && <NotesPage {...P}/>}
+      {page === 'approvals' && <ApprovalsPage {...P}/>}
       {page === 'planner' && <Planner {...P}/>}
       {page === 'templates' && <Templates {...P}/>}
       {page === 'recurring' && <RecurringInvoices {...P}/>}
