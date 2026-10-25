@@ -36,6 +36,7 @@ import {CommandMenu} from './CommandMenu.jsx';
 import {SmartField,taskChips} from './SmartField.jsx';
 import {ApprovalsPage,ApprovalBox,useApprovalSync} from './Approvals.jsx';
 import {usePortalSync} from './portal-sync';
+import {unbilled,invoiceUnbilledHours} from './billing';
 import {parseTask,parseProject,fmtDay} from './smart-parse';
 const Calendar=lazy(()=>import('./Calendar.jsx'));
 const Integrations=lazy(()=>import('./Integrations.jsx'));
@@ -200,7 +201,15 @@ function ProjectPage({ d, mut, open, id, removeItem, user, demo, toast }) {
     {section==='tasks'&&<section aria-label="Project tasks">{tasks.length ? tasks.map(k => <div className="row task-row" data-priority={k.priority || 'None'} key={k.id}><button className="chk" aria-pressed={k.status === 'Done'} aria-label={k.status === 'Done' ? 'Mark not done' : 'Mark complete'} onClick={() => toggleTask(mut, k.id)}>{k.status === 'Done' ? '☑' : '☐'}</button><a className="grow" href={'#/tasks/' + k.id}><b style={{ textDecoration: k.status === 'Done' ? 'line-through' : 'none' }}>{k.title}</b><small>{k.status}{k.due ? ` · due ${k.due}` : ''}{k.priority ? ` · ${k.priority} priority` : ''}</small></a></div>) : <Empty m="No tasks yet for this project." label="Add task" onClick={() => open('task', { project: id, client: p.client })} />}</section>}
     {section==='notes'&&<NoteBoard d={d} mut={mut} toast={toast} scope={{project:id}} onFiles={()=>setSection('files')}/>}
     {section==='files'&&<FilesAndDocs d={d} mut={mut} toast={toast} scope={{kind:'project',id}} user={user} demo={demo}/>}
-    {section==='budget'&&<section className="card" aria-label="Project budget"><p style={{marginTop:0}}><b>{budget.hours.toFixed(1)}h</b> logged{budget.budget ? ` of ${budget.budget}h · ${budget.over ? budget.over.toFixed(1) + 'h over' : budget.remaining.toFixed(1) + 'h left'}` : ''}</p>{p.hourlyRate ? <p>Time value {money(budget.value)} at {money(p.hourlyRate)}/h</p> : <p className="mu">Add budget hours and an hourly rate in Edit to track this project’s effort.</p>}</section>}
+    {section==='budget'&&(() => { const u = unbilled(d, id); const bill = () => { const next = structuredClone(d); let invoiceId; try { invoiceId = invoiceUnbilledHours(next, id); } catch (e) { toast(e.message); return; } mut(n => { invoiceUnbilledHours(n, id); }); toast(`Draft invoice created for ${u.billable}h. Check it, then send.`); window.location.hash = '#/invoices/' + invoiceId; };
+      return <section className="budget-grid" aria-label="Project budget">
+        <div className="card"><span className="eyebrow">TIME LOGGED</span><p className="budget-big">{budget.hours.toFixed(1)}h</p><p className="mu" style={{ margin: 0 }}>{budget.budget ? `of ${budget.budget}h budget · ${budget.over ? budget.over.toFixed(1) + 'h over' : budget.remaining.toFixed(1) + 'h left'}` : 'No budget set'}{p.hourlyRate ? ` · ${money(budget.value)} at ${money(p.hourlyRate)}/h` : ''}</p>{budget.budget > 0 && <div className="portal-progress" style={{ marginTop: 12 }}><i style={{ width: Math.min(100, budget.hours / budget.budget * 100) + '%' }} /></div>}</div>
+        <div className={'card unbilled-card' + (u.billable > 0 ? ' has' : '')}><span className="eyebrow">NOT INVOICED YET</span><p className="budget-big">{u.billable}h{u.rate > 0 && <small> · {money(u.value)}</small>}</p>
+          {!p.hourlyRate ? <p className="mu" style={{ margin: 0 }}>Add an hourly rate in Edit (tick “Track an effort budget”) to invoice logged time.</p>
+            : !p.client ? <p className="mu" style={{ margin: 0 }}>Give this project a client to invoice its time.</p>
+            : u.billable > 0 ? <button className="btn" onClick={bill}><Icon name="invoices" size={16} />Invoice unbilled hours</button>
+            : <p className="mu" style={{ margin: 0 }}>All logged time is on an invoice. Use the Focus timer on a task to log more.</p>}</div>
+      </section>; })()}
     <div className="end" style={{ justifyContent: 'flex-start', marginTop: 24 }}><button className="ghost sm" onClick={()=>mut(n=>{const row=n.projects.find(x=>x.id===id);row.arch=!row.arch;})}>{p.arch?'Unarchive project':'Archive project'}</button><button className="ghost danger sm" onClick={() => removeItem('projects',id)}>Delete project</button></div>
   </>;
 }

@@ -906,3 +906,11 @@ input[type=radio]{border-radius:50%!important}
 .repeat-days{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 4px}
 .repeat-days button{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--ln);background:var(--card);color:var(--tx);font:inherit;font-weight:700;cursor:pointer}
 .repeat-days button[aria-pressed=true]{background:var(--hero);border-color:var(--hero);color:#141414}
+
+/* project budget + unbilled time */
+.budget-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.budget-grid .card{display:grid;gap:8px;align-content:start}
+.budget-big{font-family:var(--font-display);font-size:40px;line-height:1;margin:0}
+.budget-big small{font-family:var(--font-body);font-size:16px;font-weight:600;color:var(--mu)}
+.unbilled-card.has{background:color-mix(in srgb,var(--hero) 22%,var(--card));border:2px solid var(--hero)}
+.unbilled-card .btn{justify-self:start;display:inline-flex;align-items:center;gap:8px}
