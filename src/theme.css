@@ -1041,3 +1041,14 @@ input[type=radio]{border-radius:50%!important}
 /* files & docs without Excel */
 .docs-only{display:grid;gap:12px}
 .excel-soon{display:flex;align-items:center;gap:10px;margin:0;color:var(--mu);font-size:13.5px;flex-wrap:wrap}
+/* dark mode fixes (1.09): calendar chips, day counts, timeline captions, task ticks, delete buttons */
+:root[data-theme=dark] .cal-chip{background:color-mix(in srgb,var(--tone,var(--hero)) 38%,#1b1916)!important;color:#f3eee6;box-shadow:inset 3px 0 0 var(--tone,var(--hero))}
+:root[data-theme=dark] .load-count{color:var(--tx)}
+:root[data-theme=dark] .load-count.load-busy,:root[data-theme=dark] .load-count.load-packed{color:#141414}
+:root[data-theme=dark] .wt-bar{color:#141414}
+:root[data-theme=dark] .wt-bar small{color:#141414;opacity:.75}
+:root[data-theme=dark] .chk{color:var(--tx)}
+:root[data-theme=dark] .ghost.danger{color:#F2A08A;border-color:#F2A08A}
+:root[data-theme=dark] .thread-msg.client{background:color-mix(in srgb,var(--hero) 30%,var(--card))}
+:root[data-theme=dark] .notif-item.new{background:color-mix(in srgb,var(--hero) 20%,transparent)}
+:root[data-theme=dark] .cal-chip,:root[data-theme=dark] .cal-chip .cal-title,:root[data-theme=dark] .cal-chip .cal-time{color:#f3eee6!important}
