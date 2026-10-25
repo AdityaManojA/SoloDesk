@@ -36,7 +36,7 @@ import {ViewStateProvider,useViewState,PageFrame,DataNav} from './ViewState.jsx'
 import {CommandMenu} from './CommandMenu.jsx';
 import {SmartField,taskChips} from './SmartField.jsx';
 import {ApprovalsPage,ApprovalBox,useApprovalSync} from './Approvals.jsx';
-import {usePortalSync} from './portal-sync';
+import {usePortalSync,sendOwnerComment} from './portal-sync';
 import {NotificationBell} from './Notifications.jsx';
 import {unseenAnswers} from './notifications';
 import {unbilled,invoiceUnbilledHours} from './billing';
@@ -230,10 +230,21 @@ function Projects({ d, mut, open, removeItem }) {
 }
 
 /* ---------- tasks ---------- */
+// One task in a list: tick, title, where it belongs, and chips for priority, due date and client approval.
+const APPROVAL_TAG = { pending: ['Waiting for client', 'hero'], approved: ['Approved', 'sage'], changes: ['Changes requested', 'sand'] };
+function TaskRow({ k, d, mut, removeItem, t, hideProject = false }) {
+  const project = d.projects.find(p => p.id === k.project), late = k.due && k.status !== 'Done' && k.due < t;
+  return <div className={'row task-row' + (k.status === 'Done' ? ' done' : '')} data-priority={k.priority || 'None'}>
+    <button className="chk" aria-pressed={k.status === 'Done'} aria-label={k.status === 'Done' ? 'Mark not done' : 'Mark complete'} onClick={() => toggleTask(mut, k.id)}>{k.status === 'Done' ? '☑' : '☐'}</button>
+    <a className="grow" href={'#/tasks/' + k.id}><b style={{ textDecoration: k.status === 'Done' ? 'line-through' : 'none' }}>{k.title}</b>
+      <span className="task-chips">{k.status === 'In progress' && <span className="chip sand">In progress</span>}{k.priority && <span className={'chip pri-' + k.priority.toLowerCase()}>{k.priority}</span>}{k.due && <span className={'chip ' + (late ? 'hero' : 'white')}>{late ? 'Overdue · ' : k.due === t ? 'Today · ' : ''}{new Date(k.due + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>}{k.approval && <span className={'chip ' + APPROVAL_TAG[k.approval.state][1]}>{APPROVAL_TAG[k.approval.state][0]}</span>}{!hideProject && project && <small>{project.name}</small>}{!project && k.client && <small>{L.cname(d, k.client)}</small>}</span></a>
+    <button className="ghost sm" onClick={() => mut(n => { const row = n.tasks.find(x => x.id === k.id); row.arch = !row.arch; })}>{k.arch ? 'Unarchive' : 'Archive'}</button><button type="button" className="ghost danger sm" aria-label={'Delete task ' + k.title} onClick={() => removeItem('tasks', k.id)}>Delete</button>
+  </div>;
+}
 const toggleTask = (mut, id) => mut((n) => { const x = n.tasks.find((y) => y.id === id); x.status = x.status === 'Done' ? 'Todo' : 'Done'; });
 
 function Tasks({ d, mut, open, taskflow, removeItem }) {
-  const [f, setF] = useViewState('tasks.filters',{ status: '', due: '', client: '', project: '' }),[archived,setArchived]=useViewState('tasks.archived',false), t = today();
+  const [f, setF] = useViewState('tasks.filters',{ status: '', due: '', client: '', project: '' }),[archived,setArchived]=useViewState('tasks.archived',false),[group,setGroup]=useViewState('tasks.group','list'), t = today();
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const a = d.tasks.filter((k) => (archived || !k.arch) && (!f.status || k.status === f.status) && (!f.client || k.client === f.client) && (!f.project || k.project === f.project)
     && (!f.due || (f.due === 'none' ? !k.due : f.due === 'over' ? k.due && k.due < t && k.status !== 'Done' : k.due && k.due >= t && k.due <= addDays(t, 7))))
@@ -246,38 +257,70 @@ function Tasks({ d, mut, open, taskflow, removeItem }) {
       <Sel l="Client" o={[['', 'All'], ...d.clients.map((c) => [c.id, c.name])]} value={f.client} onChange={set('client')} />
       <Sel l="Project" o={[['', 'All'], ...d.projects.map((p) => [p.id, p.name])]} value={f.project} onChange={set('project')} />
     </div></details>
-    {a.length ? a.map((k) => (
-      <div className="row task-row" data-priority={k.priority || 'None'} key={k.id}>
-        <button className="chk" aria-pressed={k.status === 'Done'} aria-label={k.status === 'Done' ? 'Mark not done' : 'Mark complete'} onClick={() => toggleTask(mut, k.id)}>{k.status === 'Done' ? '☑' : '☐'}</button>
-        <a className="grow" href={'#/tasks/' + k.id}><b style={{ textDecoration: k.status === 'Done' ? 'line-through' : 'none' }}>{k.title}</b>
-          <small>{k.status}{k.due ? ` · due ${k.due}` : ''}{k.priority ? ` · ${k.priority} priority` : ''}</small></a>
-        <button className="ghost sm" onClick={()=>mut(n=>{const row=n.tasks.find(x=>x.id===k.id);row.arch=!row.arch;})}>{k.arch?'Unarchive':'Archive'}</button><button type="button" className="ghost danger sm" aria-label={'Delete task '+k.title} onClick={() => removeItem('tasks',k.id)}>Delete</button>
-      </div>)) : <Empty m={d.tasks.length ? 'No tasks match these filters.' : 'No tasks yet. Add one to see what is due.'} label={d.tasks.length ? '' : 'Add task'} onClick={() => open('task')} />}
+    <div className="tabs-pill task-view" role="group" aria-label="Show tasks as">{[['list', 'List'], ['project', 'By project']].map(([k, l]) => <button key={k} type="button" aria-pressed={group === k} onClick={() => setGroup(k)}>{l}</button>)}</div>
+    {a.length ? (group === 'project'
+      ? [...new Set(a.map(k => k.project || ''))].sort((x, y) => (!x) - (!y) || (d.projects.find(p => p.id === x)?.name || '').localeCompare(d.projects.find(p => p.id === y)?.name || '')).map(pid => { const p = d.projects.find(x => x.id === pid), list = a.filter(k => (k.project || '') === pid), done = list.filter(k => k.status === 'Done').length;
+        return <section key={pid || 'none'} className="task-group"><div className="task-group-head">{p ? <a href={'#/projects/' + p.id}><b>{p.name}</b></a> : <b>No project</b>}{p?.client && <small>{L.cname(d, p.client)}</small>}<span className="grow" /><small>{done}/{list.length} done</small><button type="button" className="ghost sm" onClick={() => open('task', p ? { project: p.id, client: p.client } : {})}>+ Task</button></div>{list.map(k => <TaskRow key={k.id} k={k} d={d} mut={mut} removeItem={removeItem} t={t} hideProject />)}</section>; })
+      : a.map(k => <TaskRow key={k.id} k={k} d={d} mut={mut} removeItem={removeItem} t={t} />))
+      : <Empty m={d.tasks.length ? 'No tasks match these filters.' : 'No tasks yet. Add one to see what is due.'} label={d.tasks.length ? '' : 'Add task'} onClick={() => open('task')} />}
     <TaskflowPanel taskflow={taskflow} />
   </>);
 }
 
-function TaskPage({ d, mut, open, ask, id, removeItem, toast, user, demo }) {
+const PRIORITY_CHIP = { High: 'hero', Medium: 'sand', Low: 'sage' };
+const STATUS_CHIP = { Todo: 'white', 'In progress': 'sand', Done: 'sage' };
+function TaskPage({ d, mut, open, ask, id, removeItem, toast, user, demo, comments, shares }) {
   const k = d.tasks.find((x) => x.id === id);
   if (!k) return <><Back to="tasks" label="Tasks" /><Empty m="This task could not be found." /></>;
-  const rows = [['Status', k.status], ['Due date', k.due || 'No due date'], ['Priority', k.priority || 'None'], ['Repeats', repeatLabel(k.repeat, k.repeatDays)], ['Scheduled', k.scheduledAt ? new Date(k.scheduledAt).toLocaleString() + ' · ' + (k.durationMinutes || 60) + ' minutes' : 'Not scheduled']];
+  const project = d.projects.find(p => p.id === k.project), clientId = k.client || project?.client || '';
+  const setStatus = status => mut(n => { const t = n.tasks.find(x => x.id === id); t.status = status; });
+  const when = iso => new Date(iso + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  const late = k.due && k.status !== 'Done' && k.due < today();
+  const details = [
+    ['calendar', 'Due', k.due ? when(k.due) + (late ? ' · overdue' : '') : 'No due date', late],
+    ['planner', 'Scheduled', k.scheduledAt ? new Date(k.scheduledAt).toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) + ' · ' + (k.durationMinutes || 60) + ' min' : 'Not scheduled'],
+    ['focus', 'Repeats', repeatLabel(k.repeat, k.repeatDays)],
+    ['clients', 'Client', clientId ? <a href={'#/clients/' + clientId}>{L.cname(d, clientId)}</a> : 'No client'],
+    ['projects', 'Project', project ? <a href={'#/projects/' + project.id}>{project.name}</a> : 'No project'],
+  ];
   return (<>
     <Back to="tasks" label="Tasks" />
-    <div className="hd"><h1>{k.title}</h1>
-      <div className="end" style={{ margin: 0 }}>
+    <section className={'task-hero status-' + (k.status || 'Todo').replace(' ', '-').toLowerCase()}>
+      <div className="task-hero-chips"><span className={'chip ' + STATUS_CHIP[k.status || 'Todo']}>{k.status || 'Todo'}</span>{k.priority && <span className={'chip ' + PRIORITY_CHIP[k.priority]}>{k.priority} priority</span>}{k.approval && <span className="chip ink">Approval: {({ pending: 'waiting', approved: 'approved', changes: 'changes requested' })[k.approval.state]}</span>}</div>
+      <h1>{k.title}</h1>
+      <div className="task-hero-actions">
+        <div className="status-switch" role="group" aria-label="Status">{['Todo', 'In progress', 'Done'].map(s => <button key={s} type="button" aria-pressed={(k.status || 'Todo') === s} onClick={() => setStatus(s)}>{s === 'Done' && <Icon name="check" size={15} />}{s}</button>)}</div>
+        <span className="grow" />
         <button className="ghost sm" onClick={() => open('task', k)}>Edit</button>
-        <button className="ghost danger sm" onClick={() => removeItem('tasks',id)}>Delete task</button>
-      </div></div>
-    <div className="card">
-      {rows.map(([a, b]) => <p key={a} style={{ margin: '4px 0' }}><small>{a}</small><br />{b}</p>)}
-      {k.client && <p style={{ margin: '4px 0' }}><small>Client</small><br /><a href={'#/clients/' + k.client} style={{ fontWeight: 700 }}>{L.cname(d, k.client)}</a></p>}
-      {k.project && <p style={{ margin: '4px 0' }}><small>Project</small><br />{d.projects.find((p) => p.id === k.project)?.name || '—'}</p>}
+        <button className="ghost danger sm" onClick={() => removeItem('tasks', id)}>Delete</button>
+      </div>
+    </section>
+    <div className="task-layout">
+      <div className="task-main">
+        <ClientThread d={d} task={k} clientId={clientId} comments={(comments || []).filter(c => c.itemId === k.id)} shared={(shares || []).some(s => s.id === clientId)} user={user} demo={demo} toast={toast} />
+        <ApprovalBox d={d} mut={mut} user={user} demo={demo} item={k} kind="task" toast={toast}/>
+        <RecordExtras d={d} mut={mut} task={k} toast={toast}/>
+      </div>
+      <aside className="task-side">
+        <dl className="card task-details">{details.map(([icon, label, value, warn]) => <div key={label} className={warn ? 'warn' : ''}><dt><Icon name={icon} size={15} />{label}</dt><dd>{value}</dd></div>)}</dl>
+        <Focus d={d} mut={mut} toast={toast} taskId={id}/>
+      </aside>
     </div>
-    <Focus d={d} mut={mut} toast={toast} taskId={id}/>
-    <ApprovalBox d={d} mut={mut} user={user} demo={demo} item={k} kind="task" toast={toast}/>
-    <RecordExtras d={d} mut={mut} task={k} toast={toast}/>
-    <p><button className="btn" onClick={() => toggleTask(mut, id)}>{k.status === 'Done' ? 'Mark not done' : 'Mark complete'}</button></p>
   </>);
+}
+
+// The conversation with the client about this task: their comments, cheers and change requests, and your replies.
+function ClientThread({ d, task, clientId, comments, shared, user, demo, toast }) {
+  const [text, setText] = useState(''), [busy, setBusy] = useState(false), client = d.clients.find(c => c.id === clientId);
+  if (!client) return null;
+  const send = async e => { e.preventDefault(); if (!text.trim()) return; setBusy(true); try { await sendOwnerComment(user, clientId, task.id, text); setText(''); } catch { toast('Your reply could not be sent. Check your connection and try again.'); } finally { setBusy(false); } };
+  return <section className="card client-thread">
+    <div className="block-head" style={{ margin: 0 }}><h3><Icon name="notes" size={18} /> Talk with {client.name}</h3>{comments.length > 0 && <span className="chip white">{comments.length}</span>}</div>
+    {demo ? <p className="empty-note" style={{ margin: 0 }}>In your signed-in workspace, {client.name} can comment on this task from their portal, and you can reply here.</p>
+      : !shared ? <p className="empty-note" style={{ margin: 0 }}>Set up <a href={'#/clients/' + clientId}>Client access</a> so {client.name} can comment on shared tasks and you can reply here.</p>
+      : <>{comments.length ? <ul className="thread-list">{comments.map(c => <li key={c.id} className={'thread-msg ' + (c.from === 'owner' ? 'client' : 'owner') + ' ' + c.kind}><span className="thread-who">{c.from === 'owner' ? 'You' : client.name}{c.kind === 'change' && <span className="chip sand">Change request</span>}<small>{c.at ? new Date(c.at).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : 'Sending…'}</small></span><p>{c.text}</p></li>)}</ul> : <p className="empty-note" style={{ margin: 0 }}>No comments yet. {client.name} can comment from their portal when this task’s project is shared.</p>}
+        <form className="thread-form" onSubmit={send}><textarea rows="2" maxLength={1000} aria-label={'Reply to ' + client.name} placeholder={'Reply to ' + client.name + '…'} value={text} onChange={e => setText(e.target.value)} /><button className="btn sm" disabled={busy || !text.trim()}>Send</button></form></>}
+  </section>;
 }
 
 /* ---------- invoices ---------- */
@@ -664,7 +707,7 @@ export default function App() {
   };
   const startDemo = () => { sessionStorage.setItem('sd_demo_active','1'); setDemo(true); };
   useApprovalSync({ d, mut, user, demo, toast });
-  const { comments: clientComments } = usePortalSync({ d, user, demo, mut, toast });
+  const { comments: clientComments, shares: portalShares } = usePortalSync({ d, user, demo, mut, toast });
   L.setCur(d?.settings.cur);
   if(route.page==='portal-preview')return <ScreenBoundary key="portal-preview"><Suspense fallback={<ScreenLoading label="Opening preview"/>}><PortalPreview/></Suspense></ScreenBoundary>;
   if(route.page==='u')return <ScreenBoundary key={'u-'+route.id}><PublicProfile username={route.id}/></ScreenBoundary>;
@@ -685,7 +728,7 @@ export default function App() {
   const startTour=()=>{rememberSeen(localStorage,onboardingKey(experienceOwner));setExperience('tour');};
   const startOnboarding=()=>setExperience('onboarding');
   const purgeTrash=id=>ask('Permanently remove this Trash entry and its deleted data? Export a backup first. Undo history will also be cleared.',()=>{mut(n=>{n.trash=n.trash.filter(e=>e.id!==id);});undoHistory.current=[];setUndoCount(0);toast('Trash entry permanently removed.');},{title:'Permanently delete?',label:'Permanently delete',danger:true});
-  const close = () => setDlg(null), P = { d, mut, open, ask, toast, user, logout, demo, saving, signingOut, taskflow, removeItem, startOnboarding, startTour, undo, undoCount, purgeTrash, offlineReady, id: route.id, theme, setTheme };
+  const close = () => setDlg(null), P = { d, mut, open, ask, toast, user, logout, demo, saving, signingOut, taskflow, removeItem, startOnboarding, startTour, undo, undoCount, purgeTrash, offlineReady, id: route.id, theme, setTheme, comments: clientComments, shares: portalShares };
   const v = dlg?.v || {};
   const save = (list, o) => {
     if (list === 'clients') {const result=prepareClient(o);if(result.error)return toast(result.error);o=result.client;}

@@ -49,7 +49,7 @@ export function usePortalSync({ d, user, demo, mut, toast }) {
     }
     return () => offs.forEach(f => f());
   }, [ids, user?.uid, demo]);
-  return { comments };
+  return { comments, shares };
 }
 
 // Reply to a client (or leave a note they can see) on a shared task.
