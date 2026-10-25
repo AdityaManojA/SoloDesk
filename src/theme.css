@@ -1024,3 +1024,20 @@ input[type=radio]{border-radius:50%!important}
 .quick-actions .eyebrow{width:100%;margin:0}
 .quick-action{border:1px solid var(--ln);background:var(--card);color:var(--tx);border-radius:99px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
 .quick-action:hover{border-color:var(--tx)}
+
+/* client summary */
+.client-summary-card{display:grid;grid-template-columns:1.3fr 1fr 1.2fr;gap:12px}
+.cs-block{display:grid;gap:4px;align-content:start;background:var(--card);border:1px solid var(--ln);border-radius:22px;padding:16px 18px;color:var(--tx);text-decoration:none;min-width:0}
+.cs-block .eyebrow{margin:0}
+.cs-block b{display:flex;align-items:center;gap:8px;font-size:20px;font-family:var(--font-display)}
+.cs-block small{color:var(--mu);overflow:hidden;text-overflow:ellipsis}
+.cs-portal{background:color-mix(in srgb,var(--sage,#A7B98B) 18%,var(--card))}
+.cs-approvals{background:color-mix(in srgb,var(--hero) 18%,var(--card))}
+.cs-approvals:hover{border-color:var(--tx)}
+.cs-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.cs-actions .btn,.cs-actions .ghost{margin:0!important;display:inline-flex;align-items:center;gap:6px}
+.cs-links .client-links{margin-top:4px}
+@media(max-width:860px){.client-summary-card{grid-template-columns:1fr}}
+/* files & docs without Excel */
+.docs-only{display:grid;gap:12px}
+.excel-soon{display:flex;align-items:center;gap:10px;margin:0;color:var(--mu);font-size:13.5px;flex-wrap:wrap}

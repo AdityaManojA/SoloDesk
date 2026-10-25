@@ -102,8 +102,9 @@ export function FilesAndDocs({ d, mut, toast, scope, user, demo }) {
   const newPrd = () => { const id = rid(); mut(n => { n.docs = [{ id, kind: 'prd', title: 'Untitled PRD', status: 'Draft', problem: '', goals: '', outOfScope: '', requirements: [], ...owner() }, ...(n.docs || [])]; }); setOpenId(id); };
   const addLink = e => { e.preventDefault(); const url = safeLink(link.url); if (!link.title.trim() || !url) return toast('Add a name and a full web address starting with https://.'); mut(n => { n.docs = [{ id: rid(), kind: 'link', title: link.title.trim().slice(0, 120), url, ...owner() }, ...(n.docs || [])]; }); setLink({ title: '', url: '' }); setAdding(false); };
   const open = items.find(x => x.id === openId && x.kind === 'prd');
-  return <div className="two-col">
-    <ExcelSync scope={scope} user={user} demo={demo} toast={toast} />
+  const excelOn = import.meta.env.VITE_EXCEL_SYNC === 'on';
+  return <div className={excelOn ? 'two-col' : 'docs-only'}>
+    {excelOn ? <ExcelSync scope={scope} user={user} demo={demo} toast={toast} /> : <p className="excel-soon"><span className="chip sand">Coming soon</span>Live Excel sync for this {scope.kind}. Until then, link the workbook under Documents.</p>}
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div className="docs-head"><h3>Documents</h3><div className="doc-actions"><button type="button" className={'doc-action' + (adding ? ' on' : '')} aria-expanded={adding} onClick={() => setAdding(!adding)}><span className="doc-action-icon link"><Icon name="link" size={16} /></span><span><b>Link a file</b><small>Drive, Figma, Notion…</small></span></button><button type="button" className="doc-action" onClick={newPrd}><span className="doc-action-icon prd"><Icon name="plus" size={16} /></span><span><b>New PRD</b><small>Write requirements</small></span></button></div></div>

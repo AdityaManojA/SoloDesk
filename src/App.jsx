@@ -36,6 +36,7 @@ import {ViewStateProvider,useViewState,PageFrame,DataNav} from './ViewState.jsx'
 import {CommandMenu} from './CommandMenu.jsx';
 import {SmartField,taskChips} from './SmartField.jsx';
 import {ApprovalsPage,ApprovalBox,useApprovalSync} from './Approvals.jsx';
+import {approvalItems,approvalClient} from './approvals';
 import {usePortalSync,sendOwnerComment} from './portal-sync';
 import {NotificationBell} from './Notifications.jsx';
 import {unseenAnswers} from './notifications';
@@ -56,7 +57,7 @@ const NAV = [['dash', 'Home'], ['work', 'All work'], ['clients', 'Clients'], ['p
 const MOB = [['dash', 'Home'], ['tasks', 'Tasks'], ['calendar', 'Calendar'], ['more', 'More']];
 const MORE = [['work','All work'],['clients','Clients'],['projects','Projects'],['invoices','Invoices'],['reports','Reports'],['notes','Notes'],['focus','Focus timer'],['integrations','Data & connections'],['profile','Profile'],['settings','Settings']];
 // Sidebar groups (desktop). Other tools stay reachable from their pages and from More.
-const GROUPS = [['General',['dash','clients','projects','tasks','calendar','invoices']],['Tools',['work','approvals','notes','planner','reports','integrations']],['Account',['profile','settings']]];
+const GROUPS = [['General',['dash','clients','projects','tasks','calendar','invoices']],['Tools',['work','approvals','notes','integrations']],['Account',['profile','settings']]];
 // The last breadcrumb names the record you are looking at.
 const crumbName = (d, page, id) => ({ clients: () => d.clients.find(x => x.id === id)?.name, projects: () => d.projects.find(x => x.id === id)?.name, tasks: () => d.tasks.find(x => x.id === id)?.title, invoices: () => d.invoices.find(x => x.id === id)?.no, notes: () => { const n = (d.notes || []).find(x => x.id === id); return n && (n.title || 'Note'); }, settings: () => ({ general: 'General', invoices: 'Invoices & bank', appearance: 'Appearance', data: 'Data & connections', 'whats-new': "What's new", account: 'Account' })[id] }[page]?.() || 'Details');
 const NAV_ICON = {dash:'home',work:'work',notes:'notes',planner:'planner',profile:'profile',focus:'focus',approvals:'approve'};
@@ -157,7 +158,7 @@ function Clients({ d, open }) {
   </>);
 }
 
-function ClientPage({ d, mut, open, id, removeItem, user, demo, toast }) {
+function ClientPage({ d, mut, open, id, removeItem, user, demo, toast, shares }) {
   const [section,setSection]=useViewState('client.'+id+'.section','overview');
   const c = d.clients.find((x) => x.id === id);
   if (!c) return <><Back to="clients" label="Clients" /><Empty m="This client could not be found." /></>;
@@ -170,7 +171,7 @@ function ClientPage({ d, mut, open, id, removeItem, user, demo, toast }) {
       <button className="ghost" onClick={() => open('client', c)}>Edit</button><button className="btn" onClick={() => open('invoice', { client: id })}>+ Invoice</button>
     </div>
     <div className="section-tabs" role="group" aria-label="Client sections">{[['overview','Overview'],['work','Work'],['notes','Notes & checklists'],['files','Files & docs'],['invoices','Invoices'],['access','Client access']].map(([key,title])=><button type="button" key={key} aria-pressed={section===key} onClick={()=>setSection(key)}>{title}</button>)}</div>
-    {section==='overview'&&<section aria-label="Client overview" style={{display:'grid',gap:16}}><div className="card">{info.length ? info.map(([k, v]) => <p key={k} style={{ margin: '4px 0', whiteSpace: 'pre-line' }}><small>{k}</small><br />{v}</p>) : !c.links?.length && <p className="mu">No contact details yet.</p>}{c.links?.length > 0 && <div style={{ margin: '8px 0 4px' }}><small>Links</small><ul className="client-link-list">{c.links.map((l, i) => <li key={i}><a href={l.url} target="_blank" rel="noopener noreferrer"><b>{linkName(l)}</b><span>{l.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span></a></li>)}</ul></div>}</div>
+    {section==='overview'&&<section aria-label="Client overview" style={{display:'grid',gap:16}}><ClientSummary d={d} c={c} user={user} demo={demo} share={(shares || []).find(s => s.id === id)} toast={toast} onAccess={() => setSection('access')} /><div className="card">{info.length ? info.map(([k, v]) => <p key={k} style={{ margin: '4px 0', whiteSpace: 'pre-line' }}><small>{k}</small><br />{v}</p>) : !c.links?.length && <p className="mu">No contact details yet.</p>}{c.links?.length > 0 && <div style={{ margin: '8px 0 4px' }}><small>Links</small><ul className="client-link-list">{c.links.map((l, i) => <li key={i}><a href={l.url} target="_blank" rel="noopener noreferrer"><b>{linkName(l)}</b><span>{l.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span></a></li>)}</ul></div>}</div>
 <div className="client-summary-grid">{[['Projects',d.projects.filter(p=>p.client===id).length,'work'],['Open tasks',d.tasks.filter(t=>t.client===id&&t.status!=='Done'&&!t.arch).length,'work'],['Invoices',d.invoices.filter(i=>i.client===id).length,'invoices']].map(([label,count,target])=><button className="card client-summary" key={label} onClick={()=>setSection(target)}><strong>{count}</strong><span>{label}</span></button>)}</div><details className="card"><summary>Activity timeline</summary><Timeline d={d} client={id}/></details>
       <div className="end" style={{ justifyContent: 'flex-start', margin: 0 }}><button className="ghost sm" onClick={() => mut((n) => { const x = n.clients.find((y) => y.id === id); x.arch = !x.arch; })}>{c.arch ? 'Restore client' : 'Archive client'}</button><button className="ghost danger sm" onClick={() => removeItem('clients',id)}>Delete client</button></div></section>}
     {section==='work'&&<section aria-label="Client work">    <div className="hd" style={{ marginTop: 16 }}><h3 style={{ margin: 0 }}>Projects</h3><button className="ghost sm" onClick={() => open('project', { client: id })}>+ Project</button></div>
@@ -437,6 +438,20 @@ function Settings({ d, mut, toast, ask, user, logout, demo, saving, signingOut, 
     <section id="settings-whats-new" className="settings-section"><WhatsNew/></section>
     <section id="settings-account" className="settings-section"><div className="card account-settings"><h2 style={{marginTop:0}}>Account</h2><p className="mu">{demo ? 'You are exploring the demo with sample data.' : 'Signed in as ' + (user?.email || user?.displayName || 'your Google account') + '.'} Signing out returns to the login page. Workspace deletion keeps your shared TaskFlow account.</p><div className="end" style={{ justifyContent: 'flex-start' }}><button className="ghost" disabled={signingOut} onClick={logout}>{signingOut ? 'Signing out…' : 'Sign out'}</button><button className="ghost danger" disabled={signingOut || (!demo && saving === 'saving')} onClick={del}>Delete SoloDesk workspace</button></div></div></section>
   </>);
+}
+
+/* ---------- client summary: portal, approvals, links in one place ---------- */
+function ClientSummary({ d, c, user, demo, share, toast, onAccess }) {
+  const items = approvalItems(d).filter(x => approvalClient(d, x.row) === c.id);
+  const waiting = items.filter(x => x.row.approval.state === 'pending').length, changes = items.filter(x => x.row.approval.state === 'changes').length;
+  const url = user && share ? window.location.origin + '/#/portal/' + user.uid : '';
+  const copy = async () => { try { await navigator.clipboard.writeText(url); toast('Portal link copied.'); } catch { toast('Copy the link from Client access.'); } };
+  return <div className="client-summary-card">
+    <div className="cs-block cs-portal"><span className="eyebrow">CLIENT PORTAL</span>{share ? <><b><span className="live-dot" /> Live</b><small>{share.recipientEmail}{share.data?.updatedAt ? ' · updated ' + new Date(share.data.updatedAt).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : ''}</small><div className="cs-actions"><button className="btn sm" onClick={copy}><Icon name="link" size={15} />Copy portal link</button><a className="ghost sm" href={'#/portal/' + user.uid} target="_blank" rel="noopener noreferrer">Preview ↗</a></div></>
+      : <><b>Not shared yet</b><small>{demo ? 'Client access works in your signed-in workspace.' : 'Give ' + c.name + ' a login to see progress, approve work and comment.'}</small><div className="cs-actions"><button className="ghost sm" onClick={onAccess}>Set up client access</button></div></>}</div>
+    <a className="cs-block cs-approvals" href="#/approvals"><span className="eyebrow">APPROVALS</span><b>{waiting} waiting</b><small>{changes ? `${changes} with changes requested` : items.length ? `${items.filter(x => x.row.approval.state === 'approved').length} approved` : 'Nothing sent yet'}</small></a>
+    <div className="cs-block cs-links"><span className="eyebrow">LINKS</span>{c.links?.length ? <ClientLinks links={c.links} /> : <small>No links yet. Add them with Edit.</small>}</div>
+  </div>;
 }
 
 /* ---------- task form ---------- */

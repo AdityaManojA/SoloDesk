@@ -78,6 +78,7 @@ export default function Calendar({ d, mut, open, user, taskflow, toast = () => {
   return <section className="calendar-b" aria-label="Calendar" ref={zoomArea}>
     <div className="page-head"><div className="grow"><h1>Calendar</h1><p className="empty-note" style={{ margin: '6px 0 0' }}>Zoom out to see the year, zoom in to plan the day. Keys: Y M W D, T for today.</p></div>
       <button className="ghost" onClick={() => exportEvents(inRange, `solodesk-${zoom}-${range.start}`)}>Export {ZOOM_LABEL[zoom].toLowerCase()} · ICS</button>
+      <a className="ghost" href="#/planner"><Icon name="planner" size={18} />Plan your day</a>
       <button className="btn" onClick={() => open('task', { due: zoom === 'day' ? day : undefined })}><Icon name="plus" size={18} />Add task</button></div>
 
     <div className="cal-toolbar">
