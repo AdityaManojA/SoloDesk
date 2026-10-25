@@ -2,7 +2,7 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
-  {version:'1.09',released:false,date:'',title:'Approvals for everything, billable time and room to grow',highlights:[
+  {version:'1.09',released:true,date:'2026-10-25',title:'Approvals for everything, billable time and room to grow',highlights:[
     ['Notifications','A bell in the top bar shows when clients approve, ask for changes, comment, cheer you on, send a request or update a link, plus overdue invoices, reminders and tasks due today. The Approvals menu item shows how many answers and requests are new.'],
     ['Clients can talk to you','In their portal, clients comment on tasks, send a quick “You got this 💪”, request a change, update their links and shared files, and draft a meeting request email to you in one click. You reply to comments from the task page.'],
     ['Client requests','Clients can ask for something new (“Can you add a blog?”). You answer from Approvals with Feature scope, We’ll start right away, Can be implemented, In progress, or your own timing, and can add it as a task in the same click. They see the answer in their portal.'],
@@ -20,6 +20,7 @@ export const changelog=[
   ],fixes:[
     'Dark mode: calendar items, day counts, timeline captions and delete buttons are readable again.',
     'The Excel “Coming soon” card is now a single line, so Files & docs uses the full width.',
+    'Note titles and text no longer sit in white boxes on coloured notes.',
   ]},
   {version:'1.08',released:true,date:'2026-10-25',title:'A clearer timeline and a calmer Home',highlights:[
     ['Jump back in opens the work','Clicking a task, project or client under Jump back in now opens its page instead of the edit form. Notes still open right there on Home.'],

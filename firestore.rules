@@ -163,7 +163,8 @@ service cloud.firestore {
       // season EXP grows from where it was this season (or from 0 in a new one); EXP and season EXP draw on the same
       // bucket, and whichever grows more uses it up (season EXP can catch up on its own when it's worked out again)
       let sGain = sameSeason ? n.seasonExp - o.get('seasonExp', 0) : n.seasonExp;
-      let used = math.max(math.max(delta, sGain), 0);
+      let more = delta > sGain ? delta : sGain;
+      let used = more > 0 ? more : 0;
       return pastOk && n.season >= o.get('season', 0) && n.bank <= room - used;
     }
     // Feedback left when someone deletes their TaskFlow account: anonymous (no name, email or account id), write

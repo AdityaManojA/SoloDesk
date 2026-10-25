@@ -1064,3 +1064,11 @@ input[type=radio]{border-radius:50%!important}
 .request-form{display:grid;gap:10px;border:2px dashed var(--hero)}
 .request-form .btn{justify-self:start}
 .approval-group h2 .tab-count{vertical-align:middle}
+/* note editor: fields are plain text on the note's colour, not white form boxes */
+.keep-editor .keep-title,.keep-editor .keep-body,.keep-editor .keep-item input:not([type=date]){background:transparent!important;border:0!important;box-shadow:none!important;outline:none;border-radius:0!important;padding:4px 2px!important;color:inherit!important;width:100%;resize:none}
+.keep-editor .keep-title{font-family:var(--font-display);font-size:22px;font-weight:600;line-height:1.25}
+.keep-editor .keep-body{font-size:15.5px;line-height:1.55;min-height:72px}
+.keep-editor .keep-title::placeholder,.keep-editor .keep-body::placeholder{color:currentColor;opacity:.45}
+.keep-editor .keep-title:focus,.keep-editor .keep-body:focus{background:transparent!important;box-shadow:none!important}
+.keep-editor{gap:6px}
+.keep-editor .keep-toolbar{border-top-color:color-mix(in srgb,currentColor 18%,transparent)}

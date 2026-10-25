@@ -2,6 +2,28 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.09 — 25 October 2026 · Approvals for everything, billable time and room to grow
+
+- **Notifications.** A bell in the top bar shows when clients approve, ask for changes, comment, cheer you on, send a request or update a link, plus overdue invoices, reminders and tasks due today. The Approvals menu item shows how many answers and requests are new.
+- **Clients can talk to you.** In their portal, clients comment on tasks, send a quick “You got this 💪”, request a change, update their links and shared files, and draft a meeting request email to you in one click. You reply to comments from the task page.
+- **Client requests.** Clients can ask for something new (“Can you add a blog?”). You answer from Approvals with Feature scope, We’ll start right away, Can be implemented, In progress, or your own timing, and can add it as a task in the same click. They see the answer in their portal.
+- **Quick add from anywhere.** Press N (or Ctrl/⌘ J, or the bolt in the top bar), type “Call Ava tomorrow 7pm for Website” and press Enter.
+- **A clearer task page and list.** Tasks open with a status switch, a tidy details panel, the client conversation and approvals. The Tasks list shows priority, due, approval and project chips, and can be grouped by project.
+- **Client summary.** A client’s Overview starts with their portal status (with Copy portal link), approvals waiting and their links.
+- **A shorter sidebar.** Daily planner opens from the Calendar (Plan your day) and Reports from the top bar.
+- **Approve PRDs, files and quotes.** Send a PRD, a linked file or a draft invoice (as a quote) for approval, not just tasks. Clients read the PRD, open the file or see the quote’s lines and total in their portal, then approve or ask for changes. An approved PRD is marked Approved by itself.
+- **Invoice unbilled hours.** A project’s Budget tab shows logged time that is not on an invoice yet. One click turns it into a draft invoice, one line per task at the project’s hourly rate.
+- **Repeats like TaskFlow.** Tasks can repeat every other day, yearly, or on the weekdays you pick, and smart typing fills these in from “every Mon, Wed and Fri”.
+- **Room to grow.** Notes, documents, activity, focus history and Trash are now stored separately from the rest of your workspace, so it can keep growing well past the old 1 MB limit.
+- **Requested changes on Home.** When a client asks for changes, it shows in Needs attention with their comment.
+- **Portal settings.** Clients change their password in a new Settings tab in their portal, which also shows the name and email they are signed in with.
+- **Approval emails (coming with Blaze).** Ready for when the Blaze plan is on: clients get an email when you send something for approval, and you get one when they answer.
+
+Fixes
+- Dark mode: calendar items, day counts, timeline captions and delete buttons are readable again.
+- The Excel “Coming soon” card is now a single line, so Files & docs uses the full width.
+- Note titles and text no longer sit in white boxes on coloured notes.
+
 ## 1.08 — 25 October 2026 · A clearer timeline and a calmer Home
 
 - **Jump back in opens the work.** Clicking a task, project or client under Jump back in now opens its page instead of the edit form. Notes still open right there on Home.
