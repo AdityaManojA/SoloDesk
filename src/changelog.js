@@ -2,7 +2,7 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
-  {version:'1.07',released:false,date:'',title:'Small improvements',highlights:[
+  {version:'1.07',released:true,date:'2026-10-25',title:'Small improvements',highlights:[
     ['Your client’s name in their portal','The top of the client portal shows the client’s name as you set it in SoloDesk, with their initials and login email, instead of only the email.'],
   ],fixes:[]},
   {version:'1.06',released:true,date:'2026-10-25',title:'Client portals that keep themselves up to date',highlights:[

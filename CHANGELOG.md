@@ -2,6 +2,10 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.07 — 25 October 2026 · Small improvements
+
+- **Your client’s name in their portal.** The top of the client portal shows the client’s name as you set it in SoloDesk, with their initials and login email, instead of only the email.
+
 ## 1.06 — 25 October 2026 · Client portals that keep themselves up to date
 
 - **No more “Update portal”.** A client’s portal now updates by itself a moment after you change anything you share with them: task progress, project dates, documents, PRDs, links or invoices.
