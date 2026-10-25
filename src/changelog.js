@@ -2,7 +2,7 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
-  {version:'1.08',released:false,date:'',title:'Small improvements',highlights:[
+  {version:'1.08',released:true,date:'2026-10-25',title:'A clearer timeline and a calmer Home',highlights:[
     ['Jump back in opens the work','Clicking a task, project or client under Jump back in now opens its page instead of the edit form. Notes still open right there on Home.'],
     ['A clearer project timeline','“What you’re working on” in the calendar now labels every day with its weekday and date, shades weekends, marks today with a clear line, and stacks only projects that overlap. Bar ends show whether a project carries on past the view (›) or is ongoing.'],
     ['A calmer Home','The revenue card moved off Home; Needs attention now has the full width. Revenue is still in Reports.'],
