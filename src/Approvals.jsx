@@ -53,8 +53,10 @@ export function ApprovalBox({ d, mut, user, demo, item, kind = 'task', toast, co
   </section>;
 }
 
-export function ApprovalsPage({ d }) {
+export function ApprovalsPage({ d, mut }) {
   const all = approvalItems(d);
+  // Visiting the page clears the count on the Approvals menu item.
+  useEffect(() => { const latest = all.map(x => x.row.approval.decidedAt || '').sort().at(-1) || ''; if (latest && latest > (d.settings.approvalsSeenAt || '')) mut(n => { n.settings.approvalsSeenAt = latest; }); }, [all.length, d.settings.approvalsSeenAt]);
   const [filter, setFilter] = useState('all');
   const groups = [['changes', 'Changes requested'], ['pending', 'Waiting for client'], ['approved', 'Approved']];
   const ready = d.tasks.filter(t => !t.approval && !t.arch && t.status !== 'Done' && approvalClient(d, t)).slice(0, 6);

@@ -1,0 +1,33 @@
+// What clients do in their portal, as it reaches SoloDesk: comments on tasks (including quick "You got this"
+// cheers and change requests) and link updates. Plain functions here; the Firestore listeners are in portal-sync.js.
+import { clientLinkUrl, MAX_CLIENT_LINKS } from './invoice-input.js';
+import { rid } from './lib.js';
+
+export const COMMENT_KINDS = { comment: 'Comment', cheer: 'Cheer', change: 'Change request' };
+export const CHEER = 'You got this! 💪';
+
+// A link or file update from the client. Returns the activity row to record, or null when nothing changed.
+export function applyClientUpdate(workspace, clientId, update, now = new Date().toISOString()) {
+  const client = workspace.clients.find(c => c.id === clientId);
+  const url = clientLinkUrl(update?.url);
+  if (!client || !url) return null;
+  const label = String(update.label || '').trim().slice(0, 60);
+  if (update.kind === 'file') {
+    const doc = (workspace.docs || []).find(x => x.id === update.docId && x.kind === 'link' && (x.client === clientId || workspace.projects.some(p => p.id === x.project && p.client === clientId)));
+    if (!doc || doc.url === url) return null;
+    doc.url = url; if (label) doc.title = label; doc.updatedAt = now;
+    return { id: rid(), at: now, kind: 'docs', recordId: doc.id, client: clientId, title: doc.title, action: 'client-updated-file' };
+  }
+  const links = client.links || (client.links = []);
+  const old = update.replaceUrl ? links.find(l => l.url === update.replaceUrl) : null;
+  if (old) { if (old.url === url && old.label === label) return null; old.url = url; old.label = label; }
+  else { if (links.some(l => l.url === url) || links.length >= MAX_CLIENT_LINKS) return null; links.push({ label, url }); }
+  return { id: rid(), at: now, kind: 'clients', recordId: clientId, client: clientId, title: label || url, action: old ? 'client-updated-link' : 'client-added-link' };
+}
+
+// The draft email for "Request a meeting" in the portal.
+export function meetingMailto(to, { business, clientName, project }) {
+  const subject = `Meeting request${project ? ' · ' + project : ''}`;
+  const body = `Hi ${business || 'there'},\n\nCan we have a meeting / quick call?\n\nWhat about: \nTimes that work for me: \n\nThanks,\n${clientName || ''}`;
+  return `mailto:${encodeURIComponent(to || '')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}

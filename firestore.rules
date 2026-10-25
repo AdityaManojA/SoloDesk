@@ -23,22 +23,47 @@ service cloud.firestore {
         request.resource.data.ownerUid == owner && request.resource.data.clientId == client &&
         request.resource.data.recipientUid is string && request.resource.data.recipientEmail is string;
       allow delete: if request.auth != null && request.auth.uid == owner;
-      // Client approvals: the signed-in client answers a task the owner sent them (one document per task).
-      // Only tasks listed as waiting in the published share can be answered; the owner reads and clears them.
+      function share() { return get(/databases/$(database)/documents/solodeskPortals/$(owner)/shares/$(client)).data; }
+      function isClient() {
+        return request.auth != null && (share().recipientUid == request.auth.uid ||
+          (request.auth.token.get('email_verified', false) == true && share().recipientEmail == request.auth.token.get('email', '').lower()));
+      }
+      function isOwner() { return request.auth != null && request.auth.uid == owner; }
+      // Client approvals: the signed-in client answers an item the owner sent them (one document per item).
+      // Only items listed as waiting in the published share can be answered; the owner reads and clears them.
       match /responses/{task} {
-        function share() { return get(/databases/$(database)/documents/solodeskPortals/$(owner)/shares/$(client)).data; }
-        function isClient() {
-          return request.auth != null && (share().recipientUid == request.auth.uid ||
-            (request.auth.token.get('email_verified', false) == true && share().recipientEmail == request.auth.token.get('email', '').lower()));
-        }
-        allow read: if request.auth != null && (request.auth.uid == owner || isClient());
+        allow read: if isOwner() || isClient();
         allow create, update: if isClient() &&
           request.resource.data.keys().hasOnly(['taskId','decision','comment','at','email']) &&
           request.resource.data.taskId == task && task in share().data.get('approvalIds', []) &&
           request.resource.data.decision in ['approved','changes'] &&
           request.resource.data.comment is string && request.resource.data.comment.size() <= 1000 &&
           request.resource.data.email is string && request.resource.data.at == request.time;
-        allow delete: if request.auth != null && request.auth.uid == owner;
+        allow delete: if isOwner();
+      }
+      // Comments on shared tasks, from the client (comment, cheer, change request) or the owner (replies).
+      match /comments/{comment} {
+        allow read: if isOwner() || isClient();
+        allow create: if (isOwner() || isClient()) &&
+          request.resource.data.keys().hasOnly(['itemId','kind','text','at','email','from']) &&
+          request.resource.data.itemId is string && request.resource.data.itemId.size() <= 100 &&
+          request.resource.data.kind in ['comment','cheer','change'] &&
+          request.resource.data.text is string && request.resource.data.text.size() <= 1000 &&
+          request.resource.data.email is string && request.resource.data.at == request.time &&
+          request.resource.data.from == (isOwner() ? 'owner' : 'client');
+        allow delete: if isOwner();
+      }
+      // Link and file updates from the client; SoloDesk applies them to the workspace and removes them.
+      match /updates/{update} {
+        allow read, delete: if isOwner();
+        allow create: if isClient() &&
+          request.resource.data.keys().hasOnly(['kind','docId','label','url','replaceUrl','at','email']) &&
+          request.resource.data.kind in ['link','file'] &&
+          request.resource.data.url is string && request.resource.data.url.size() <= 300 &&
+          request.resource.data.label is string && request.resource.data.label.size() <= 60 &&
+          request.resource.data.docId is string && request.resource.data.docId.size() <= 100 &&
+          request.resource.data.replaceUrl is string && request.resource.data.replaceUrl.size() <= 300 &&
+          request.resource.data.email is string && request.resource.data.at == request.time;
       }
     }
     // Solodesk public profiles (Profile → Public profile), one document per username. Anyone with the link can

@@ -1,7 +1,8 @@
 import {useEffect,useState} from 'react';
 import {initializeApp,deleteApp} from 'firebase/app';
 import {getAuth,setPersistence,inMemoryPersistence,createUserWithEmailAndPassword,signOut,signInWithEmailAndPassword,signInWithPopup,sendPasswordResetEmail,updatePassword,onAuthStateChanged,EmailAuthProvider,reauthenticateWithCredential,reauthenticateWithPopup} from 'firebase/auth';
-import {doc,getDoc,setDoc,deleteDoc,onSnapshot,collection,serverTimestamp} from 'firebase/firestore';
+import {doc,getDoc,setDoc,deleteDoc,onSnapshot,collection,serverTimestamp,addDoc} from 'firebase/firestore';
+import {CHEER,meetingMailto} from './client-feed';
 import {auth,db,firebaseOptions,provider} from './firebase';
 import {publishablePortal} from './workspace-upgrades';
 import {APPROVAL_LABEL,KIND_LABEL} from './approvals';
@@ -17,7 +18,7 @@ export async function republishShare(d,uid,clientId){
   const ref=doc(db,'solodeskPortals',uid,'shares',clientId),snap=await getDoc(ref);
   if(!snap.exists())return false;
   const s=snap.data();
-  await setDoc(ref,{ownerUid:s.ownerUid,clientId:s.clientId,recipientUid:s.recipientUid,recipientEmail:s.recipientEmail,projectIds:s.projectIds||[],invoiceIds:s.invoiceIds||[],docIds:s.docIds||[],data:publishablePortal(d,clientId,s.projectIds||[],s.invoiceIds||[],s.docIds||[])});
+  await setDoc(ref,{ownerUid:s.ownerUid,clientId:s.clientId,recipientUid:s.recipientUid,recipientEmail:s.recipientEmail,projectIds:s.projectIds||[],invoiceIds:s.invoiceIds||[],docIds:s.docIds||[],data:publishablePortal(d,clientId,s.projectIds||[],s.invoiceIds||[],s.docIds||[],auth?.currentUser?.email||'')});
   return true;
 }
 
@@ -28,7 +29,7 @@ export function PortalManager({d,user,demo,client,toast}){
   useEffect(()=>{if(demo||!user)return;return onSnapshot(doc(db,'solodeskPortals',user.uid,'shares',client.id),snap=>{const v=snap.exists()?snap.data():null;setGrant(v);if(v){setEmail(v.recipientEmail);setProjects(v.projectIds||[]);setInvoices(v.invoiceIds||[]);setDocs(v.docIds||[]);}},()=>setError('Could not load portal sharing. Retry after checking your connection.'));},[user?.uid,client.id,demo]);
   // Once a portal is live, ticking or unticking something publishes it straight away.
   const toggle=(id,items,set,key)=>{const next=items.includes(id)?items.filter(x=>x!==id):[...items,id];set(next);if(!grant||demo)return;const ids={projectIds:projects,invoiceIds:invoices,docIds:docs,[key]:next};
-    setDoc(doc(db,'solodeskPortals',user.uid,'shares',client.id),{ownerUid:grant.ownerUid,clientId:client.id,recipientUid:grant.recipientUid,recipientEmail:grant.recipientEmail,...ids,data:publishablePortal(d,client.id,ids.projectIds,ids.invoiceIds,ids.docIds)}).then(()=>toast(items.includes(id)?'Removed from the portal.':'Added to the portal.')).catch(e=>setError(authMessage(e)));};
+    setDoc(doc(db,'solodeskPortals',user.uid,'shares',client.id),{ownerUid:grant.ownerUid,clientId:client.id,recipientUid:grant.recipientUid,recipientEmail:grant.recipientEmail,...ids,data:publishablePortal(d,client.id,ids.projectIds,ids.invoiceIds,ids.docIds,user.email||'')}).then(()=>toast(items.includes(id)?'Removed from the portal.':'Added to the portal.')).catch(e=>setError(authMessage(e)));};
   const publish=async e=>{
     e.preventDefault();if(demo){setError('Sign in to create real client accounts. Demo data is never published.');return;}setBusy(true);setError('');let secondary;
     try{
@@ -43,7 +44,7 @@ export function PortalManager({d,user,demo,client,toast}){
         await signOut(secondaryAuth);
       }
       if(grant&&normalized!==grant.recipientEmail){setError('Revoke the existing share before changing its login email.');return;}
-      await setDoc(doc(db,'solodeskPortals',user.uid,'shares',client.id),{ownerUid:user.uid,clientId:client.id,recipientUid,recipientEmail:normalized,projectIds:projects,invoiceIds:invoices,docIds:docs,data:publishablePortal(d,client.id,projects,invoices,docs)});
+      await setDoc(doc(db,'solodeskPortals',user.uid,'shares',client.id),{ownerUid:user.uid,clientId:client.id,recipientUid,recipientEmail:normalized,projectIds:projects,invoiceIds:invoices,docIds:docs,data:publishablePortal(d,client.id,projects,invoices,docs,user.email||'')});
       toast(grant?'Client portal updated.':'Client portal published. Share the portal link and initial password privately.');
     }catch(err){setError(authMessage(err));}finally{setPassword('');setConfirm('');setBusy(false);if(secondary)await deleteApp(secondary);}
   };
@@ -101,8 +102,39 @@ function ApprovalCard({task,response,project,owner,shareId,user,onMessage,curren
   </article>;
 }
 
+const timeAgo=iso=>{if(!iso)return 'just now';const m=Math.round((Date.now()-Date.parse(iso))/60000);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':day(iso);};
+// Comments on one task: the client and the studio talk here. Quick "You got this" and "Request a change".
+function TaskThread({task,comments,owner,shareId,user,onMessage,business}){
+  const [text,setText]=useState(''),[busy,setBusy]=useState(false),[asChange,setAsChange]=useState(false);
+  const post=async(kind,body)=>{
+    if(kind!=='cheer'&&!body.trim()){onMessage(kind==='change'?'Say what you would like changed.':'Write a comment first.');return;}
+    if(!owner){onMessage('This is a preview, so comments are not sent.');return;}
+    setBusy(true);
+    try{await addDoc(collection(db,'solodeskPortals',owner,'shares',shareId,'comments'),{itemId:task.id,kind,text:(kind==='cheer'?CHEER:body).trim().slice(0,1000),at:serverTimestamp(),email:(user.email||'').toLowerCase(),from:'client'});setText('');setAsChange(false);onMessage(kind==='cheer'?'Sent. That will make their day!':kind==='change'?'Change request sent.':'Comment sent.');}
+    catch{onMessage('That could not be sent. Check your connection and try again.');}finally{setBusy(false);}
+  };
+  return <div className="task-thread">
+    {comments.length>0&&<ul className="thread-list">{comments.map(c=><li key={c.id} className={'thread-msg '+c.from+' '+c.kind}><span className="thread-who">{c.from==='owner'?business:'You'}{c.kind==='change'&&<span className="chip sand">Change request</span>}<small>{timeAgo(c.at)}</small></span><p>{c.text}</p></li>)}</ul>}
+    <div className="thread-quick"><button type="button" className="cheer-btn" disabled={busy} onClick={()=>post('cheer','')}>💪 You got this</button><button type="button" className={'ghost sm'+(asChange?' on':'')} aria-pressed={asChange} onClick={()=>setAsChange(!asChange)}>Request a change</button></div>
+    <form className="thread-form" onSubmit={e=>{e.preventDefault();post(asChange?'change':'comment',text);}}><textarea rows="2" maxLength={1000} aria-label={asChange?'What should change?':'Comment'} placeholder={asChange?'What would you like changed?':'Write a comment…'} value={text} onChange={e=>setText(e.target.value)}/><button className="btn sm" disabled={busy}>{asChange?'Send change request':'Send'}</button></form>
+  </div>;
+}
+// Add or change a link (the client's own links, or the address of a shared file).
+function LinkEditor({initial,kind,docId='',owner,shareId,user,onMessage,onDone}){
+  const [label,setLabel]=useState(initial?.label||''),[url,setUrl]=useState(initial?.url||''),[busy,setBusy]=useState(false);
+  const save=async e=>{e.preventDefault();
+    const clean=url.trim();if(!/^(https?:\/\/)?[^\s.]+\.[^\s]+$/i.test(clean)){onMessage('Enter a web address like acme.com.');return;}
+    if(!owner){onMessage('This is a preview, so changes are not sent.');onDone();return;}
+    setBusy(true);
+    try{await addDoc(collection(db,'solodeskPortals',owner,'shares',shareId,'updates'),{kind,docId,label:label.trim().slice(0,60),url:(/^https?:\/\//i.test(clean)?clean:'https://'+clean).slice(0,300),replaceUrl:(initial?.url||'').slice(0,300),at:serverTimestamp(),email:(user.email||'').toLowerCase()});onMessage('Sent. It appears here once it is saved.');onDone();}
+    catch{onMessage('That could not be saved. Check your connection and try again.');}finally{setBusy(false);}
+  };
+  return <form className="link-editor" onSubmit={save}><input aria-label="Name" placeholder={kind==='file'?'File name':'Name (optional)'} maxLength={60} value={label} onChange={e=>setLabel(e.target.value)}/><input aria-label="Web address" placeholder="acme.com" inputMode="url" value={url} onChange={e=>setUrl(e.target.value)} autoFocus/><button className="btn sm" disabled={busy}>Save</button><button type="button" className="ghost sm" onClick={onDone}>Cancel</button></form>;
+}
+
 function PortalShare({share,owner,user,onMessage,settings}){
-  const data=share.data,[responses,setResponses]=useState({});
+  const data=share.data,[responses,setResponses]=useState({}),[comments,setComments]=useState([]),[thread,setThread]=useState(null),[editing,setEditing]=useState(null);
+  useEffect(()=>{if(!owner||!db)return;return onSnapshot(collection(db,'solodeskPortals',owner,'shares',share.id,'comments'),snap=>setComments(snap.docs.map(x=>({id:x.id,...x.data(),at:x.data().at?.toDate?.().toISOString()||''})).sort((a,b)=>a.at.localeCompare(b.at))),()=>{});},[owner,share.id]);
   useEffect(()=>{if(!owner||!db)return;return onSnapshot(collection(db,'solodeskPortals',owner,'shares',share.id,'responses'),snap=>setResponses(Object.fromEntries(snap.docs.map(x=>{const r=x.data();return [x.id,{...r,atIso:r.at?.toDate?.().toISOString()||''}];}))),()=>{});},[owner,share.id]);
   const tasks=data.tasks||[],approvals=[...tasks.filter(t=>t.approval),...(data.approvals||[])],pending=approvals.filter(t=>!(responses[t.id]?.atIso>=t.approval.requestedAt)&&t.approval.state==='pending');
   const [tab,setTab]=useState(pending.length?'approvals':'work');
@@ -115,6 +147,7 @@ function PortalShare({share,owner,user,onMessage,settings}){
       <span className="eyebrow">{data.business} · CLIENT PORTAL</span>
       <h1>Hello, {data.clientName}</h1>
       <p>Everything {data.business} is working on for you, in one place. Updated {new Date(data.updatedAt).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'})}.</p>
+      {data.contactEmail&&<a className="meeting-btn" href={meetingMailto(data.contactEmail,{business:data.business,clientName:data.clientName,project:projects.length===1?projects[0].name:''})}><Icon name="calendar" size={16}/>Request a meeting</a>}
       <div className="portal-stats">
         <button type="button" className="portal-stat hero" onClick={()=>setTab('approvals')}><strong>{pending.length}</strong><span>Waiting for your approval</span></button>
         <button type="button" className="portal-stat sand" onClick={()=>setTab('work')}><strong>{projects.length}</strong><span>Active project{projects.length===1?'':'s'}</span></button>
@@ -128,11 +161,14 @@ function PortalShare({share,owner,user,onMessage,settings}){
       <div className="approval-head"><span className={'chip '+(p.status==='Complete'?'sage':p.status==='On hold'?'sand':'hero')}>{p.status}</span><small>{p.start?day(p.start)+' → '+(p.end?day(p.end):'ongoing'):''}</small></div>
       <h3>{p.name}</h3>
       <div className="portal-progress" role="img" aria-label={`${done} of ${list.length} tasks done`}><i style={{width:(list.length?done/list.length*100:0)+'%'}}/></div><small>{done} of {list.length} tasks done</small>
-      <ul className="portal-tasks">{list.map(t=><li key={t.id}><span className={'dot '+(STATUS_CHIP[t.status]||'white')}/><span className="grow"><b>{t.title}</b>{t.due&&<small>Due {day(t.due)}</small>}{(t.checklist||[]).length>0&&<small>{t.checklist.filter(c=>c.done).length}/{t.checklist.length} steps</small>}</span>{t.approval&&<span className={'chip '+APPROVAL_CHIP[t.approval.state]}>{t.approval.state==='pending'?'Needs your approval':APPROVAL_LABEL[t.approval.state]}</span>}<span className={'chip '+(STATUS_CHIP[t.status]||'white')}>{t.status}</span></li>)}{!list.length&&<li className="empty-note">No tasks yet.</li>}</ul>
+      <ul className="portal-tasks">{list.map(t=>{const mine=comments.filter(c=>c.itemId===t.id),open=thread===t.id;return <li key={t.id} className={open?'open':''}><div className="portal-task-row"><span className={'dot '+(STATUS_CHIP[t.status]||'white')}/><span className="grow"><b>{t.title}</b>{t.due&&<small>Due {day(t.due)}</small>}{(t.checklist||[]).length>0&&<small>{t.checklist.filter(c=>c.done).length}/{t.checklist.length} steps</small>}</span>{t.approval&&<span className={'chip '+APPROVAL_CHIP[t.approval.state]}>{t.approval.state==='pending'?'Needs your approval':APPROVAL_LABEL[t.approval.state]}</span>}<span className={'chip '+(STATUS_CHIP[t.status]||'white')}>{t.status}</span><button type="button" className={'comment-toggle'+(mine.length?' has':'')} aria-expanded={open} aria-label={'Comments on '+t.title} onClick={()=>setThread(open?null:t.id)}><Icon name="notes" size={15}/>{mine.length||''}</button></div>{open&&<TaskThread task={t} comments={mine} owner={owner} shareId={share.id} user={user} onMessage={onMessage} business={data.business}/>}</li>;})}{!list.length&&<li className="empty-note">No tasks yet.</li>}</ul>
     </article>;})}{!projects.length&&<p className="portal-empty">No projects have been shared yet.</p>}</div>}
     {tab==='docs'&&<div className="portal-grid">
-      {links.length>0&&<article className="portal-project"><h3>Your links</h3><div className="client-links">{links.map((l,i)=><a key={i} className="chip white" href={l.url} target="_blank" rel="noopener noreferrer"><Icon name="link" size={14}/>{l.label||host(l.url)}</a>)}</div></article>}
-      {docs.filter(x=>x.kind==='link').length>0&&<article className="portal-project"><h3>Shared files</h3>{docs.filter(x=>x.kind==='link').map(x=><a key={x.id} className="portal-file" href={x.url} target="_blank" rel="noopener noreferrer"><span className="file-badge"><Icon name="link" size={16}/></span><span className="grow"><b>{x.title}</b><small>{host(x.url)}</small></span><span aria-hidden="true">↗</span></a>)}</article>}
+      <article className="portal-project"><div className="approval-head"><h3>Your links</h3><button type="button" className="ghost sm" onClick={()=>setEditing({kind:'link'})}>+ Add a link</button></div>
+        {links.map((l,i)=>editing?.kind==='link'&&editing.url===l.url?<LinkEditor key={i} initial={l} kind="link" owner={owner} shareId={share.id} user={user} onMessage={onMessage} onDone={()=>setEditing(null)}/>:<div key={i} className="portal-file"><span className="file-badge"><Icon name="link" size={16}/></span><a className="grow" href={l.url} target="_blank" rel="noopener noreferrer"><b>{l.label||host(l.url)}</b><small>{host(l.url)}</small></a><button type="button" className="ghost sm" onClick={()=>setEditing({kind:'link',url:l.url})}>Edit</button></div>)}
+        {editing?.kind==='link'&&!editing.url&&<LinkEditor kind="link" owner={owner} shareId={share.id} user={user} onMessage={onMessage} onDone={()=>setEditing(null)}/>}
+        {!links.length&&editing?.kind!=='link'&&<p className="empty-note" style={{margin:0}}>Add your website, socials or anything {data.business} should have.</p>}</article>
+      {docs.filter(x=>x.kind==='link').length>0&&<article className="portal-project"><h3>Shared files</h3>{docs.filter(x=>x.kind==='link').map(x=>editing?.docId===x.id?<LinkEditor key={x.id} initial={{label:x.title,url:x.url}} kind="file" docId={x.id} owner={owner} shareId={share.id} user={user} onMessage={onMessage} onDone={()=>setEditing(null)}/>:<div key={x.id} className="portal-file"><span className="file-badge"><Icon name="link" size={16}/></span><a className="grow" href={x.url} target="_blank" rel="noopener noreferrer"><b>{x.title}</b><small>{host(x.url)} ↗</small></a><button type="button" className="ghost sm" onClick={()=>setEditing({docId:x.id})}>Update link</button></div>)}</article>}
       {docs.filter(x=>x.kind==='prd').map(x=><details key={x.id} className="portal-project portal-prd"><summary><span className="file-badge prd">P</span><span className="grow"><b>{x.title}</b><small>Product requirements · {x.requirements.length} requirements</small></span><span className={'chip '+(x.status==='Approved'?'sage':x.status==='In review'?'sand':'white')}>{x.status}</span></summary>
         {[['Problem',x.problem],['Goals and success measures',x.goals],['Out of scope',x.outOfScope]].filter(([,v])=>v).map(([k,v])=><div key={k}><small>{k}</small><p>{v}</p></div>)}
         {x.requirements.length>0&&<><small>Requirements</small><ul className="portal-checks">{x.requirements.map((r,i)=><li key={i} className={r.done?'done':''}><i/>R{i+1} · {r.title}</li>)}</ul></>}
