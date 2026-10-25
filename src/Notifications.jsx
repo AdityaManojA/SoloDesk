@@ -2,15 +2,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from './Icon';
 import { buildNotifications, unreadCount } from './notifications';
 
-const ICON = { approved: 'approve', changes: 'notes', cheer: 'check', comment: 'notes', link: 'link', overdue: 'invoices', reminder: 'bell', due: 'tasks' };
-const TONE = { approved: 'sage', changes: 'sand', cheer: 'sage', comment: 'hero', link: 'white', overdue: 'hero', reminder: 'sand', due: 'white' };
+const ICON = { request: 'plus', approved: 'approve', changes: 'notes', cheer: 'check', comment: 'notes', link: 'link', overdue: 'invoices', reminder: 'bell', due: 'tasks' };
+const TONE = { request: 'hero', approved: 'sage', changes: 'sand', cheer: 'sage', comment: 'hero', link: 'white', overdue: 'hero', reminder: 'sand', due: 'white' };
 const ago = iso => { const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 1 ? 'Just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); };
 
 // The bell in the top bar: approvals answered, client comments and link updates, overdue invoices, reminders
 // and tasks due today. Opening it marks everything as seen (saved with the workspace, so on every device).
-export function NotificationBell({ d, mut, comments }) {
+export function NotificationBell({ d, mut, comments, requests = [] }) {
   const [open, setOpen] = useState(false), ref = useRef(null);
-  const list = useMemo(() => buildNotifications(d, comments), [d, comments]);
+  const list = useMemo(() => buildNotifications(d, comments, new Date(), requests), [d, comments, requests]);
   const seen = d.settings.notificationsSeenAt || '', unread = unreadCount(list, seen);
   useEffect(() => {
     if (!open) return;

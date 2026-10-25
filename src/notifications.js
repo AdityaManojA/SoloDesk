@@ -5,7 +5,7 @@ import { calc, status, today, money } from './lib.js';
 
 const CLIENT_ACTIONS = { 'client-updated-link': 'updated a link', 'client-added-link': 'added a link', 'client-updated-file': 'updated a shared file' };
 
-export function buildNotifications(workspace, comments = [], now = new Date()) {
+export function buildNotifications(workspace, comments = [], now = new Date(), requests = []) {
   const t = today(), out = [], cname = id => workspace.clients.find(c => c.id === id)?.name || 'Your client';
   for (const { kind, row, title, href } of approvalItems(workspace)) {
     if (row.approval.state === 'pending' || !row.approval.decidedAt) continue;
@@ -17,6 +17,7 @@ export function buildNotifications(workspace, comments = [], now = new Date()) {
     const task = workspace.tasks.find(x => x.id === c.itemId);
     out.push({ id: 'cm-' + c.id, at: c.at, kind: c.kind === 'cheer' ? 'cheer' : c.kind === 'change' ? 'changes' : 'comment', title: `${cname(c.clientId)} ${c.kind === 'cheer' ? 'cheered you on' + (task ? ' for' : '') : c.kind === 'change' ? 'requested a change' + (task ? ' to' : '') : 'commented' + (task ? ' on' : '')}${task ? ` “${task.title}”` : ''}`, detail: c.kind === 'cheer' ? '' : c.text, href: task ? '#/tasks/' + task.id : '#/approvals' });
   }
+  for (const r of requests) if (r.at) out.push({ id: 'rq-' + r.id, at: r.at, kind: 'request', title: `${cname(r.clientId)} asked: “${r.title}”`, detail: r.reply ? 'Answered' : 'Waiting for your reply', href: '#/approvals' });
   for (const a of workspace.activity || []) if (CLIENT_ACTIONS[a.action]) out.push({ id: 'ac-' + a.id, at: a.at, kind: 'link', title: `${cname(a.client)} ${CLIENT_ACTIONS[a.action]}`, detail: a.title, href: '#/clients/' + a.client });
   for (const i of workspace.invoices) if (status(i) === 'Overdue') out.push({ id: 'od-' + i.id + i.due, at: i.due + 'T09:00:00.000Z', kind: 'overdue', title: `${i.no} is overdue`, detail: `${cname(i.client)} · ${money(calc(i).bal)} outstanding`, href: '#/invoices/' + i.id });
   for (const n of workspace.notes || []) for (const c of n.checklist || []) if (!c.done && c.due && c.due <= t) out.push({ id: 'rm-' + c.id + c.due, at: c.due + 'T08:00:00.000Z', kind: 'reminder', title: c.title || 'Reminder', detail: (c.due === t ? 'Today' : 'Overdue') + (n.title ? ' · ' + n.title : ''), href: '#/notes/' + n.id });

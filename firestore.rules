@@ -53,6 +53,23 @@ service cloud.firestore {
           request.resource.data.from == (isOwner() ? 'owner' : 'client');
         allow delete: if isOwner();
       }
+      // Requests and questions from the client ("Can you add a blog?"). The owner answers with a label.
+      match /requests/{request} {
+        allow read: if isOwner() || isClient();
+        allow create: if isClient() &&
+          request.resource.data.keys().hasOnly(['title','details','projectId','at','email']) &&
+          request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 200 &&
+          request.resource.data.details is string && request.resource.data.details.size() <= 2000 &&
+          request.resource.data.projectId is string && request.resource.data.projectId.size() <= 100 &&
+          request.resource.data.email is string && request.resource.data.at == request.time;
+        allow update: if isOwner() &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reply','replyText','repliedAt','taskId']) &&
+          request.resource.data.reply in ['scope','now','can','progress','custom'] &&
+          request.resource.data.replyText is string && request.resource.data.replyText.size() <= 200 &&
+          request.resource.data.repliedAt == request.time &&
+          request.resource.data.get('taskId', '') is string;
+        allow delete: if isOwner();
+      }
       // Link and file updates from the client; SoloDesk applies them to the workspace and removes them.
       match /updates/{update} {
         allow read, delete: if isOwner();
@@ -143,11 +160,11 @@ service cloud.firestore {
       let pastOk = pastDiff.size() == 0
         || (!sameSeason && pastDiff.hasOnly([string(o.get('season', 0))])
             && n.past[string(o.get('season', 0))] == o.get('seasonExp', 0));
-      return pastOk && n.season >= o.get('season', 0) && (
-        (delta <= 0 && n.bank <= room
-          && ((sameSeason && n.seasonExp <= o.get('seasonExp', 0)) || (!sameSeason && n.seasonExp == 0)))
-        || (delta > 0 && n.bank <= room - delta
-          && ((sameSeason && n.seasonExp <= o.get('seasonExp', 0) + delta) || (!sameSeason && n.seasonExp <= delta))));
+      // season EXP grows from where it was this season (or from 0 in a new one); EXP and season EXP draw on the same
+      // bucket, and whichever grows more uses it up (season EXP can catch up on its own when it's worked out again)
+      let sGain = sameSeason ? n.seasonExp - o.get('seasonExp', 0) : n.seasonExp;
+      let used = math.max(math.max(delta, sGain), 0);
+      return pastOk && n.season >= o.get('season', 0) && n.bank <= room - used;
     }
     // Feedback left when someone deletes their TaskFlow account: anonymous (no name, email or account id), write
     // once, and never readable from the app (only in the Firebase console).

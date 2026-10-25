@@ -5,6 +5,10 @@ import { rid } from './lib.js';
 
 export const COMMENT_KINDS = { comment: 'Comment', cheer: 'Cheer', change: 'Change request' };
 export const CHEER = 'You got this! 💪';
+// Client requests ("Can you also add a blog?") and the replies you can send back. "custom" carries your own timing.
+export const REPLIES = { scope: 'Feature scope', now: 'We’ll start right away', can: 'Can be implemented', progress: 'In progress', custom: 'Custom timing' };
+export const REPLY_TONE = { scope: 'sand', now: 'sage', can: 'white', progress: 'hero', custom: 'ink' };
+export const replyLabel = r => r?.reply ? (r.reply === 'custom' ? r.replyText || REPLIES.custom : REPLIES[r.reply]) : 'Waiting for a reply';
 
 // A link or file update from the client. Returns the activity row to record, or null when nothing changed.
 export function applyClientUpdate(workspace, clientId, update, now = new Date().toISOString()) {

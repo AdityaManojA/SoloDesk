@@ -2,7 +2,7 @@ import {useEffect,useState} from 'react';
 import {initializeApp,deleteApp} from 'firebase/app';
 import {getAuth,setPersistence,inMemoryPersistence,createUserWithEmailAndPassword,signOut,signInWithEmailAndPassword,signInWithPopup,sendPasswordResetEmail,updatePassword,onAuthStateChanged,EmailAuthProvider,reauthenticateWithCredential,reauthenticateWithPopup} from 'firebase/auth';
 import {doc,getDoc,setDoc,deleteDoc,onSnapshot,collection,serverTimestamp,addDoc} from 'firebase/firestore';
-import {CHEER,meetingMailto} from './client-feed';
+import {CHEER,meetingMailto,REPLY_TONE,replyLabel} from './client-feed';
 import {auth,db,firebaseOptions,provider} from './firebase';
 import {publishablePortal} from './workspace-upgrades';
 import {APPROVAL_LABEL,KIND_LABEL} from './approvals';
@@ -132,8 +132,28 @@ function LinkEditor({initial,kind,docId='',owner,shareId,user,onMessage,onDone})
   return <form className="link-editor" onSubmit={save}><input aria-label="Name" placeholder={kind==='file'?'File name':'Name (optional)'} maxLength={60} value={label} onChange={e=>setLabel(e.target.value)}/><input aria-label="Web address" placeholder="acme.com" inputMode="url" value={url} onChange={e=>setUrl(e.target.value)} autoFocus/><button className="btn sm" disabled={busy}>Save</button><button type="button" className="ghost sm" onClick={onDone}>Cancel</button></form>;
 }
 
+// Ask the studio for something new; their answer comes back as a label (or a timing).
+function RequestsTab({data,requests,owner,shareId,user,onMessage}){
+  const [title,setTitle]=useState(''),[details,setDetails]=useState(''),[projectId,setProjectId]=useState(''),[busy,setBusy]=useState(false);
+  const send=async e=>{e.preventDefault();if(!title.trim())return;
+    if(!owner){onMessage('This is a preview, so requests are not sent.');return;}
+    setBusy(true);
+    try{await addDoc(collection(db,'solodeskPortals',owner,'shares',shareId,'requests'),{title:title.trim().slice(0,200),details:details.trim().slice(0,2000),projectId,at:serverTimestamp(),email:(user.email||'').toLowerCase()});setTitle('');setDetails('');onMessage(`Sent to ${data.business}. You’ll see their answer here.`);}
+    catch{onMessage('Your request could not be sent. Check your connection and try again.');}finally{setBusy(false);}
+  };
+  return <div className="portal-grid">
+    <form className="portal-project request-form" onSubmit={send}><h3>Ask for something</h3><p className="empty-note" style={{margin:0}}>A new task, a change or a question. {data.business} replies with whether and when it can be done.</p>
+      <label>What would you like?<input required maxLength={200} placeholder="Can you add a blog to the website?" value={title} onChange={e=>setTitle(e.target.value)}/></label>
+      <label>Details (optional)<textarea rows="3" maxLength={2000} value={details} onChange={e=>setDetails(e.target.value)}/></label>
+      {(data.projects||[]).length>0&&<label>Project<select value={projectId} onChange={e=>setProjectId(e.target.value)}><option value="">Not sure / general</option>{data.projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}
+      <button className="btn" disabled={busy||!title.trim()}>Send request</button></form>
+    {requests.map(r=><article key={r.id} className={'portal-project request-card'+(r.reply?' answered':'')}><div className="approval-head"><span className={'chip '+(r.reply?REPLY_TONE[r.reply]:'white')}>{replyLabel(r)}</span><small>Asked {day(r.at)}</small></div><h3>{r.title}</h3>{r.details&&<p className="request-details">{r.details}</p>}{r.reply&&<p className="approval-result" style={{margin:0}}>{data.business} replied {r.repliedAt?day(r.repliedAt):''}{r.taskId?' and added it to your tasks':''}.</p>}</article>)}
+  </div>;
+}
+
 function PortalShare({share,owner,user,onMessage,settings}){
-  const data=share.data,[responses,setResponses]=useState({}),[comments,setComments]=useState([]),[thread,setThread]=useState(null),[editing,setEditing]=useState(null);
+  const data=share.data,[responses,setResponses]=useState({}),[comments,setComments]=useState([]),[thread,setThread]=useState(null),[editing,setEditing]=useState(null),[requests,setRequests]=useState(share.sample?.requests||[]);
+  useEffect(()=>{if(!owner||!db)return;return onSnapshot(collection(db,'solodeskPortals',owner,'shares',share.id,'requests'),snap=>setRequests(snap.docs.map(x=>({id:x.id,...x.data(),at:x.data().at?.toDate?.().toISOString()||'',repliedAt:x.data().repliedAt?.toDate?.().toISOString()||''})).sort((a,b)=>b.at.localeCompare(a.at))),()=>{});},[owner,share.id]);
   useEffect(()=>{if(!owner||!db)return;return onSnapshot(collection(db,'solodeskPortals',owner,'shares',share.id,'comments'),snap=>setComments(snap.docs.map(x=>({id:x.id,...x.data(),at:x.data().at?.toDate?.().toISOString()||''})).sort((a,b)=>a.at.localeCompare(b.at))),()=>{});},[owner,share.id]);
   useEffect(()=>{if(!owner||!db)return;return onSnapshot(collection(db,'solodeskPortals',owner,'shares',share.id,'responses'),snap=>setResponses(Object.fromEntries(snap.docs.map(x=>{const r=x.data();return [x.id,{...r,atIso:r.at?.toDate?.().toISOString()||''}];}))),()=>{});},[owner,share.id]);
   const tasks=data.tasks||[],approvals=[...tasks.filter(t=>t.approval),...(data.approvals||[])],pending=approvals.filter(t=>!(responses[t.id]?.atIso>=t.approval.requestedAt)&&t.approval.state==='pending');
@@ -141,7 +161,7 @@ function PortalShare({share,owner,user,onMessage,settings}){
   const currency=new Intl.NumberFormat(undefined,{style:'currency',currency:data.currency||'USD'});
   const docs=data.docs||[],links=data.links||[],invoices=data.invoices||[],projects=data.projects||[];
   const balance=invoices.reduce((s,i)=>s+(i.balance||0),0);
-  const tabs=[['approvals','Approvals',pending.length],['work','Projects & tasks',tasks.filter(t=>t.status!=='Done').length],['docs','Links & documents',docs.length+links.length],['invoices','Invoices',invoices.length],...(settings?[['settings','Settings',0]]:[])];
+  const tabs=[['approvals','Approvals',pending.length],['work','Projects & tasks',tasks.filter(t=>t.status!=='Done').length],['docs','Links & documents',docs.length+links.length],['requests','Requests',0],['invoices','Invoices',invoices.length],...(settings?[['settings','Settings',0]]:[])];
   return <section className="portal-share" style={data.accent?{'--hero':data.accent}:undefined}>
     <div className="portal-hero">
       <span className="eyebrow">{data.business} · CLIENT PORTAL</span>
@@ -175,6 +195,7 @@ function PortalShare({share,owner,user,onMessage,settings}){
       </details>)}
       {!docs.length&&!links.length&&<p className="portal-empty">No links or documents have been shared yet.</p>}
     </div>}
+    {tab==='requests'&&<RequestsTab data={data} requests={requests} owner={owner} shareId={share.id} user={user} onMessage={onMessage}/>}
     {tab==='settings'&&settings}
     {tab==='invoices'&&<div className="portal-grid">{invoices.map(i=><article className="portal-project" key={i.id}><div className="approval-head"><span className={'chip '+(i.balance>0?'hero':'sage')}>{i.balance>0?'Due '+day(i.due):'Paid'}</span><small>Issued {day(i.issue)}</small></div><h3>{i.no}</h3>{i.items.map((l,n)=><p key={n} className="invoice-line"><span>{l.desc}</span><span>{l.qty} × {currency.format(l.price)}</span></p>)}<p className="invoice-line total"><span>Total</span><b>{currency.format(i.total)}</b></p><p className="invoice-line"><span>Paid</span><span>{currency.format(i.paid)}</span></p><p className="invoice-line"><span>Balance</span><b>{currency.format(i.balance)}</b></p></article>)}{!invoices.length&&<p className="portal-empty">No invoices have been shared.</p>}</div>}
   </section>;
@@ -226,7 +247,7 @@ export function ClientPortal({owner}){
 // For checking the portal's look without signing in: #/portal-preview shows sample data (never real work).
 export function PortalPreview(){
   const today=new Date().toISOString();
-  const share={id:'preview',data:{business:'Your studio',clientName:'Ava Studio',currency:'INR',accent:getComputedStyle(document.documentElement).getPropertyValue('--hero').trim(),updatedAt:today,
+  const share={id:'preview',sample:{requests:[{id:'r1',title:'Can you add a blog to the website?',details:'Something simple, 2–3 posts a month.',at:today,reply:'custom',replyText:'Ready by Friday 30 Oct',repliedAt:today,taskId:'x'},{id:'r2',title:'Could the logo be bigger on mobile?',details:'',at:today}]},data:{business:'Your studio',contactEmail:'studio@example.com',clientName:'Ava Studio',currency:'INR',accent:getComputedStyle(document.documentElement).getPropertyValue('--hero').trim(),updatedAt:today,
     links:[{label:'Website',url:'https://example.com/'},{label:'',url:'https://instagram.com/example'}],
     projects:[{id:'p',name:'Website launch',status:'Active',start:'2026-10-16',end:''}],
     tasks:[{id:'a',projectId:'p',title:'Homepage design',status:'In progress',due:'2026-10-30',checklist:[{title:'Hero section',done:true},{title:'Footer',done:false}],approval:{state:'pending',note:'Here is the homepage. Happy for it to go live?',requestedAt:today}},{id:'b',projectId:'p',title:'Brand colours',status:'Done',due:'',checklist:[],approval:{state:'approved',note:'',requestedAt:'2026-10-20T10:00:00.000Z',decidedAt:'2026-10-21T10:00:00.000Z',comment:'Love it'}},{id:'c',projectId:'p',title:'Content inventory',status:'Todo',due:'2026-11-04',checklist:[]}],

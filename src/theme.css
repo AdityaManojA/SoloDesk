@@ -1052,3 +1052,15 @@ input[type=radio]{border-radius:50%!important}
 :root[data-theme=dark] .thread-msg.client{background:color-mix(in srgb,var(--hero) 30%,var(--card))}
 :root[data-theme=dark] .notif-item.new{background:color-mix(in srgb,var(--hero) 20%,transparent)}
 :root[data-theme=dark] .cal-chip,:root[data-theme=dark] .cal-chip .cal-title,:root[data-theme=dark] .cal-chip .cal-time{color:#f3eee6!important}
+
+/* client requests */
+.request-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.request-card{background:var(--card);border:2px solid var(--hero);border-radius:24px;padding:18px;display:grid;gap:8px;align-content:start}
+.request-card.answered{border-color:var(--ln)}
+.request-card h3{margin:0;font-size:18px}
+.request-details{margin:0;color:var(--mu);white-space:pre-wrap}
+.request-reply{display:grid;gap:8px;border-top:1px solid var(--ln);padding-top:10px}
+.request-reply .context-actions{margin:0}
+.request-form{display:grid;gap:10px;border:2px dashed var(--hero)}
+.request-form .btn{justify-self:start}
+.approval-group h2 .tab-count{vertical-align:middle}

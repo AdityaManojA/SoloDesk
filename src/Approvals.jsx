@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
 import Icon from './Icon';
+import { REPLIES, REPLY_TONE, replyLabel } from './client-feed';
+import { replyToRequest } from './portal-sync';
+import { rid } from './lib';
 import { APPROVAL_LABEL, KIND_LABEL, approvalClient, approvalItems, applyResponses, requestApproval, withdrawApproval, findItem } from './approvals';
 
 const CHIP = { pending: 'hero', approved: 'sage', changes: 'sand' };
@@ -53,7 +56,27 @@ export function ApprovalBox({ d, mut, user, demo, item, kind = 'task', toast, co
   </section>;
 }
 
-export function ApprovalsPage({ d, mut }) {
+// One client request: what they asked, and a dropdown to answer with a label (or your own timing).
+function RequestRow({ r, d, mut, user, toast }) {
+  const [reply, setReply] = useState(r.reply || 'now'), [text, setText] = useState(r.replyText || ''), [busy, setBusy] = useState(false);
+  const client = d.clients.find(c => c.id === r.clientId), project = d.projects.find(p => p.id === r.projectId), task = r.taskId && d.tasks.find(t => t.id === r.taskId);
+  const send = async (taskId) => {
+    if (reply === 'custom' && !text.trim()) { toast('Write the timing for your custom reply, for example “Ready by Friday 30 Oct”.'); return; }
+    setBusy(true);
+    try { await replyToRequest(user, r.clientId, r.id, reply, reply === 'custom' ? text : '', taskId); toast(`Sent to ${client?.name || 'your client'}: ${reply === 'custom' ? text.trim() : REPLIES[reply]}.`); }
+    catch { toast('Your reply could not be sent. Check your connection and try again.'); } finally { setBusy(false); }
+  };
+  const addTask = () => { const id = rid(); mut(n => { n.tasks.push({ id, title: r.title.slice(0, 300), status: reply === 'progress' || reply === 'now' ? 'In progress' : 'Todo', priority: '', client: r.clientId, project: r.projectId && d.projects.some(p => p.id === r.projectId) ? r.projectId : '', notes: r.details || '', durationMinutes: 60, createdAt: new Date().toISOString() }); }); send(id); };
+  return <article className={'request-card' + (r.reply ? ' answered' : '')}>
+    <div className="approval-head"><span className={'chip ' + (r.reply ? REPLY_TONE[r.reply] : 'hero')}>{r.reply ? replyLabel(r) : 'New request'}</span><small>{client?.name}{project ? ' · ' + project.name : ''} · {r.at ? new Date(r.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : ''}</small></div>
+    <h3>{r.title}</h3>{r.details && <p className="request-details">{r.details}</p>}
+    <div className="request-reply"><label>Reply<select value={reply} onChange={e => setReply(e.target.value)}>{Object.entries(REPLIES).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+      {reply === 'custom' && <label>Timing<input maxLength={200} placeholder="Ready by Friday 30 Oct" value={text} onChange={e => setText(e.target.value)} /></label>}
+      <div className="context-actions"><button className="btn sm" disabled={busy} onClick={() => send()}>{r.reply ? 'Update reply' : 'Send reply'}</button>{task ? <a className="ghost sm" href={'#/tasks/' + task.id}>Open task</a> : <button className="ghost sm" disabled={busy} onClick={addTask}>Reply and add as task</button>}</div></div>
+  </article>;
+}
+
+export function ApprovalsPage({ d, mut, requests = [], user, demo, toast }) {
   const all = approvalItems(d);
   // Visiting the page clears the count on the Approvals menu item.
   useEffect(() => { const latest = all.map(x => x.row.approval.decidedAt || '').sort().at(-1) || ''; if (latest && latest > (d.settings.approvalsSeenAt || '')) mut(n => { n.settings.approvalsSeenAt = latest; }); }, [all.length, d.settings.approvalsSeenAt]);
@@ -62,6 +85,8 @@ export function ApprovalsPage({ d, mut }) {
   const ready = d.tasks.filter(t => !t.approval && !t.arch && t.status !== 'Done' && approvalClient(d, t)).slice(0, 6);
   return <>
     <div className="page-head"><div className="grow"><h1>Approvals</h1><p className="empty-note" style={{ margin: '6px 0 0' }}>Send tasks, PRDs, files and quotes to clients for sign-off. They approve or ask for changes in their client portal.</p></div></div>
+    {(requests.length > 0 || !demo) && <section className="approval-group"><h2>Requests from clients {requests.filter(r => !r.reply).length > 0 && <span className="tab-count">{requests.filter(r => !r.reply).length}</span>}</h2>
+      {requests.length ? <div className="request-grid">{[...requests].sort((a, b) => (!!a.reply - !!b.reply) || b.at.localeCompare(a.at)).map(r => <RequestRow key={r.clientId + r.id} r={r} d={d} mut={mut} user={user} toast={toast} />)}</div> : <p className="empty-note">When a client asks for something in their portal (“Can you also add a blog?”), it shows here so you can reply.</p>}</section>}
     <div className="approval-stats">{groups.map(([k, l]) => <button key={k} type="button" className={'approval-stat ' + k + (filter === k ? ' on' : '')} onClick={() => setFilter(filter === k ? 'all' : k)}><strong>{all.filter(x => x.row.approval.state === k).length}</strong><span>{l}</span></button>)}</div>
     {groups.filter(([k]) => filter === 'all' || filter === k).map(([k, l]) => { const list = all.filter(x => x.row.approval.state === k); return list.length > 0 && <section key={k} className="approval-group"><h2>{l}</h2>{list.map(({ kind, row, title, href }) => { const client = d.clients.find(c => c.id === approvalClient(d, row)), project = d.projects.find(p => p.id === row.project); return <a key={row.id} className={'approval-row state-' + k} href={href}>
       <span className={'approval-dot ' + k} /><span className="grow"><b>{title}</b><small><span className={'kind-tag ' + kind}>{KIND_LABEL[kind]}</span> {[client?.name, project?.name].filter(Boolean).join(' · ')} · sent {when(row.approval.requestedAt)}{row.approval.decidedAt ? ' · answered ' + when(row.approval.decidedAt) : ''}</small>{row.approval.comment && <span className="approval-comment">“{row.approval.comment}”</span>}</span><span className={'chip ' + CHIP[k]}>{APPROVAL_LABEL[k]}</span><span aria-hidden="true">›</span></a>; })}</section>; })}

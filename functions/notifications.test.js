@@ -42,3 +42,12 @@ test('request a meeting drafts an email to you', () => {
   assert.match(m, /^mailto:me%40studio\.co\?subject=Meeting%20request%20%C2%B7%20Website/);
   assert.match(decodeURIComponent(m), /Can we have a meeting \/ quick call\?/);
 });
+
+test('request replies read as labels, with your own timing for custom', async () => {
+  const { replyLabel, REPLIES } = await import('../src/client-feed.js');
+  assert.equal(replyLabel({}), 'Waiting for a reply');
+  assert.equal(replyLabel({ reply: 'now' }), REPLIES.now);
+  assert.equal(replyLabel({ reply: 'custom', replyText: 'Ready by Friday' }), 'Ready by Friday');
+  const list = buildNotifications(ws(), [], new Date(), [{ id: 'r', clientId: 'c', title: 'Add a blog?', at: '2026-10-25T09:00:00.000Z' }]);
+  assert.ok(list.some(n => n.title === 'Hytz asked: “Add a blog?”'));
+});
