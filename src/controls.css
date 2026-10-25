@@ -8,3 +8,6 @@
 .date-panel-foot{padding-top:10px;margin-top:10px}
 .list-toolbar>.select-control{max-width:250px;margin-top:0}
 @media(max-width:600px){.list-toolbar>.select-control{max-width:none}}
+input[type=time],input[type=date],input[type=datetime-local]{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;text-align:left}
+input[type=time]::-webkit-date-and-time-value,input[type=date]::-webkit-date-and-time-value,input[type=datetime-local]::-webkit-date-and-time-value{text-align:left;margin:0}
+.date-control{max-width:100%}

@@ -11,7 +11,7 @@
 .calendar-drag-handle{width:44px;min-width:44px;padding:0;border:2px solid var(--ln);border-radius:12px;background:var(--sf);color:var(--tx);font-size:28px;cursor:grab;touch-action:none;user-select:none}
 .calendar-drag-preview{position:fixed;z-index:120;pointer-events:none;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:8px 12px;border:2px solid var(--ln);border-radius:10px;background:var(--butter);color:var(--tx);font-size:12px;font-weight:700;box-shadow:0 6px 22px #0003}
 .calendar-move-form{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;border-top:1px solid var(--gridline);padding-top:18px}
-.calendar-move-form label{flex:1;min-width:160px;margin:0}
+.calendar-move-form label{flex:1;min-width:min(160px,100%);max-width:100%;margin:0}
 .calendar-move-form>p{flex-basis:100%;margin:0}
 .event-inspector{bottom:132px;max-height:min(70dvh,calc(100dvh - 244px))}
 
@@ -56,7 +56,7 @@
   .day-agenda .section-head{align-items:flex-start;gap:12px}
   .day-agenda h2{font-size:22px}
   .calendar-help a{flex-shrink:1;flex-wrap:wrap}
-  .event-inspector{left:12px;right:12px;width:auto;bottom:calc(120px + env(safe-area-inset-bottom,0px));max-height:calc(100dvh - 228px - env(safe-area-inset-bottom,0px));overscroll-behavior:contain}
+  .event-inspector{left:16px;right:16px;width:auto;max-width:calc(100vw - 32px);margin:0 auto;transform:none;box-sizing:border-box;overflow-x:hidden;bottom:calc(120px + env(safe-area-inset-bottom,0px));max-height:calc(100dvh - 228px - env(safe-area-inset-bottom,0px));overscroll-behavior:contain}
   .event-inspector p{overflow-wrap:anywhere}
   .event-inspector .section-head{gap:10px}
   .ov{padding:12px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px))}
