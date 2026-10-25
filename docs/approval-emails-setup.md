@@ -1,8 +1,8 @@
 # Approval emails
 
-When you send a task, PRD, file or quote for approval, SoloDesk can email the client a link to their portal. When they approve or ask for changes, it can email you. The code is in [`functions/approval-functions.js`](../functions/approval-functions.js) (triggers) and [`functions/approval-mail.js`](../functions/approval-mail.js) (the emails). It needs the **Blaze** plan.
+When you send a task, PRD, file or quote for approval, Terracove can email the client a link to their portal. When they approve or ask for changes, it can email you. The code is in [`functions/approval-functions.js`](../functions/approval-functions.js) (triggers) and [`functions/approval-mail.js`](../functions/approval-mail.js) (the emails). It needs the **Blaze** plan.
 
-Without these functions everything still works: the client sees the request in their portal, and their answer is copied onto the item the next time you open SoloDesk (the answer waits in `solodeskPortals/{owner}/shares/{client}/responses`).
+Without these functions everything still works: the client sees the request in their portal, and their answer is copied onto the item the next time you open Terracove (the answer waits in `solodeskPortals/{owner}/shares/{client}/responses`).
 
 ## Set up (once, after moving to Blaze)
 
@@ -21,4 +21,4 @@ Without these functions everything still works: the client sees the request in t
 ## What gets sent
 
 - **To the client**, when a share is published with items that are newly waiting for approval (or sent again): subject "Studio would like your approval on …", the items and your message, and an **Open your portal** button.
-- **To you** (the email on your SoloDesk sign-in), when the client answers: "Ava approved “Homepage”" or "asked for changes to", with their comment and an **Open Approvals** button.
+- **To you** (the email on your Terracove sign-in), when the client answers: "Ava approved “Homepage”" or "asked for changes to", with their comment and an **Open Approvals** button.

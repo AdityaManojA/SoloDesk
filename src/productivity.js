@@ -131,7 +131,7 @@ export function freeSlots(events,day,{start='09:00',end='18:00',minutes=60}={}){
 }
 export function scheduleTask(workspace,id,day,time='09:00',minutes=60){
   const task=workspace.tasks.find(t=>t.id===id);
-  if(!task||task.status==='Done')throw new Error('Choose an open SoloDesk task.');
+  if(!task||task.status==='Done')throw new Error('Choose an open Terracove task.');
   if(!validDay(day)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)||!Number.isFinite(Number(minutes))||minutes<5||minutes>1440)throw new Error('Choose a date, time and duration of 5–1440 minutes.');
   const date=new Date(day+'T'+time+':00');
   if(localDay(date.toISOString())!==day||date.getHours()!==Number(time.slice(0,2))||date.getMinutes()!==Number(time.slice(3)))throw new Error('That time does not exist on this date.');

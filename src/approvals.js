@@ -1,6 +1,6 @@
 // Client approvals. You send a task, a PRD, a linked file or a draft invoice (as a quote) for approval; it
 // appears in that client's portal, where they approve it or ask for changes. Their answer is written to
-// solodeskPortals/{owner}/shares/{client}/responses/{itemId} and copied onto the item the next time SoloDesk is
+// solodeskPortals/{owner}/shares/{client}/responses/{itemId} and copied onto the item the next time Terracove is
 // open. Item ids are unique across tasks, docs and invoices, so the response only needs the id.
 export const APPROVAL_LABEL = { pending: 'Waiting for client', approved: 'Approved', changes: 'Changes requested' };
 export const DECISIONS = ['approved', 'changes'];

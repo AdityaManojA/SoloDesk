@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "SoloDesk",
-  "short_name": "SoloDesk",
+  "name": "Terracove",
+  "short_name": "Terracove",
   "description": "Your clients, projects, tasks and invoices in one workspace.",
   "lang": "en",
   "start_url": "/#/dash",

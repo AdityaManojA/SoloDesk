@@ -61,7 +61,7 @@ export async function resolveWorkbook(graph, shareUrl, worksheetName) {
 }
 
 export async function syncLink({ graph, link, workspace, pending = [], newId, now = new Date().toISOString(), resolve = {} }) {
-  // Changes already sent to the app but not yet applied count as SoloDesk's current state.
+  // Changes already sent to the app but not yet applied count as Terracove's current state.
   const effective = structuredClone(workspace);
   applyAppChanges(effective, pending, link.scope, now);
   const app = appRows(effective, link.scope);

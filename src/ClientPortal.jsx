@@ -80,7 +80,7 @@ const host=url=>{try{return new URL(url).hostname.replace(/^www\./,'');}catch{re
 function ApprovalCard({task,response,project,owner,shareId,user,onMessage,currency,compact=false}){
   const kind=task.kind||'task';
   const [comment,setComment]=useState(''),[busy,setBusy]=useState(false),[changing,setChanging]=useState(false);
-  // Their own answer shows straight away; the published state catches up once the owner opens SoloDesk.
+  // Their own answer shows straight away; the published state catches up once the owner opens Terracove.
   const fresh=response&&response.atIso>=task.approval.requestedAt;
   const state=fresh?response.decision:task.approval.state,said=fresh?response.comment:task.approval.comment;
   const answer=async decision=>{
@@ -202,7 +202,7 @@ function PortalShare({share,owner,user,onMessage,settings}){
   </section>;
 }
 
-// Top right: the client's name as you set it in SoloDesk, with the login email under it.
+// Top right: the client's name as you set it in Terracove, with the login email under it.
 const initials=name=>name.split(/\s+/).filter(Boolean).map(w=>w[0]).join('').slice(0,2).toUpperCase();
 function PortalUser({name,email,onSignOut}){
   const shown=name||email||'';

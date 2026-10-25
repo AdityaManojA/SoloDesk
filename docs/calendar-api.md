@@ -1,6 +1,6 @@
 # Calendar and scheduler integration
 
-SoloDesk supplies a one-way timeline. Your calendar remains responsible for display, conflicts, notifications and sync cadence. No calendar provider has been connected yet.
+Terracove supplies a one-way timeline. Your calendar remains responsible for display, conflicts, notifications and sync cadence. No calendar provider has been connected yet.
 
 ## Choose a connection
 
@@ -54,7 +54,7 @@ This response is illustrative. IDs and actual dates come from your workspace.
 
 ## Endpoints
 
-All paths are relative to the deployed SoloDesk origin. `VITE_API_BASE_URL` can override the browser base for local development.
+All paths are relative to the deployed Terracove origin. `VITE_API_BASE_URL` can override the browser base for local development.
 
 | Method/path | Access | Response |
 | --- | --- | --- |
@@ -71,8 +71,8 @@ Calendar endpoints accept `from=YYYY-MM-DD`, `to=YYYY-MM-DD`, and `includeComple
 ## Polling correctly
 
 1. Fetch every page for the same date range. Follow `meta.nextOffset` until null. Do not update your scheduler from a partial/failed fetch.
-2. Upsert under a SoloDesk source namespace using stable event `id`. A title or date edit keeps its ID.
-3. After a **complete, successful** refresh, remove previously imported SoloDesk events that overlap the same range but are absent from the new result. This handles completions, deletions, and rescheduling outside the range. Leave unrelated calendar events alone.
+2. Upsert under a Terracove source namespace using stable event `id`. A title or date edit keeps its ID.
+3. After a **complete, successful** refresh, remove previously imported Terracove events that overlap the same range but are absent from the new result. This handles completions, deletions, and rescheduling outside the range. Leave unrelated calendar events alone.
 4. Poll at a cadence appropriate for your application. A multi-page read is not an atomic snapshot: for a rapidly changing workspace, refresh again or use an unpaginated ICS subscription. Rate limiting, push notifications, and delta tokens are not implemented.
 
 ## Deployment prerequisites
@@ -85,7 +85,7 @@ Authoritative implementation references: [Firebase HTTP functions](https://fireb
 
 ## View and import one item at a time
 
-In SoloDesk open **Calendar** in the bottom dock (`#/calendar`). Navigate months, switch to Agenda, or select a day. Client/type/completed filters affect the view and monthly export. Click an event to open its details, then **Export this event · ICS**. Open its editor to change its underlying task/project.
+In Terracove open **Calendar** in the bottom dock (`#/calendar`). Navigate months, switch to Agenda, or select a day. Client/type/completed filters affect the view and monthly export. Click an event to open its details, then **Export this event · ICS**. Open its editor to change its underlying task/project.
 
 **Google Calendar (computer):** Settings → Import & export → Select file from your computer → choose the single-event ICS → choose the destination calendar → Import. Repeat for each chosen item. Imports are copies and do not keep syncing. [Official Google guide](https://support.google.com/calendar/answer/37118?hl=en).
 
@@ -93,4 +93,4 @@ In SoloDesk open **Calendar** in the bottom dock (`#/calendar`). Navigate months
 
 **Ongoing feed:** Google Calendar web → Other calendars → + → From URL; Apple Calendar Mac → File → New Calendar Subscription. Use the URL shown once when creating a calendar-only key. Localhost is not reachable by Google’s servers or other devices. The endpoint must be deployed at a reachable HTTPS origin. Feed refresh is controlled by the provider and has not been tested against either service here. Keys expire in 90 days. Anyone who has the URL can read the feed.
 
-Avoid mixing repeated file imports with a subscription to the same events; separate copies can appear. Direct Google insertion would require Calendar API OAuth, a dedicated destination calendar, source/provider ID mapping and update/delete reconciliation. Google sign-in for SoloDesk alone does not grant Calendar API access. [Google event creation guide](https://developers.google.com/workspace/calendar/api/guides/create-events).
+Avoid mixing repeated file imports with a subscription to the same events; separate copies can appear. Direct Google insertion would require Calendar API OAuth, a dedicated destination calendar, source/provider ID mapping and update/delete reconciliation. Google sign-in for Terracove alone does not grant Calendar API access. [Google event creation guide](https://developers.google.com/workspace/calendar/api/guides/create-events).

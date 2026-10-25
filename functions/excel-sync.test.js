@@ -50,10 +50,10 @@ test('first sync writes the header and every in-scope task, with hours from the 
   assert.equal(first.appChanges.length, 0);
 });
 
-test('a sheet edit flows to SoloDesk and a SoloDesk edit flows to the sheet, one cell at a time', async () => {
+test('a sheet edit flows to Terracove and a Terracove edit flows to the sheet, one cell at a time', async () => {
   const { graph, w, base } = await linked();
   row(graph.grid, 't1')[2] = 'done';                // edited in Excel
-  w.tasks[1].title = 'Homepage copy';               // edited in SoloDesk
+  w.tasks[1].title = 'Homepage copy';               // edited in Terracove
   graph.grid[1][7] = '=F2*2';                        // a formula in an unmapped column
   graph.calls.length = 0;
   const result = await syncLink({ graph, link: link(base), workspace: w, newId });
@@ -74,7 +74,7 @@ test('a cell changed on both sides is a conflict until the owner picks a side', 
   assert.deepEqual(picked.appChanges, [{ op: 'update', id: 't1', fields: { due: '2026-10-29' } }]);
 });
 
-test('a row typed into the sheet becomes a task and gets its SoloDesk ID written back', async () => {
+test('a row typed into the sheet becomes a task and gets its Terracove ID written back', async () => {
   const { graph, w, base } = await linked();
   graph.grid.push(['', 'Launch checklist', 'In progress', 46325, 'low']);   // 46325 = Excel serial for 2026-10-30
   const result = await syncLink({ graph, link: link(base), workspace: w, newId });
@@ -91,7 +91,7 @@ test('deleted rows are reported once and never deleted or re-added on the other 
   graph.grid.splice(graph.grid.indexOf(row(graph.grid, 't2')), 1);
   const first = await syncLink({ graph, link: link(base), workspace: w, newId });
   assert.deepEqual(first.removedInSheet.map(r => r.id), ['t2']);
-  assert.ok(w.tasks.some(t => t.id === 't2'), 'the task stays in SoloDesk');
+  assert.ok(w.tasks.some(t => t.id === 't2'), 'the task stays in Terracove');
   const again = await syncLink({ graph, link: link(first.base), workspace: w, newId });
   assert.ok(!row(graph.grid, 't2') && !again.removedInSheet.length);
   w.tasks = w.tasks.filter(t => t.id !== 't1');
@@ -120,7 +120,7 @@ test('unreadable cells are reported instead of synced, and missing columns stop 
 });
 
 test('mapping, readers and helpers reject unsafe input', () => {
-  assert.throws(() => validateMapping([{ column: 'Task', field: 'title', direction: 'both' }]), /SoloDesk ID/);
+  assert.throws(() => validateMapping([{ column: 'Task', field: 'title', direction: 'both' }]), /Terracove ID/);
   assert.throws(() => validateMapping([...DEFAULT_MAPPING.slice(0, 5), { column: 'Hours', field: 'hours', direction: 'both' }]), /hours/i);
   assert.throws(() => validateMapping([...DEFAULT_MAPPING, { column: 'task', field: 'status', direction: 'in' }]), /once/);
   assert.equal(readers.due('2026-02-30'), undefined); assert.equal(readers.priority('urgent'), undefined);

@@ -1,4 +1,4 @@
-// Operates only on SoloDesk's workspace, never the separate TaskFlow feed.
+// Operates only on Terracove's workspace, never the separate TaskFlow feed.
 export function deletionInfo(workspace, kind, id, invoiceId) {
   if (kind === 'payments') {
     const invoice = workspace.invoices.find(i => i.id === invoiceId), payment = invoice?.pays.find(p => p.id === id);
@@ -15,7 +15,7 @@ export function deletionInfo(workspace, kind, id, invoiceId) {
   }
   if (kind === 'projects') return {label:'Delete project',message:`Delete “${title}”? Its tasks will be kept and unlinked from this project. This cannot be undone.`};
   if (kind === 'invoices') return {label:'Delete invoice',message:`Delete ${title}, including its ${record.pays.length} payment records? Outstanding balances and revenue reports will be recalculated. This cannot be undone.`};
-  return {label:'Delete task',message:`Delete “${title}”? This removes its SoloDesk calendar entry too. This cannot be undone.`};
+  return {label:'Delete task',message:`Delete “${title}”? This removes its Terracove calendar entry too. This cannot be undone.`};
 }
 
 export function deleteRecord(workspace, kind, id, invoiceId) {

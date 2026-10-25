@@ -11,7 +11,7 @@ const CHIP = { pending: 'hero', approved: 'sage', changes: 'sand' };
 const when = iso => iso ? new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '';
 const republish = (d, user, clientId, toast) => import('./ClientPortal.jsx').then(m => m.republishShare(d, user.uid, clientId)).catch(() => toast('Saved. The client portal will catch up in a moment.'));
 
-// While SoloDesk is open, copy client answers from the portal onto their items, then refresh that portal.
+// While Terracove is open, copy client answers from the portal onto their items, then refresh that portal.
 export function useApprovalSync({ d, mut, user, demo, toast }) {
   const latest = useRef(d); latest.current = d;
   const clients = !d ? '' : [...new Set(approvalItems(d).map(x => approvalClient(d, x.row)).filter(Boolean))].sort().join(',');

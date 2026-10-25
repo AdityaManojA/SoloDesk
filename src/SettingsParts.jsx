@@ -54,7 +54,7 @@ export function InvoiceDefaults({ d, mut, toast }) {
 export function WhatsNew() {
   const released = changelog.filter(r => r.released), upcoming = changelog.filter(r => !r.released);
   return <div>
-    <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}><div style={{ flex: 1 }}><h2 style={{ margin: 0 }}>SoloDesk {currentVersion()}</h2><small className="empty-note">Released {day(released[0]?.date)} · You are on the latest version</small></div><span className="chip sage">Up to date</span></div>
+    <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}><div style={{ flex: 1 }}><h2 style={{ margin: 0 }}>Terracove {currentVersion()}</h2><small className="empty-note">Released {day(released[0]?.date)} · You are on the latest version</small></div><span className="chip sage">Up to date</span></div>
     {[...upcoming, ...released].map(r => <section key={r.version} className="release" aria-label={'Version ' + r.version}>
       <div className="release-head"><span className="chip ink">{r.version}</span><h3>{r.title}</h3><span className={'chip ' + (r.released ? (r.version === currentVersion() ? 'sage' : 'white') : 'hero')}>{r.released ? (r.version === currentVersion() ? 'Current' : 'Released') : 'Coming soon'}</span><small className="empty-note">{r.released ? day(r.date) : 'In progress'}</small></div>
       <ul>{r.highlights.map(([t, x]) => <li key={t}><span><b>{t}</b><small>{x}</small></span></li>)}</ul>
@@ -65,7 +65,7 @@ export function WhatsNew() {
 
 export function UpdateNotice({ Modal, onClose }) {
   const r = changelog.find(x => x.released);
-  return <Modal title={'SoloDesk updated to ' + r.version} label="Got it" onClose={onClose} onSubmit={onClose}>
+  return <Modal title={'Terracove updated to ' + r.version} label="Got it" onClose={onClose} onSubmit={onClose}>
     <div className="update-hero"><Shape kind="star" color="var(--hero-deep)" size={110} style={{ position: 'absolute', right: -24, top: -24 }} /><b style={{ fontSize: 18 }}>{r.title}</b><p style={{ margin: '4px 0 0' }}>Here is what changed.</p></div>
     <ul style={{ margin: '16px 0', paddingLeft: 18, display: 'grid', gap: 8 }}>{r.highlights.slice(0, 6).map(([t, x]) => <li key={t}><b>{t}.</b> {x}</li>)}</ul>
     <a className="text-link" href="#/settings/whats-new" onClick={onClose}>See all release notes →</a>

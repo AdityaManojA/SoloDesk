@@ -3,7 +3,7 @@
 //                                  encrypted and kept in solodeskPrivate/{uid}, which browsers cannot read.
 //   link / unlink / syncNow / resolve / disconnect   called from the app.
 //   webhook                        Microsoft change notifications for linked drives → queue a sync.
-//   onQueue / onWorkspaceWrite     run a sync after a sheet change or a SoloDesk save.
+//   onQueue / onWorkspaceWrite     run a sync after a sheet change or a Terracove save.
 //   maintain                       hourly: renew notification subscriptions and run a backstop sync.
 // Changes from the sheet are left in solodeskSync/{uid}/inbox for the app to apply; the server never
 // rewrites the workspace document, so it cannot collide with the app's own saves.
@@ -19,7 +19,7 @@ import { createGraph, resolveWorkbook, syncLink, rowsHash } from './excel-runner
 
 const CLIENT_ID = defineString('MS_CLIENT_ID', { description: 'Application (client) ID of the Microsoft Entra app registration.' });
 const TENANT = defineString('MS_TENANT', { default: 'common', description: '"common" for work, school and personal Microsoft accounts.' });
-const APP_URL = defineString('SOLODESK_APP_URL', { description: 'SoloDesk origin, for example https://taskflow-solodesk.web.app' });
+const APP_URL = defineString('SOLODESK_APP_URL', { description: 'Terracove origin, for example https://taskflow-solodesk.web.app' });
 const REDIRECT_URI = defineString('MS_REDIRECT_URI', { description: 'Redirect URI registered with Microsoft; must reach excel-oauthCallback.' });
 const WEBHOOK_URL = defineString('MS_WEBHOOK_URL', { description: 'Public HTTPS URL that reaches excel-webhook.' });
 const CLIENT_SECRET = defineSecret('MS_CLIENT_SECRET');
@@ -31,7 +31,7 @@ const MAX_LINKS = 25, SUB_DAYS = 3;
 
 const db = () => getFirestore();
 const now = () => new Date().toISOString();
-const need = request => { if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Sign in to SoloDesk first.'); return request.auth.uid; };
+const need = request => { if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Sign in to Terracove first.'); return request.auth.uid; };
 const text = (value, max) => typeof value === 'string' ? value.trim().slice(0, max) : '';
 
 // AES-256-GCM with a 32-byte key kept in Secret Manager.
@@ -126,7 +126,7 @@ export async function syncUser(uid, { source = 'app', linkId, resolve = {} } = {
       const link = { id: doc.id, ...doc.data() };
       const pending = inbox.docs.filter(d => d.get('linkId') === doc.id).flatMap(d => d.get('changes') || []);
       return { doc, link, pending };
-    // A SoloDesk save that did not touch this project's or client's tasks needs no Excel round trip.
+    // A Terracove save that did not touch this project's or client's tasks needs no Excel round trip.
     }).filter(({ link, pending }) => source !== 'app' || link.status !== 'ok' || predictedHash(workspace, pending, link.scope) !== link.appHash);
     if (!work.length) return;
     let graph;
@@ -197,7 +197,7 @@ export const link = onCall(withSecrets, async request => {
   if (existing.size >= MAX_LINKS) throw new HttpsError('resource-exhausted', `You can link up to ${MAX_LINKS} sheets.`);
   const token = await accessToken(uid);
   let workbook;
-  try { workbook = await resolveWorkbook(createGraph(token), shareUrl, text(data.worksheet, 31) || 'SoloDesk tasks'); }
+  try { workbook = await resolveWorkbook(createGraph(token), shareUrl, text(data.worksheet, 31) || 'Terracove tasks'); }
   catch (error) { throw new HttpsError('failed-precondition', error.status === 404 || error.status === 403 ? 'Microsoft could not open that workbook with this account. Check the link and that you can edit it.' : error.message); }
   if (existing.docs.some(d => d.get('itemId') === workbook.itemId && d.get('worksheetId') === workbook.worksheetId)) throw new HttpsError('already-exists', 'That worksheet is already linked. Use another worksheet name.');
   const ref = db().collection(`solodeskSync/${uid}/links`).doc();

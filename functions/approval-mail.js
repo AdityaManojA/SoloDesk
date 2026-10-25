@@ -13,7 +13,7 @@ export function newlyRequested(before, after) {
 }
 
 const button = (url, label) => `<p style="margin:24px 0"><a href="${esc(url)}" style="background:#141414;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:600">${esc(label)}</a></p>`;
-const wrap = body => `<div style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.5;color:#141414;max-width:560px">${body}<p style="color:#7a756c;font-size:12px;margin-top:32px">Sent by SoloDesk.</p></div>`;
+const wrap = body => `<div style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.5;color:#141414;max-width:560px">${body}<p style="color:#7a756c;font-size:12px;margin-top:32px">Sent by Terracove.</p></div>`;
 
 export function requestEmail({ to, business, clientName, items, portalUrl }) {
   const list = items.map(x => `<li><b>${esc(x.title)}</b> <span style="color:#7a756c">(${KIND[x.kind] || 'item'})</span>${x.approval?.note ? `<br><i>“${esc(x.approval.note)}”</i>` : ''}</li>`).join('');
@@ -30,7 +30,7 @@ export function answerEmail({ to, clientName, item, decision, comment, appUrl })
   const title = item?.title || 'an item';
   return { to, message: {
     subject: `${clientName} ${verb} “${title}”`,
-    text: `${clientName} ${verb} “${title}”.${comment ? `\n\n“${comment}”` : ''}\n\nOpen SoloDesk to see it: ${appUrl}/#/approvals`,
+    text: `${clientName} ${verb} “${title}”.${comment ? `\n\n“${comment}”` : ''}\n\nOpen Terracove to see it: ${appUrl}/#/approvals`,
     html: wrap(`<p><b>${esc(clientName)}</b> ${esc(verb)} <b>“${esc(title)}”</b>.</p>${comment ? `<p style="padding:12px 16px;background:#f3ecdf;border-radius:14px"><i>“${esc(comment)}”</i></p>` : ''}${button(appUrl + '/#/approvals', 'Open Approvals')}`),
   } };
 }

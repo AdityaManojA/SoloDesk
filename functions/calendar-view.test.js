@@ -59,7 +59,7 @@ test('agenda groups dates once and anchors continuing spans to the visible month
 import {calendarSourceCounts} from '../src/calendar-view.js';
 test('month source markers include every connected source on crowded dates',()=>{
   const items=[...Array.from({length:6},(_,i)=>({id:'p'+i,type:'project'})),{type:'taskflow-quest'},{type:'taskflow-event'},{type:'taskflow-event'},{type:'task'}];
-  assert.deepEqual(calendarSourceCounts(items),[{key:'taskflow',label:'TaskFlow',count:1},{key:'google',label:'Google Calendar',count:2},{key:'projects',label:'Projects',count:6},{key:'tasks',label:'SoloDesk tasks',count:1}]);
+  assert.deepEqual(calendarSourceCounts(items),[{key:'taskflow',label:'TaskFlow',count:1},{key:'google',label:'Google Calendar',count:2},{key:'projects',label:'Projects',count:6},{key:'tasks',label:'Terracove tasks',count:1}]);
   assert.deepEqual(calendarSourceCounts([]),[]);
 });
 

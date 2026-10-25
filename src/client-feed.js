@@ -1,4 +1,4 @@
-// What clients do in their portal, as it reaches SoloDesk: comments on tasks (including quick "You got this"
+// What clients do in their portal, as it reaches Terracove: comments on tasks (including quick "You got this"
 // cheers and change requests) and link updates. Plain functions here; the Firestore listeners are in portal-sync.js.
 import { clientLinkUrl, MAX_CLIENT_LINKS } from './invoice-input.js';
 import { rid } from './lib.js';

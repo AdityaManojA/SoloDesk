@@ -10,7 +10,7 @@ export function assertUnchanged(actual,expected){
 const object=v=>v&&typeof v==='object'&&!Array.isArray(v);
 const date=v=>!v||typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(v))&&new Date(v+'T00:00:00Z').toISOString().slice(0,10)===v;
 export function validateWorkspace(input){
-  if(!object(input))throw new Error('Choose a SoloDesk workspace JSON backup.');
+  if(!object(input))throw new Error('Choose a Terracove workspace JSON backup.');
   const pending=[input],seen=new WeakSet();
   while(pending.length){const row=pending.pop();if(!row||typeof row!=='object'||seen.has(row))continue;seen.add(row);for(const [key,value]of Object.entries(row)){if(['__proto__','prototype','constructor'].includes(key))throw new Error('Unsafe field name in backup.');if(value&&typeof value==='object')pending.push(value);}}
   const w=structuredClone(input),base=fresh();
@@ -115,7 +115,7 @@ export function publishablePortal(workspace,clientId,projectIds,invoiceIds,docId
     ...(kind==='link'?{url:row.url}:{}),
     ...(kind==='prd'?{prd:{problem:row.problem||'',goals:row.goals||'',outOfScope:row.outOfScope||'',requirements:(row.requirements||[]).map(r=>({title:r.title}))}}:{}),
     ...(kind==='quote'?{quote:{no:row.no,title:row.title||'',issue:row.issue,due:row.due,items:row.items.map(l=>({desc:l.desc,qty:l.qty,price:l.price})),tax:row.tax||0,total:calc(row).total}}:{})}));
-  return {business:workspace.settings.biz||'SoloDesk',contactEmail:workspace.settings.email||ownerEmail||'',clientName:client.name,currency:workspace.settings.cur,accent:actionColour(workspace.settings.actionColour).hex,links:(client.links||[]).map(l=>({label:l.label||'',url:l.url})),projects,tasks,docs,invoices,approvals,approvalIds:[...tasks,...approvals].filter(t=>t.approval).map(t=>t.id),wsStamp:workspaceStamp(workspace),updatedAt:new Date().toISOString()};
+  return {business:workspace.settings.biz||'Terracove',contactEmail:workspace.settings.email||ownerEmail||'',clientName:client.name,currency:workspace.settings.cur,accent:actionColour(workspace.settings.actionColour).hex,links:(client.links||[]).map(l=>({label:l.label||'',url:l.url})),projects,tasks,docs,invoices,approvals,approvalIds:[...tasks,...approvals].filter(t=>t.approval).map(t=>t.id),wsStamp:workspaceStamp(workspace),updatedAt:new Date().toISOString()};
 }
 
 const comparable = data => JSON.stringify({ ...data, updatedAt: '' });

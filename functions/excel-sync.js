@@ -1,13 +1,13 @@
-// Two-way sync between a SoloDesk task list (one project or one client) and a table in an Excel worksheet.
+// Two-way sync between a Terracove task list (one project or one client) and a table in an Excel worksheet.
 // Pure functions only: the Graph calls and Firestore storage live in excel-runner.js and excel-functions.js.
 //
-// Each sheet row carries a "SoloDesk ID" that SoloDesk owns. Every sync compares three versions of each
-// mapped cell: SoloDesk now, the sheet now, and the value both agreed on after the last sync ("base").
+// Each sheet row carries a "Terracove ID" that Terracove owns. Every sync compares three versions of each
+// mapped cell: Terracove now, the sheet now, and the value both agreed on after the last sync ("base").
 // Whichever side differs from base changed; if both did, it is a conflict and nothing is overwritten.
 // Rows are never deleted on either side: a row removed in one place is reported and stops syncing.
 
 export const DEFAULT_MAPPING = [
-  { column: 'SoloDesk ID', field: 'id', direction: 'locked' },
+  { column: 'Terracove ID', field: 'id', direction: 'locked' },
   { column: 'Task', field: 'title', direction: 'both' },
   { column: 'Status', field: 'status', direction: 'both' },
   { column: 'Due', field: 'due', direction: 'both' },
@@ -20,7 +20,7 @@ const isoDay = value => /^\d{4}-\d{2}-\d{2}$/.test(value) && new Date(value + 'T
 // Excel stores dates as days since 30 Dec 1899.
 const fromSerial = serial => new Date(Date.UTC(1899, 11, 30) + Math.round(serial) * 86400000).toISOString().slice(0, 10);
 
-// Each reader turns a sheet cell into a SoloDesk value, or undefined when the cell cannot be used.
+// Each reader turns a sheet cell into a Terracove value, or undefined when the cell cannot be used.
 export const readers = {
   title: v => { const t = String(v ?? '').trim().slice(0, 200); return t || undefined; },
   status: v => {
@@ -50,11 +50,11 @@ export function validateMapping(mapping) {
     const column = String(m?.column || '').trim();
     if (!column || column.length > 60) throw new Error('Each mapped column needs a header of up to 60 characters.');
     if (m.field === 'id' ? m.direction !== 'locked' : !readers[m.field] || !DIRECTIONS.includes(m.direction)) throw new Error('Unknown field or sync direction in the column mapping.');
-    if (m.field === 'hours' && m.direction !== 'out') throw new Error('Logged hours can only be sent from SoloDesk to the sheet.');
+    if (m.field === 'hours' && m.direction !== 'out') throw new Error('Logged hours can only be sent from Terracove to the sheet.');
     if (fields.has(m.field) || columns.has(column.toLowerCase())) throw new Error('Each field and column can be mapped once.');
     fields.add(m.field); columns.add(column.toLowerCase());
   }
-  if (!fields.has('id') || !fields.has('title')) throw new Error('The mapping needs the SoloDesk ID and Task columns.');
+  if (!fields.has('id') || !fields.has('title')) throw new Error('The mapping needs the Terracove ID and Task columns.');
   return mapping.map(m => ({ column: String(m.column).trim(), field: m.field, direction: m.direction }));
 }
 
@@ -99,11 +99,11 @@ export function planSync({ app, sheet, base = {}, mapping, newId, resolve = {} }
 
   for (const s of sheet.rows) {
     if (s.id) {
-      if (sheetById.has(s.id)) out.invalid.push({ row: s.row, id: s.id, field: 'id', reason: 'This SoloDesk ID appears more than once. Only the first row syncs.' });
+      if (sheetById.has(s.id)) out.invalid.push({ row: s.row, id: s.id, field: 'id', reason: 'This Terracove ID appears more than once. Only the first row syncs.' });
       else sheetById.set(s.id, s);
       continue;
     }
-    // A row typed into the sheet without an ID becomes a new SoloDesk task.
+    // A row typed into the sheet without an ID becomes a new Terracove task.
     const fieldsIn = {};
     for (const m of fields) {
       if (m.direction === 'out') continue;
@@ -159,7 +159,7 @@ export function planSync({ app, sheet, base = {}, mapping, newId, resolve = {} }
   return out;
 }
 
-// Applied by the SoloDesk app (from its sync inbox) and by the server to predict pending changes.
+// Applied by the Terracove app (from its sync inbox) and by the server to predict pending changes.
 export function applyAppChanges(workspace, changes, scope, now = new Date().toISOString()) {
   let applied = 0;
   for (const change of changes) {

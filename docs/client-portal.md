@@ -1,6 +1,6 @@
 # Client portal setup
 
-Sign in to SoloDesk as the workspace owner, open **Clients**, then open a client and choose **Access → Client portal**.
+Sign in to Terracove as the workspace owner, open **Clients**, then open a client and choose **Access → Client portal**.
 
 1. Enter the client's **email**. This is their username.
 2. For a new account, enter an **initial password with at least 12 characters**. For someone who already uses this Firebase project, choose **Link existing account**; their current password is kept, and their email must be verified. Google sign-in is also available on the portal.
@@ -17,7 +17,7 @@ The client sees selected project names, dates, task progress/checklists and sele
 - Clients can use **Forgot password** on the sign-in page or **Change your password** after signing in. A recent sign-in may be required. Reset email delivery is handled by Firebase and depends on its email configuration, limits and spam filtering.
 - Existing accounts are linked rather than overwritten. Owners cannot view or replace an existing account's password through this form.
 - If Firebase account creation succeeds but publishing fails, the form keeps the new user ID while it remains open so publication can be retried. If you close it, use the existing-account flow after the client verifies the email, or contact support to repair the binding. The Auth account is not deleted automatically.
-- No passwords are stored in SoloDesk workspace documents, portal snapshots or exported backups. The initial password exists only in the form and is cleared after the attempt. Never put passwords in client notes.
+- No passwords are stored in Terracove workspace documents, portal snapshots or exported backups. The initial password exists only in the form and is cleared after the attempt. Never put passwords in client notes.
 
 ## Shared Firebase project
 

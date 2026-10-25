@@ -23,7 +23,7 @@ export function touchedAt(workspace,kind,row){
 const ranked=rows=>rows.sort((a,b)=>b.at-a.at||b.index-a.index);
 const entries=(workspace,list,kind,keep=()=>true)=>(workspace[list]||[]).map((row,index)=>({kind,row,index,at:touchedAt(workspace,list,row)})).filter(e=>keep(e.row));
 
-// Home's "Jump back in": the SoloDesk items you edited most recently — notes, tasks, projects and clients —
+// Home's "Jump back in": the Terracove items you edited most recently — notes, tasks, projects and clients —
 // each ranked by its own last edit, so the thing you changed is the thing that shows.
 export function recentWork(workspace,{limit=3}={}){
   const own=row=>time(row.updatedAt||row.createdAt);

@@ -1,12 +1,12 @@
 # Planning & productivity guide
 
-Open [SoloDesk](https://taskflow-solodesk.web.app) and sign in, or choose **Explore the demo** to try sample data. Demo changes stay in your browser. Use **Commands** in the header or **More** on desktop and mobile. **Calendar → Daily plan** opens the planner; **Projects → Project templates** and **Invoices → Recurring drafts** keep related tools together. **More → Data & connections → Backup & restore** contains JSON backups and individual CSV exports. **More → Recovery** contains Undo and Trash. Settings groups business details, appearance, getting started, connections and account controls.
+Open [Terracove](https://taskflow-solodesk.web.app) and sign in, or choose **Explore the demo** to try sample data. Demo changes stay in your browser. Use **Commands** in the header or **More** on desktop and mobile. **Calendar → Daily plan** opens the planner; **Projects → Project templates** and **Invoices → Recurring drafts** keep related tools together. **More → Data & connections → Backup & restore** contains JSON backups and individual CSV exports. **More → Recovery** contains Undo and Trash. Settings groups business details, appearance, getting started, connections and account controls.
 
 | Tool | How to use it | Example |
 | --- | --- | --- |
 | **Daily planner** | Open Daily planner, choose a date and working hours, then schedule a task with a start time and duration. | [Planner](screenshots/13-daily-planner-desktop.png) |
 | **Conflicts & free time** | Review overlapping timed work and choose a suggested free slot. You can also open this from Calendar. | [Scheduling suggestions](screenshots/21-conflicts-and-free-time.png) |
-| **Calendar task tray** | Drag an unscheduled SoloDesk task onto a calendar date. Use the planner to give it a timed work block. | [Calendar](screenshots/04-calendar-desktop.png) |
+| **Calendar task tray** | Drag an unscheduled Terracove task onto a calendar date. Use the planner to give it a timed work block. | [Calendar](screenshots/04-calendar-desktop.png) |
 | **Global search** | Use the header search button or **Ctrl/Command K**, enter a title or name, and select a result. | [Search](screenshots/15-global-search-desktop.png) |
 | **Undo & Trash** | Use Undo for recent changes, or open Trash and choose Restore for a deleted record. | [Trash](screenshots/19-trash-desktop.png) |
 | **Recurring tasks & drafts** | Set a task's repeat option when editing it. Completing it creates its next occurrence. For recurring invoices, create a schedule and choose **Generate due drafts** when due. | [Invoice draft schedules](screenshots/18-recurring-drafts-desktop.png) |

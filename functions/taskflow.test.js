@@ -22,7 +22,7 @@ test('undated quests stay in the list; unresolved quest times use a free all-day
   assert.equal(events.length,1); assert.equal(events[0].allDay,true); assert.equal(events[0].availability,'free');
   assert.equal(events[0].end,'2026-10-23'); assert.match(events[0].description,/could not be resolved/);
 });
-test('calendar IDs stay distinct from SoloDesk and quest due times never reserve a work block',()=>{
+test('calendar IDs stay distinct from Terracove and quest due times never reserve a work block',()=>{
   const feed=normalizeTaskflow(sample()), events=taskflowCalendarEvents(feed);
   assert.deepEqual(events.map(e=>e.id),['taskflow-event-e1','taskflow-quest-q1']);
   assert.equal(events[1].availability,'free'); assert.equal(events[1].reminder,true);

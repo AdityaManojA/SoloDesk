@@ -7,7 +7,7 @@
 // shows a load error instead of saving a workspace with those lists missing.
 export const PART_LISTS = ['notes', 'docs', 'activity', 'focusSessions', 'trash'];
 export const PART_BYTES = 900_000;
-export const SPLIT_MARKER = JSON.stringify({ splitStorage: 2, message: 'This workspace was saved by a newer SoloDesk. Reload the page.' });
+export const SPLIT_MARKER = JSON.stringify({ splitStorage: 2, message: 'This workspace was saved by a newer Terracove. Reload the page.' });
 const bytes = s => new TextEncoder().encode(s).byteLength;
 
 export function splitWorkspace(workspace) {

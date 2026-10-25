@@ -34,7 +34,7 @@ test('new items keep the level of the line they follow; removing keeps the outli
 
 test('text and checklists convert both ways and keep indentation', () => {
   let n = 0;
-  const items = linesToItems('SoloDesk\n  profile\n    links\n- approval\n\n', () => 'i' + n++);
-  assert.deepEqual(items.map(x => [x.title, x.level]), [['SoloDesk', 0], ['profile', 1], ['links', 2], ['approval', 0]]);
-  assert.equal(itemsToLines(items), 'SoloDesk\n  profile\n    links\napproval');
+  const items = linesToItems('Terracove\n  profile\n    links\n- approval\n\n', () => 'i' + n++);
+  assert.deepEqual(items.map(x => [x.title, x.level]), [['Terracove', 0], ['profile', 1], ['links', 2], ['approval', 0]]);
+  assert.equal(itemsToLines(items), 'Terracove\n  profile\n    links\napproval');
 });

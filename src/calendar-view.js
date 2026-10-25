@@ -47,7 +47,7 @@ export function groupCalendarAgenda(items, month) {
 
 // Count every source, including events beyond the three visible title previews.
 export function calendarSourceCounts(items) {
-  const sources=[['taskflow','TaskFlow'],['google','Google Calendar'],['projects','Projects'],['tasks','SoloDesk tasks']];
+  const sources=[['taskflow','TaskFlow'],['google','Google Calendar'],['projects','Projects'],['tasks','Terracove tasks']];
   const counts={taskflow:0,google:0,projects:0,tasks:0};
   for(const event of items) counts[event.type==='taskflow-event'?'google':event.type==='taskflow-quest'?'taskflow':event.type==='project'?'projects':'tasks']++;
   return sources.filter(([key])=>counts[key]).map(([key,label])=>({key,label,count:counts[key]}));

@@ -78,7 +78,7 @@ export function createApi({ store, verifyToken, userExists, allowedOrigins = [],
       if (!resources.includes(resource)) throw fail(404, 'Endpoint was not found.');
       if (req.method !== 'GET') { res.set('Allow', 'GET'); throw fail(405, 'Data endpoints are read-only.'); }
       const workspace = await store.getWorkspace(uid);
-      if (!workspace) throw fail(404, 'Workspace was not found. Open SoloDesk and save your first record.');
+      if (!workspace) throw fail(404, 'Workspace was not found. Open Terracove and save your first record.');
       let events;
       if (calendarRoute) {
         for (const field of ['from', 'to']) if (req.query[field] && (!/^\d{4}-\d{2}-\d{2}$/.test(req.query[field]) || !Number.isFinite(Date.parse(req.query[field])) || new Date(req.query[field] + 'T00:00:00Z').toISOString().slice(0, 10) !== req.query[field])) throw fail(400, 'Date filters must use YYYY-MM-DD.');
@@ -86,7 +86,7 @@ export function createApi({ store, verifyToken, userExists, allowedOrigins = [],
         events = calendarEvents(workspace, { from: req.query.from, to: req.query.to, includeCompleted: req.query.includeCompleted === 'true' });
         if (resource === 'calendar.ics') {
           res.set('Content-Type', 'text/calendar; charset=utf-8');
-          res.set('Content-Disposition', 'inline; filename="solodesk-calendar.ics"');
+          res.set('Content-Disposition', 'inline; filename="terracove-calendar.ics"');
           return res.send(calendarIcs(events, { namespace: hashKey(uid).slice(0, 16), now: now() }));
         }
       }

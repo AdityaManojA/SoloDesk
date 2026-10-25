@@ -9,8 +9,8 @@ import { ago } from './Home.jsx';
 import { ApprovalBox } from './Approvals.jsx';
 import { APPROVAL_LABEL } from './approvals';
 
-const LABEL = { title: 'Task', status: 'Status', due: 'Due date', priority: 'Priority', hours: 'Logged hours', id: 'SoloDesk ID' };
-const DIRECTION = { both: 'Both ways', in: 'Sheet → SoloDesk', out: 'SoloDesk → sheet', locked: 'Kept by SoloDesk' };
+const LABEL = { title: 'Task', status: 'Status', due: 'Due date', priority: 'Priority', hours: 'Logged hours', id: 'Terracove ID' };
+const DIRECTION = { both: 'Both ways', in: 'Sheet → Terracove', out: 'Terracove → sheet', locked: 'Kept by Terracove' };
 const safeLink = url => { try { const u = new URL(String(url).trim()); return ['https:', 'http:'].includes(u.protocol) ? u.href : null; } catch { return null; } };
 // A missing or undeployed function answers with a bare code instead of one of our sentences.
 const friendly = error => !error?.message || /^(internal|not[-_ ]found|unavailable)$/i.test(error.message.trim()) ? 'Live Excel sync is not switched on for this workspace yet.' : error.message;
@@ -32,7 +32,7 @@ function ExcelSync({ scope, user, demo, toast }) {
   // Switched on at build time once the server part is deployed (needs the Blaze plan): VITE_EXCEL_SYNC=on
   if (import.meta.env.VITE_EXCEL_SYNC !== 'on') return <div className="card" style={{ display: 'grid', gap: 10, alignContent: 'start' }}><div className="block-head" style={{ margin: 0 }}><h3>Connected spreadsheet</h3><span className="chip sand">Coming soon</span></div><p style={{ margin: 0 }}>Soon you can link a Microsoft Excel workbook to this {scope.kind}. Task names, statuses, due dates and priorities will stay in step both ways, and logged hours will go to the sheet.</p><p className="notice soft" style={{ margin: 0 }}>Until then, link the workbook below under Documents so everyone can open it from here.</p></div>;
   const { account, links, ready } = useSync(live ? user.uid : null);
-  const [url, setUrl] = useState(''), [sheet, setSheet] = useState('SoloDesk tasks'), [busy, setBusy] = useState('');
+  const [url, setUrl] = useState(''), [sheet, setSheet] = useState('Terracove tasks'), [busy, setBusy] = useState('');
   const mine = links.filter(l => l.scope?.kind === scope.kind && l.scope?.id === scope.id);
   const run = async (key, action, data, done) => { setBusy(key); try { const r = await excel(action, data); done?.(r); } catch (e) { toast(friendly(e)); } finally { setBusy(''); } };
   if (!live) return <div className="card"><h3 style={{ marginTop: 0 }}>Connected spreadsheet</h3><p>Link a Microsoft Excel workbook to this {scope.kind}. Task names, statuses, due dates and priorities stay in step both ways, and logged hours go to the sheet.</p><p className="notice soft">{demo ? 'Live Excel sync works in your signed-in workspace, not in the demo.' : 'Live Excel sync needs the hosted app.'}</p></div>;
@@ -40,7 +40,7 @@ function ExcelSync({ scope, user, demo, toast }) {
     <div className="block-head" style={{ margin: 0 }}><h3>Connected spreadsheet</h3>{account?.account && <span className="chip white">Microsoft · {account.account}</span>}</div>
     {account?.error && <p className="notice hero">{account.error}</p>}
     {!ready ? <p className="empty-note">Checking your Microsoft connection…</p> : !account?.connectedAt ? <>
-      <p style={{ margin: 0 }}>Connect your Microsoft 365 or OneDrive account, then link a workbook. SoloDesk only opens the workbooks you link.</p>
+      <p style={{ margin: 0 }}>Connect your Microsoft 365 or OneDrive account, then link a workbook. Terracove only opens the workbooks you link.</p>
       <button className="btn" style={{ alignSelf: 'flex-start' }} disabled={busy === 'connect'} onClick={() => run('connect', 'connect', {}, r => { window.location.href = r.url; })}>{busy === 'connect' ? 'Opening Microsoft…' : 'Connect Microsoft account'}</button>
     </> : <>
       {mine.map(l => <div key={l.id} className="card" style={{ background: 'var(--sf)', padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -49,17 +49,17 @@ function ExcelSync({ scope, user, demo, toast }) {
           <button className="ghost sm" disabled={busy === 'sync' + l.id} onClick={() => run('sync' + l.id, 'syncNow', { linkId: l.id }, r => toast(r.queued ? 'A sync is already running. Your sheet will catch up in a moment.' : 'Synced with Excel.'))}>{busy === 'sync' + l.id ? 'Syncing…' : 'Sync now'}</button>
           {l.webUrl && <a className="ghost sm" href={l.webUrl} target="_blank" rel="noopener noreferrer">Open ↗</a>}</div>
         {l.error && <p className="notice hero" style={{ margin: 0 }}>{l.error}</p>}
-        {(l.conflicts || []).map(c => <div key={c.id + c.field} className="notice">“{c.title}”: {LABEL[c.field].toLowerCase()} changed in both places — SoloDesk has <b>{c.app || 'empty'}</b>, the sheet has <b>{c.sheet || 'empty'}</b>.
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}><button className="btn sm" onClick={() => run('r', 'resolve', { linkId: l.id, id: c.id, field: c.field, keep: 'app' }, () => toast('Kept the SoloDesk value.'))}>Keep SoloDesk</button><button className="ghost sm" onClick={() => run('r', 'resolve', { linkId: l.id, id: c.id, field: c.field, keep: 'sheet' }, () => toast('Kept the sheet value.'))}>Keep sheet</button></div></div>)}
-        {(l.invalid || []).length > 0 && <p className="notice soft" style={{ margin: 0 }}>{l.invalid.length} cell{l.invalid.length === 1 ? '' : 's'} could not be read (for example a status SoloDesk does not know). They are skipped until fixed in the sheet.</p>}
+        {(l.conflicts || []).map(c => <div key={c.id + c.field} className="notice">“{c.title}”: {LABEL[c.field].toLowerCase()} changed in both places — Terracove has <b>{c.app || 'empty'}</b>, the sheet has <b>{c.sheet || 'empty'}</b>.
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}><button className="btn sm" onClick={() => run('r', 'resolve', { linkId: l.id, id: c.id, field: c.field, keep: 'app' }, () => toast('Kept the Terracove value.'))}>Keep Terracove</button><button className="ghost sm" onClick={() => run('r', 'resolve', { linkId: l.id, id: c.id, field: c.field, keep: 'sheet' }, () => toast('Kept the sheet value.'))}>Keep sheet</button></div></div>)}
+        {(l.invalid || []).length > 0 && <p className="notice soft" style={{ margin: 0 }}>{l.invalid.length} cell{l.invalid.length === 1 ? '' : 's'} could not be read (for example a status Terracove does not know). They are skipped until fixed in the sheet.</p>}
         {((l.removedInSheet || []).length > 0 || (l.removedInApp || []).length > 0) && <p className="notice soft" style={{ margin: 0 }}>Rows deleted on one side stop syncing; nothing is deleted on the other side.</p>}
-        <details><summary>Column mapping</summary><table className="map-table"><thead><tr><th>Sheet column</th><th>SoloDesk field</th><th>Sync</th></tr></thead><tbody>{(l.mapping || []).map(m => <tr key={m.field}><td>{m.column}</td><td>{LABEL[m.field]}</td><td>{DIRECTION[m.direction]}</td></tr>)}</tbody></table></details>
+        <details><summary>Column mapping</summary><table className="map-table"><thead><tr><th>Sheet column</th><th>Terracove field</th><th>Sync</th></tr></thead><tbody>{(l.mapping || []).map(m => <tr key={m.field}><td>{m.column}</td><td>{LABEL[m.field]}</td><td>{DIRECTION[m.direction]}</td></tr>)}</tbody></table></details>
         <button className="ghost danger sm" style={{ alignSelf: 'flex-start' }} onClick={() => run('u' + l.id, 'unlink', { linkId: l.id }, () => toast('Sheet unlinked. Nothing was deleted from the workbook.'))}>Unlink sheet</button>
       </div>)}
       <form onSubmit={e => { e.preventDefault(); run('link', 'link', { shareUrl: url, worksheet: sheet, scope }, r => { setUrl(''); toast(`Linked ${r.name} · ${r.worksheet}.`); }); }} style={{ display: 'grid', gap: 10 }}>
         <label>Workbook link (in Excel: Share → Copy link)<input type="url" required placeholder="https://…sharepoint.com/… or https://1drv.ms/…" value={url} onChange={e => setUrl(e.target.value)} /></label>
         <label>Worksheet<input value={sheet} maxLength={31} onChange={e => setSheet(e.target.value)} /></label>
-        <small className="empty-note">SoloDesk adds the worksheet if it does not exist and writes a header row with a SoloDesk ID column. Only mapped cells are ever changed.</small>
+        <small className="empty-note">Terracove adds the worksheet if it does not exist and writes a header row with a Terracove ID column. Only mapped cells are ever changed.</small>
         <button className="btn" style={{ justifySelf: 'start' }} disabled={busy === 'link'}>{busy === 'link' ? 'Linking…' : mine.length ? 'Link another sheet' : 'Link workbook'}</button>
       </form>
       <button className="ghost sm" style={{ alignSelf: 'flex-start' }} onClick={() => run('d', 'disconnect', {}, () => toast('Microsoft account disconnected. Linked workbooks are unchanged.'))}>Disconnect Microsoft</button>
@@ -110,7 +110,7 @@ export function FilesAndDocs({ d, mut, toast, scope, user, demo }) {
         <div className="docs-head"><h3>Documents</h3><div className="doc-actions"><button type="button" className={'doc-action' + (adding ? ' on' : '')} aria-expanded={adding} onClick={() => setAdding(!adding)}><span className="doc-action-icon link"><Icon name="link" size={16} /></span><span><b>Link a file</b><small>Drive, Figma, Notion…</small></span></button><button type="button" className="doc-action" onClick={newPrd}><span className="doc-action-icon prd"><Icon name="plus" size={16} /></span><span><b>New PRD</b><small>Write requirements</small></span></button></div></div>
         {adding && <form onSubmit={addLink} style={{ display: 'grid', gap: 8 }}><label>Name<input value={link.title} onChange={e => setLink({ ...link, title: e.target.value })} placeholder="Content inventory" /></label><label>Link<input type="url" value={link.url} onChange={e => setLink({ ...link, url: e.target.value })} placeholder="https://drive.google.com/…" /></label><button className="btn sm" style={{ justifySelf: 'start' }}>Add link</button></form>}
         {items.map(x => <div key={x.id} className="file-row"><span className="file-badge" style={{ background: x.kind === 'prd' ? 'var(--hero-deep)' : '#4A5566' }}>{x.kind === 'prd' ? 'P' : <Icon name="link" size={16} />}</span>
-          <span className="grow"><b>{x.title}</b><small>{x.kind === 'prd' ? `Written in SoloDesk · ${(x.requirements || []).length} requirements` : host(x.url)}</small></span>
+          <span className="grow"><b>{x.title}</b><small>{x.kind === 'prd' ? `Written in Terracove · ${(x.requirements || []).length} requirements` : host(x.url)}</small></span>
           {x.kind === 'prd' ? <><span className={'chip ' + (x.status === 'Approved' ? 'sage' : x.status === 'In review' ? 'sand' : 'white')}>{x.status || 'Draft'}</span><button className="ghost sm" onClick={() => setOpenId(openId === x.id ? null : x.id)}>{openId === x.id ? 'Close' : 'Open'}</button></> : <>{x.approval && <span className={'chip ' + ({ pending: 'hero', approved: 'sage', changes: 'sand' })[x.approval.state]}>{APPROVAL_LABEL[x.approval.state]}</span>}<button className="ghost sm" aria-expanded={approveId === x.id} onClick={() => setApproveId(approveId === x.id ? null : x.id)}>Approval</button><a className="ghost sm" href={safeLink(x.url)} target="_blank" rel="noopener noreferrer">Open ↗</a></>}
           <button className="icon-x" aria-label={'Move ' + x.title + ' to Trash'} onClick={() => { mut(n => trashReusable(n, 'docs', x.id)); toast('Moved to Trash.'); }}>×</button></div>)}
         {!items.length && <p className="empty-note">Write a PRD here, or link files from Google Drive, OneDrive, Notion or Figma.</p>}

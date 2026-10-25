@@ -1,7 +1,7 @@
 // Public profile ("mini portfolio"). The editable copy lives in the private workspace; publishing writes a
 // separate document at solodeskProfiles/{username}. While private, that document holds only the name.
 export const PROFILE_COLLECTION='solodeskProfiles';
-export const RESERVED=new Set(['privacy','cookies','portal','u','api','brand','assets','admin','settings','login','signin','signup','app','solodesk','help','support','about','terms','www','index','dash']);
+export const RESERVED=new Set(['privacy','cookies','portal','u','api','brand','assets','admin','settings','login','signin','signup','app','solodesk','terracove','help','support','about','terms','www','index','dash']);
 export const normalizeUsername=value=>String(value||'').trim().toLowerCase();
 export const validUsername=value=>/^[a-z0-9][a-z0-9_-]{2,29}$/.test(value)&&!RESERVED.has(value);
 export const emptyProfile=()=>({username:'',name:'',headline:'',bio:'',location:'',available:false,links:[],clients:[],public:false});

@@ -1,6 +1,6 @@
 // Smart entry, shared with TaskFlow: "Call Ava tomorrow at 7pm for Website launch" fills in the date, time,
 // client and project. parseWhen is a port of TaskFlow's parseQuest (TaskFlow-controls/app/js/parse.js);
-// keep the two in step when the wording rules change. parseTask and suggest add SoloDesk's clients and projects.
+// keep the two in step when the wording rules change. parseTask and suggest add Terracove's clients and projects.
 
 const pad = n => String(n).padStart(2, '0');
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -123,7 +123,7 @@ function findName(text, items, nameOf) {
   return best;
 }
 
-// SoloDesk priorities. Only words or P1–P4 set one; a date alone does not.
+// Terracove priorities. Only words or P1–P4 set one; a date alone does not.
 const PRIORITY = [ 'High', 'High', 'Medium', 'Low', 'Low', 'Low' ];
 const REPEATS = new Set(['daily', 'alternate', 'weekdays', 'weekly', 'custom', 'monthly', 'yearly']);
 

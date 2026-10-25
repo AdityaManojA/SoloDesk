@@ -1,6 +1,12 @@
-# SoloDesk release notes
+# Terracove release notes
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
+
+## 1.13 — 26 October 2026 · SoloDesk is now Terracove
+
+- **A new name.** SoloDesk is now Terracove. Data and links are unchanged: Firestore collections keep their `solodesk*` names, browser storage keeps its `sd_*` keys, and the app stays at taskflow-solodesk.web.app until a new domain is set up.
+
+Releases below were made under the name SoloDesk.
 
 ## 1.12 — 26 October 2026 · Open a task in the client portal
 

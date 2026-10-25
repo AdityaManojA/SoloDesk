@@ -15,7 +15,7 @@ export const approvals = approvalFunctions;
 
 initializeApp();
 const db = getFirestore(), auth = getAuth();
-const origins = defineString('API_ALLOWED_ORIGINS', { default: '', description: 'Comma-separated exact browser origins, including your SoloDesk Hosting origin. Empty blocks all browser origins; server-to-server requests still work.' });
+const origins = defineString('API_ALLOWED_ORIGINS', { default: '', description: 'Comma-separated exact browser origins, including your Terracove Hosting origin. Empty blocks all browser origins; server-to-server requests still work.' });
 const keys = db.collection('integrationKeys');
 const store = {
   async getWorkspace(uid) {

@@ -10,7 +10,7 @@ const config = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
 };
-// Keep SoloDesk records separate from other apps using the same Firebase project.
+// Keep Terracove records separate from other apps using the same Firebase project.
 export const workspaceCollection = 'solodeskWorkspaces';
 export const configured = !!(config.apiKey && config.projectId && config.appId && config.authDomain);
 export const app = configured ? initializeApp(config) : null;

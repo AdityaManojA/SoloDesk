@@ -2,6 +2,9 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
+  {version:'1.13',released:true,date:'2026-10-26',title:'SoloDesk is now Terracove',highlights:[
+    ['A new name','SoloDesk is now Terracove: terracotta, and a cove, a calm place to keep your client work. Everything you have stays exactly where it is, and your clients’ portal links keep working.'],
+  ],fixes:[]},
   {version:'1.12',released:true,date:'2026-10-26',title:'Open a task in the client portal',highlights:[
     ['Open a task','In their portal, clients click a task to open it: its due date and steps, the approval (with Approve or Request changes) and the comments, all in one place.'],
     ['Change an answer','Clients can change an approval answer later (Change my answer). The newest answer is what you see in SoloDesk.'],
@@ -127,7 +130,7 @@ export const changelog=[
   ]},
 ];
 export const currentVersion=()=>changelog.find(entry=>entry.released)?.version||'1.01';
-// Whether to show the "SoloDesk updated" note: only to people who used an earlier version.
+// Whether to show the "Terracove updated" note: only to people who used an earlier version.
 export function shouldShowUpdate(seenVersion,returning){
   if(!returning)return false;
   return !seenVersion||Number(seenVersion)<Number(currentVersion());

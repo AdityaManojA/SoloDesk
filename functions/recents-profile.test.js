@@ -18,7 +18,7 @@ test('only changed or new records get a fresh timestamp',()=>{
   assert.equal(after.projects[0].updatedAt,undefined);
 });
 
-test('jump back in lists the SoloDesk items edited most recently, never TaskFlow quests',()=>{
+test('jump back in lists the Terracove items edited most recently, never TaskFlow quests',()=>{
   const w=fixture();w.projects[0].updatedAt='2026-10-20T00:00:00Z';w.clients[1].updatedAt='2026-10-21T00:00:00Z';w.tasks[0].updatedAt='2026-10-23T00:00:00Z';
   w.notes=[{id:'n',title:'Kickoff',client:'a',checklist:[],updatedAt:'2026-10-24T00:00:00Z'}];
   assert.deepEqual(recentWork(w).map(e=>e.kind+':'+e.row.id),['note:n','task:t','client:b']);

@@ -1,12 +1,12 @@
-# SoloDesk
+# Terracove
 
-![SoloDesk Throughline logo](public/brand/solodesk-logo.png)
+![Terracove Throughline logo](public/brand/solodesk-logo.png)
 
 **Throughline branding:** [Download the logo and app-icon pack](https://taskflow-solodesk.web.app/brand/solodesk-throughline-brand-kit.zip), or open Settings → Appearance. Includes SVGs, transparent PNG wordmarks, light/dark icons and phone/desktop install sizes. [Verification](qa/throughline-brand-2026-10-21.md).
 
 ## Original MVP & credit
 
-SoloDesk builds on the [SoloDesk MVP](https://github.com/nainanijo/Solodesk-MVP), created by [NainaNijo on GitHub](https://github.com/nainanijo).
+Terracove builds on the [Terracove MVP](https://github.com/nainanijo/Solodesk-MVP), created by [NainaNijo on GitHub](https://github.com/nainanijo).
 
 Big shoutout to her for laying the foundation for this project!
 
@@ -14,7 +14,13 @@ Big shoutout to her for laying the foundation for this project!
 
 Original contributions by AdityaManojA are available under the [MIT License](LICENSE). The original MVP currently has no published license; inherited code and third-party dependencies are excluded from that grant. See [third-party notices and licensing scope](THIRD_PARTY_NOTICES.md) before reusing the combined application.
 
-A business workspace for independent professionals and studios: clients, projects, tasks, invoices, payments and reports. **Current version: 1.12** ([release notes](CHANGELOG.md), also in the app under Settings → What's new). The interface uses the 1.02 design: a black sidebar, the Terracotta palette (sage, sand, cream) with a per-workspace action colour, Bricolage Grotesque and Figtree type, and a floating dock on phones. The original React/Firebase data model and hash routes are retained. Calendar exports turn project timelines and dated tasks into scheduler events.
+A business workspace for independent professionals and studios: clients, projects, tasks, invoices, payments and reports. **Current version: 1.13** ([release notes](CHANGELOG.md), also in the app under Settings → What's new). The interface uses the 1.02 design: a black sidebar, the Terracotta palette (sage, sand, cream) with a per-workspace action colour, Bricolage Grotesque and Figtree type, and a floating dock on phones. The original React/Firebase data model and hash routes are retained. Calendar exports turn project timelines and dated tasks into scheduler events.
+
+## What's new in 1.13
+
+SoloDesk was renamed **Terracove**. Only what people see changed: the in-app name, logo text, page titles, the installed-app name (manifest), emails, download file names and legal pages. Stored data keeps its old names on purpose: Firestore collections (`solodeskWorkspaces`, `solodeskPortals`, `solodeskProfiles`, `solodeskSync*`), browser keys (`sd_*`), service-worker caches and the Hosting site `taskflow-solodesk`, so existing workspaces, portals and profile links keep working. Release notes before 1.13 still say SoloDesk.
+
+1.11 and 1.12 (client portal fixes, opening a task in the portal, changing an approval answer) are described in [CHANGELOG.md](CHANGELOG.md).
 
 ## What's new in 1.10
 
@@ -32,11 +38,11 @@ Jump back in opens the task, project or client page (notes still open in place) 
 
 ## What's new in 1.07
 
-The client portal header shows the client's name as set in SoloDesk (with initials and the login email) instead of only the email ([`src/ClientPortal.jsx`](src/ClientPortal.jsx)).
+The client portal header shows the client's name as set in Terracove (with initials and the login email) instead of only the email ([`src/ClientPortal.jsx`](src/ClientPortal.jsx)).
 
 ## What's new in 1.06
 
-Client portals publish themselves: while SoloDesk is open, [`src/portal-sync.js`](src/portal-sync.js) watches your shares and republishes any whose shared data changed (compared by `portalUpdate` in [`src/workspace-upgrades.js`](src/workspace-upgrades.js), ignoring private fields), about two seconds after the last edit. Ticking what to share under Client access applies instantly. No rules change.
+Client portals publish themselves: while Terracove is open, [`src/portal-sync.js`](src/portal-sync.js) watches your shares and republishes any whose shared data changed (compared by `portalUpdate` in [`src/workspace-upgrades.js`](src/workspace-upgrades.js), ignoring private fields), about two seconds after the last edit. Ticking what to share under Client access applies instantly. No rules change.
 
 ## What's new in 1.05
 
@@ -57,14 +63,14 @@ A rebuilt calendar with Year/Month/Week/Day zoom and a client-by-client project 
 - **New design and action colour** — every page restyled ([`src/theme.css`](src/theme.css)); Settings → Appearance picks the highlight colour ([`src/appearance.js`](src/appearance.js)).
 - **Home: Jump back in** — the three most recently edited clients, projects and TaskFlow quests ([`src/recents.js`](src/recents.js)), revenue, needs-attention, mini calendar and today's timeline. **All work** at `#/work`.
 - **Notes, checklists and reminders** on every client and project; **project pages** at `#/projects/<id>`.
-- **Files & docs** — PRDs written in SoloDesk with requirements that become tasks, plus file links.
+- **Files & docs** — PRDs written in Terracove with requirements that become tasks, plus file links.
 - **Live Microsoft Excel sync** per project or client (server code in `functions/excel-*.js`; needs Blaze and a Microsoft app — [setup](docs/excel-sync-setup.md)).
 - **Public profile** at `/<username>`, private by default ([`src/profile.js`](src/profile.js); Firestore collection `solodeskProfiles`).
 - **Invoice editing on the page** with bank details and defaults; **What's new** in Settings and an update note for returning users.
 
 Deploying 1.02 needs the updated `firestore.rules` (public profiles and Excel sync status). Copy it to TaskFlow's rules file first so both stay identical, then deploy rules before Hosting.
 
-**Status:** frontend deployed to https://taskflow-solodesk.web.app in `taskflow-dailytracker`, separately from TaskFlow’s Hosting site. Version 1.12 (26 October 2026) passes all **164 automated tests** and the production build. TaskFlow quests and its shared Google events are read-only in SoloDesk. Live sign-in/cloud-save round trips still need an account-level check. The standalone integration API and background server functions are not deployed on the Spark plan.
+**Status:** frontend deployed to https://taskflow-solodesk.web.app in `taskflow-dailytracker`, separately from TaskFlow’s Hosting site. Version 1.13 (26 October 2026) passes all **164 automated tests** and the production build. TaskFlow quests and its shared Google events are read-only in Terracove. Live sign-in/cloud-save round trips still need an account-level check. The standalone integration API and background server functions are not deployed on the Spark plan.
 
 ## Shared calendar markers
 
@@ -96,7 +102,7 @@ Captured from the deployed app on **20 October 2026** using **demo data**. [View
 
 ### Daily planner
 
-![SoloDesk daily planner](docs/screenshots/13-daily-planner-desktop.png)
+![Terracove daily planner](docs/screenshots/13-daily-planner-desktop.png)
 
 ### Conflicts & free time
 
@@ -104,19 +110,19 @@ Captured from the deployed app on **20 October 2026** using **demo data**. [View
 
 ### Desktop dashboard
 
-![SoloDesk dashboard with Throughline branding](qa/screenshots/throughline-dashboard.png)
+![Terracove dashboard with Throughline branding](qa/screenshots/throughline-dashboard.png)
 
 ### Calendar
 
-![SoloDesk full-month calendar](docs/screenshots/04-calendar-desktop.png)
+![Terracove full-month calendar](docs/screenshots/04-calendar-desktop.png)
 
 ### Dark mode
 
-![SoloDesk dark dashboard](docs/screenshots/07-dashboard-dark.png)
+![Terracove dark dashboard](docs/screenshots/07-dashboard-dark.png)
 
 ### Mobile & onboarding
 
-<img src="docs/screenshots/20-planner-mobile-dark.png" alt="SoloDesk daily planner in mobile dark mode" width="280"> <img src="docs/screenshots/11-onboarding-mobile.png" alt="SoloDesk visual onboarding on mobile" width="280">
+<img src="docs/screenshots/20-planner-mobile-dark.png" alt="Terracove daily planner in mobile dark mode" width="280"> <img src="docs/screenshots/11-onboarding-mobile.png" alt="Terracove visual onboarding on mobile" width="280">
 
 ## Run locally
 
@@ -137,10 +143,10 @@ For real data, copy `.env.example` to `.env.local` and enter your Firebase web a
 
 ## Firebase setup and deployment
 
-1. SoloDesk's local `.env.local` uses the supplied TaskFlow web configuration, and `.firebaserc` maps the `solodesk` alias to `taskflow-dailytracker`. Restart Vite after configuration changes; rebuild when using preview.
-2. In that Firebase project's Authentication settings, enable Google sign-in and authorize the SoloDesk domain (including `localhost` and `127.0.0.1` when used locally). Ensure a Firestore database exists. SoloDesk stores its workspace in `solodeskWorkspaces/{uid}`; it does not read or overwrite TaskFlow's task collections. Data from the previous Firebase project is not migrated.
+1. Terracove's local `.env.local` uses the supplied TaskFlow web configuration, and `.firebaserc` maps the `solodesk` alias to `taskflow-dailytracker`. Restart Vite after configuration changes; rebuild when using preview.
+2. In that Firebase project's Authentication settings, enable Google sign-in and authorize the Terracove domain (including `localhost` and `127.0.0.1` when used locally). Ensure a Firestore database exists. Terracove stores its workspace in `solodeskWorkspaces/{uid}`; it does not read or overwrite TaskFlow's task collections. Data from the previous Firebase project is not migrated.
 
-   **Shared project rules:** merge the owner-only `solodeskWorkspaces/{uid}` rule from `firestore.rules` into TaskFlow's existing rules. Do not deploy this standalone rules file over TaskFlow's rules: Firebase replaces the complete ruleset. Integration key collections must remain inaccessible to browser clients. SoloDesk's workspace deletion keeps the shared Firebase Authentication account.
+   **Shared project rules:** merge the owner-only `solodeskWorkspaces/{uid}` rule from `firestore.rules` into TaskFlow's existing rules. Do not deploy this standalone rules file over TaskFlow's rules: Firebase replaces the complete ruleset. Integration key collections must remain inaccessible to browser clients. Terracove's workspace deletion keeps the shared Firebase Authentication account.
 
    **Hosting:** `firebase.json` uses the named `solodesk` target, mapped in `.firebaserc` to the separate `taskflow-solodesk` site. Deploy only this target to leave TaskFlow's existing site intact. The read-only TaskFlow listener uses the shared account to display quests and calendar events.
 3. Install server dependencies in their own directory:
@@ -151,7 +157,7 @@ For real data, copy `.env.example` to `.env.local` and enter your Firebase web a
    Pop-Location
    ```
 
-4. Create `functions/.env.<your-project-id>` from `functions/.env.example`. Set `API_ALLOWED_ORIGINS` to the exact SoloDesk browser origin (comma-separated if needed). Include the actual local origin only when using a deployed API from local development. Empty configuration blocks browser origins; server-to-server requests without Origin still work.
+4. Create `functions/.env.<your-project-id>` from `functions/.env.example`. Set `API_ALLOWED_ORIGINS` to the exact Terracove browser origin (comma-separated if needed). Include the actual local origin only when using a deployed API from local development. Empty configuration blocks browser origins; server-to-server requests without Origin still work.
 5. With the Firebase CLI installed and signed in, deploy using an explicit project:
 
    ```powershell
@@ -159,25 +165,25 @@ For real data, copy `.env.example` to `.env.local` and enter your Firebase web a
    firebase deploy --project taskflow-dailytracker --only hosting:solodesk
    ```
 
-The frontend-only deployment above completed successfully. The current Hosting configuration serves the SPA and its public policy routes. The server integration API is not deployed; listing functions in this project failed during setup. Before enabling it, confirm runtime/billing prerequisites and function-name isolation, deploy the backend, then add a `/api/**` rewrite to function `api` in `us-central1` ahead of the SPA fallback. Configure `API_ALLOWED_ORIGINS` for the SoloDesk site. In development, set `VITE_API_BASE_URL` to the deployed API origin plus `/api/v1`. A missing API is shown as an actionable error in Integrations. Do not use a blanket functions/rules deployment against this shared project.
+The frontend-only deployment above completed successfully. The current Hosting configuration serves the SPA and its public policy routes. The server integration API is not deployed; listing functions in this project failed during setup. Before enabling it, confirm runtime/billing prerequisites and function-name isolation, deploy the backend, then add a `/api/**` rewrite to function `api` in `us-central1` ahead of the SPA fallback. Configure `API_ALLOWED_ORIGINS` for the Terracove site. In development, set `VITE_API_BASE_URL` to the deployed API origin plus `/api/v1`. A missing API is shown as an actionable error in Integrations. Do not use a blanket functions/rules deployment against this shared project.
 
 After deployment, sign in, save a record, open Integrations, create a calendar-only key and test a subscription or API request from your calendar backend. Do not mark cloud integration complete until that succeeds.
 
 ## TaskFlow live connection (Spark plan)
 
-The shared Firestore rules were copied exactly from `D:/Projects/TaskFlow-controls/firestore.rules` and deployed first. Always preserve both apps' owner-only rule blocks. SoloDesk owns rules deployment; TaskFlow's copy must stay identical. Function codebases remain `default` (SoloDesk) and `taskflow` (TaskFlow), and neither was deployed.
+The shared Firestore rules were copied exactly from `D:/Projects/TaskFlow-controls/firestore.rules` and deployed first. Always preserve both apps' owner-only rule blocks. Terracove owns rules deployment; TaskFlow's copy must stay identical. Function codebases remain `default` (Terracove) and `taskflow` (TaskFlow), and neither was deployed.
 
-`src/useTaskflow.js` attaches one read-only `onSnapshot` listener to `taskflowUsers/{uid}/share/open` for the signed-in user. It unsubscribes and clears the view on account change, sign-out or demo mode. SoloDesk never reads chunks and never writes under `taskflowUsers/`. Incoming records stay outside the SoloDesk workspace and are not saved back to Firestore. Loading, missing-document, empty, cached and permission/network error states are distinct; errors offer retry.
+`src/useTaskflow.js` attaches one read-only `onSnapshot` listener to `taskflowUsers/{uid}/share/open` for the signed-in user. It unsubscribes and clears the view on account change, sign-out or demo mode. Terracove never reads chunks and never writes under `taskflowUsers/`. Incoming records stay outside the Terracove workspace and are not saved back to Firestore. Loading, missing-document, empty, cached and permission/network error states are distinct; errors offer retry.
 
-Tasks has a **From TaskFlow** list including undated quests, P1–P6, notes, repeat labels and subtask completion. Calendar merges dated quests and shared calendar events, with source labels, a TaskFlow-only filter and source links instead of edit controls. Client filters hide unlinked TaskFlow records. Due times use TaskFlow's timezone; missing/invalid timezone or nonexistent daylight-saving times fall back to an all-day reminder with an explanation. Due times are reminders, not scheduled work blocks. Repeat labels are shown but future occurrences are not invented: TaskFlow owns each quest's next due date. Shared calendar all-day end dates stay exclusive. Calendar month/event downloads include displayed items; other workspace exports remain SoloDesk-only.
+Tasks has a **From TaskFlow** list including undated quests, P1–P6, notes, repeat labels and subtask completion. Calendar merges dated quests and shared calendar events, with source labels, a TaskFlow-only filter and source links instead of edit controls. Client filters hide unlinked TaskFlow records. Due times use TaskFlow's timezone; missing/invalid timezone or nonexistent daylight-saving times fall back to an all-day reminder with an explanation. Due times are reminders, not scheduled work blocks. Repeat labels are shown but future occurrences are not invented: TaskFlow owns each quest's next due date. Shared calendar all-day end dates stay exclusive. Calendar month/event downloads include displayed items; other workspace exports remain Terracove-only.
 
-This connection runs entirely in the browser on Spark; no function or API key is needed. Google events appear only when TaskFlow shares them. SoloDesk's optional server API and direct Google/Apple syncing remain unavailable on the current deployment.
+This connection runs entirely in the browser on Spark; no function or API key is needed. Google events appear only when TaskFlow shares them. Terracove's optional server API and direct Google/Apple syncing remain unavailable on the current deployment.
 
-Validation: 34 automated tests and the production build passed, including schema handling, timezone/DST conversion, malformed events, safe links, date boundaries and exports. A real same-account round trip must also be checked by creating a dated quest in TaskFlow while SoloDesk is open.
+Validation: 34 automated tests and the production build passed, including schema handling, timezone/DST conversion, malformed events, safe links, date boundaries and exports. A real same-account round trip must also be checked by creating a dated quest in TaskFlow while Terracove is open.
 
 ## Pages and behavior
 
-Brand assets: SoloDesk uses an SD monogram in a warm-yellow tile, paired with its wordmark. Shared `src/BrandLogo.jsx` renders it in the app header, login and policy pages. Reusable transparent SVGs are in `public/brand/`: `solodesk-mark.svg`, `solodesk-logo.svg` and `solodesk-logo-dark.svg`. The mark is also the browser favicon. Logo changes do not replace business logos uploaded for invoices. Production build and local light/dark appearance were checked.
+Brand assets: Terracove uses an SD monogram in a warm-yellow tile, paired with its wordmark. Shared `src/BrandLogo.jsx` renders it in the app header, login and policy pages. Reusable transparent SVGs are in `public/brand/`: `solodesk-mark.svg`, `solodesk-logo.svg` and `solodesk-logo-dark.svg`. The mark is also the browser favicon. Logo changes do not replace business logos uploaded for invoices. Production build and local light/dark appearance were checked.
 
 Deletion and sign-out: red actions are available for clients, projects, tasks, all invoice states and individual payments, with explicit confirmation. Deleting a project keeps and unlinks its tasks. Deleting a client explicitly confirms cascading removal of its linked projects, tasks, invoices and payments. Deleting invoices/payments recalculates reports from the remaining records. TaskFlow remains read-only. Settings retains the full-workspace delete action and the shared Firebase account is kept. Sign-out is available in the header and Settings, clears demo/auth state, and returns to `/` with the Google login screen. Unsaved changes offer an explicit sign-out-anyway option instead of blocking exit. In-flight old workspace loads cannot repopulate the UI after account changes. Validated with 39 automated tests, a production build, browser confirmation/cancel checks and demo sign-out; real-account cloud deletion/sign-out was not exercised in this change.
 
@@ -214,7 +220,7 @@ See [the complete API and sync guide](docs/calendar-api.md) and [the server-side
 - Project spans and all-day reminders show availability as free. Timed tasks reserve busy time.
 - Integrations → **Export calendar · ICS** works immediately as a file import. **Export events · JSON** supplies stable IDs and client/project context.
 - After deployment, create a **Calendar events only** key for `GET /api/v1/calendar` or the private `/api/v1/calendar.ics?key=...` subscription URL. Keys expire in 90 days and can be revoked. Calendar-only access excludes financial records and private client details.
-- Custom scheduler: fetch every page, upsert by event ID, then reconcile missing SoloDesk events only after a complete successful refresh. A multi-page fetch is not an atomic snapshot. The example helper fetches to a file; it does not send to a calendar provider.
+- Custom scheduler: fetch every page, upsert by event ID, then reconcile missing Terracove events only after a complete successful refresh. A multi-page fetch is not an atomic snapshot. The example helper fetches to a file; it does not send to a calendar provider.
 
 This is one-way import/subscription/polling. Provider-specific OAuth, two-way editing, webhooks, recurring tasks and automatic scheduling/conflict resolution are not included. Refresh timing for subscriptions belongs to the calendar provider. Revoke a key to stop future reads; already imported copies remain in the other app.
 
@@ -242,7 +248,7 @@ Existing browser dependencies retained: React/React DOM **18.3.1**, Firebase **1
 
 The supplied `anti-SLOP.md` informed the initial overhaul and remains useful for accessibility, restrained CSS motion and honest verification. The later explicit TaskFlow reference takes precedence over the earlier navy/neutral direction.
 
-TaskFlow reference source: `D:/Projects/TaskFlow/design/DESIGN_BRIEF.md` and `design/prototype/index.html`. Applied palette: cream `#FFF8EE`, ink `#1E1B18`, mint `#A8D8B9`, coral `#F4A59A`, lavender `#C9B8E8`, butter `#FFD66B`, sky `#A9D6F0`; flat surfaces, 2.5px outlines and generous rounded corners. The dock uses four destinations and a raised central Create button. No TaskFlow mascot, sounds, art or source files were copied or modified. The UI retains SoloDesk’s existing three task priority levels. Typography uses local Inter when available, with Segoe UI/system fallbacks; no remote font is fetched.
+TaskFlow reference source: `D:/Projects/TaskFlow/design/DESIGN_BRIEF.md` and `design/prototype/index.html`. Applied palette: cream `#FFF8EE`, ink `#1E1B18`, mint `#A8D8B9`, coral `#F4A59A`, lavender `#C9B8E8`, butter `#FFD66B`, sky `#A9D6F0`; flat surfaces, 2.5px outlines and generous rounded corners. The dock uses four destinations and a raised central Create button. No TaskFlow mascot, sounds, art or source files were copied or modified. The UI retains Terracove’s existing three task priority levels. Typography uses local Inter when available, with Segoe UI/system fallbacks; no remote font is fetched.
 
 [Prompt Motion](https://prompt-motion.com/) and [SiteInspire](https://www.siteinspire.com/) were reviewed during the initial design pass; no assets or copied components were used. No animation/chart/icon packages were added. Icons are local inline SVG paths; stock photography, analytics and tracking were not introduced. Existing dependency licenses remain applicable.
 
@@ -296,7 +302,7 @@ See [the detailed functional review](qa/functional-review-2026-10-19.md) and [re
 
 ## Opening the full calendar and exporting individual work
 
-Google Calendar through TaskFlow: shared Google events appear alongside quests and SoloDesk work in Month and Agenda. Use **All clients** and **All calendars & work**, or select **Google Calendar via TaskFlow**. Event priorities, locations and busy times are retained. Connect Google and use **Sync now** in TaskFlow with the same Google account. TaskFlow currently publishes the primary calendar from 7 days back to 62 days ahead; SoloDesk cannot refresh Google's API itself. **71 tests/build pass**; see [Google feed verification](qa/taskflow-google-2026-10-20.md).
+Google Calendar through TaskFlow: shared Google events appear alongside quests and Terracove work in Month and Agenda. Use **All clients** and **All calendars & work**, or select **Google Calendar via TaskFlow**. Event priorities, locations and busy times are retained. Connect Google and use **Sync now** in TaskFlow with the same Google account. TaskFlow currently publishes the primary calendar from 7 days back to 62 days ahead; Terracove cannot refresh Google's API itself. **71 tests/build pass**; see [Google feed verification](qa/taskflow-google-2026-10-20.md).
 
 Onboarding update (20 October 2026): a one-time top **Add to Home Screen** banner opens installation guidance, and a four-step first-run introduction offers installation again on its final step. An eight-step guided tour highlights actual screens on desktop and mobile. Replay either from **Settings** or **More**. Completion/skip preferences are local to this browser, separated by signed-in account and demo. **69 tests and production build pass**; see [onboarding verification](qa/onboarding-2026-10-20.md).
 
@@ -306,7 +312,7 @@ Scrollbars now match the cream/ink/yellow theme and its dark variant across page
 
 **Add to Home Screen** is available on login, Settings and More. Supporting browsers can show a native install prompt; iOS and other browsers get platform-specific instructions. A web manifest, desktop/Android PNGs, maskable icon and Apple touch icon enable standalone launches. No service worker or offline workspace cache is introduced. See [installation verification](qa/install-2026-10-20.md); 61 tests/build pass, with real OS/device installation still pending.
 
-Calendar rescheduling/mobile update (20 October 2026): drag SoloDesk tasks or project spans onto another visible date, or open event details and use **Move to date**. Task times/duration and project lengths are preserved. TaskFlow items stay read-only. Shared phone layouts, forms, touch targets and overlay clearance were improved. **54 tests/build pass**, with 60 page/width layout observations and real browser drag checks; see [calendar/mobile verification](qa/calendar-mobile-2026-10-20.md) for exact scope and device-testing limits.
+Calendar rescheduling/mobile update (20 October 2026): drag Terracove tasks or project spans onto another visible date, or open event details and use **Move to date**. Task times/duration and project lengths are preserved. TaskFlow items stay read-only. Shared phone layouts, forms, touch targets and overlay clearance were improved. **54 tests/build pass**, with 60 page/width layout observations and real browser drag checks; see [calendar/mobile verification](qa/calendar-mobile-2026-10-20.md) for exact scope and device-testing limits.
 
 TaskFlow quest cards and their calendar entries now use the six priority colors from `D:/Projects/TaskFlow-controls/app/css/app.css`: P1 coral `#F4918A`, P2 orange `#F9B77E`, P3 yellow `#FFE08A`, P4 mint `#B9E7CC`, P5 sky `#A9D6F0`, P6 lilac `#D4C4F2`. Dark mode uses corresponding dark surfaces and pastel borders. Priority labels remain visible. Verified all six rendered card colors in light/dark mode and a 320px viewport using a local sample-data fixture, without reading or writing an account.
 

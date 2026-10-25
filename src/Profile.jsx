@@ -45,7 +45,7 @@ export function ProfileEditor({ d, mut, toast, user, demo }) {
       setBusy(true);
       try {
         const ref = doc(db, PROFILE_COLLECTION, next.username), existing = await getDoc(ref);
-        if (existing.exists() && existing.data().uid !== user.uid) { setBusy(false); return setError(`solodesk/${next.username} is taken. Try another username.`); }
+        if (existing.exists() && existing.data().uid !== user.uid) { setBusy(false); return setError(`“${next.username}” is taken. Try another username.`); }
         const batch = writeBatch(db);
         if (previous && previous !== next.username) batch.delete(doc(db, PROFILE_COLLECTION, previous));
         batch.set(ref, { ...publicProfileDoc(next, d, user.uid), updatedAt: serverTimestamp() });
@@ -138,19 +138,19 @@ function ProfileSetup({ p, set, step, setStep, handle, url, d, chosen, busy, err
 export function PublicProfile({ username }) {
   const [state, setState] = useState({ status: 'loading' });
   useEffect(() => {
-    document.title = 'solodesk/' + username;
+    document.title = username + ' · Terracove';
     if (!configured || !db) { setState({ status: 'missing' }); return; }
     getDoc(doc(db, PROFILE_COLLECTION, username)).then(s => setState(s.exists() ? { status: 'ok', p: s.data() } : { status: 'missing' }), () => setState({ status: 'missing' }));
   }, [username]);
   const p = state.p;
   return <div className="profile-public">
-    <header><span className="avatar-xl" style={{ width: 30, height: 30, fontSize: 14, borderRadius: 8 }}>S</span><b>solodesk</b><a className="ghost sm" href="/">Create your profile</a></header>
+    <header><span className="avatar-xl" style={{ width: 30, height: 30, fontSize: 14, borderRadius: 8 }}>S</span><b>terracove</b><a className="ghost sm" href="/">Create your profile</a></header>
     <main className="wrap" id="workspace">
       {state.status === 'loading' && <p className="empty-note">Opening profile…</p>}
-      {state.status === 'missing' && <div className="card" style={{ textAlign: 'center' }}><h1 style={{ fontSize: 28 }}>No profile here</h1><p className="empty-note">There is no SoloDesk profile at solodesk/{username}.</p></div>}
+      {state.status === 'missing' && <div className="card" style={{ textAlign: 'center' }}><h1 style={{ fontSize: 28 }}>No profile here</h1><p className="empty-note">There is no Terracove profile called “{username}”.</p></div>}
       {state.status === 'ok' && !p.public && <div className="card" style={{ textAlign: 'center', display: 'grid', gap: 10, justifyItems: 'center', padding: 40 }}>
-        <span className="dot-icon" style={{ width: 52, height: 52 }}><Icon name="profile" /></span><h1 style={{ margin: 0, fontSize: 30 }}>{p.name}</h1><p style={{ margin: 0 }}>This user has decided to keep their profile private.</p><small className="empty-note">solodesk/{username}</small></div>}
-      {state.status === 'ok' && p.public && <><div style={{ position: 'relative' }}><Shape kind="star" color="var(--sand)" size={90} style={{ position: 'absolute', right: 0, top: -30, zIndex: 0 }} /><ProfileCard p={p} clients={p.clients || []} /></div><small className="empty-note">Made with SoloDesk</small></>}
+        <span className="dot-icon" style={{ width: 52, height: 52 }}><Icon name="profile" /></span><h1 style={{ margin: 0, fontSize: 30 }}>{p.name}</h1><p style={{ margin: 0 }}>This user has decided to keep their profile private.</p><small className="empty-note">@{username}</small></div>}
+      {state.status === 'ok' && p.public && <><div style={{ position: 'relative' }}><Shape kind="star" color="var(--sand)" size={90} style={{ position: 'absolute', right: 0, top: -30, zIndex: 0 }} /><ProfileCard p={p} clients={p.clients || []} /></div><small className="empty-note">Made with Terracove</small></>}
     </main>
   </div>;
 }

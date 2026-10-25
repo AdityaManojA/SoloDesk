@@ -42,7 +42,7 @@ function fold(line) {
   return result + current;
 }
 export function calendarIcs(events, { namespace = 'local', now = new Date(), origin = '' } = {}) {
-  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SoloDesk//Workspace calendar//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:SoloDesk'];
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Terracove//Workspace calendar//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:Terracove'];
   for (const event of events) {
     lines.push('BEGIN:VEVENT', `UID:${escape(namespace)}-${escape(event.id)}@solodesk`, `DTSTAMP:${stamp(now)}`, `SUMMARY:${escape(event.title)}`, `DESCRIPTION:${escape(event.description)}`);
     if (event.allDay) lines.push('DTSTART;VALUE=DATE:' + event.start.replace(/-/g, ''), 'DTEND;VALUE=DATE:' + event.end.replace(/-/g, ''));
