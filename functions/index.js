@@ -5,10 +5,13 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { defineString } from 'firebase-functions/params';
 import { createApi } from './api.js';
 import * as excelFunctions from './excel-functions.js';
+import * as approvalFunctions from './approval-functions.js';
 
 // Live Excel sync, deployed separately with: firebase deploy --only functions:excel
 const { seal: _seal, unseal: _unseal, syncUser: _syncUser, disconnectUser: _disconnectUser, ...excelTriggers } = excelFunctions;
 export const excel = excelTriggers;
+// Approval emails, deployed separately with: firebase deploy --only functions:approvals
+export const approvals = approvalFunctions;
 
 initializeApp();
 const db = getFirestore(), auth = getAuth();
@@ -17,7 +20,8 @@ const keys = db.collection('integrationKeys');
 const store = {
   async getWorkspace(uid) {
     const snapshot = await db.doc(`solodeskWorkspaces/${uid}`).get();
-    return snapshot.exists ? JSON.parse(snapshot.data().json) : null;
+    // Since 1.09 the main document keeps tasks, projects and clients in `core`; older ones in `json`.
+    return snapshot.exists ? JSON.parse(snapshot.data().core ?? snapshot.data().json) : null;
   },
   async getKey(id) { const snapshot = await keys.doc(id).get(); return snapshot.exists ? snapshot.data() : null; },
   async listKeys(uid) { const snapshot = await keys.where('uid', '==', uid).get(); return snapshot.docs.map(doc => doc.data()); },

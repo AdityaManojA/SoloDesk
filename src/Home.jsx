@@ -111,7 +111,9 @@ export function Home({ d, open, user, taskflow, mut, toast }) {
   const overdue = d.invoices.filter(i => status(i) === 'Overdue');
   const dueSoon = d.invoices.filter(i => ['Sent', 'Partially paid'].includes(status(i)) && i.due >= t && i.due <= addDays(t, 3));
   const reminders = (d.notes || []).flatMap(n => (n.checklist || []).filter(c => !c.done && c.due && c.due <= t).map(c => ({ ...c, note: n })));
+  const changes = [...d.tasks, ...(d.docs || []), ...d.invoices].filter(x => x.approval?.state === 'changes' && !x.arch);
   const attention = [
+    ...changes.map(x => ({ key: 'ap-' + x.id, href: '#/approvals', icon: 'approve', tone: 'sand', title: x.title || x.no, meta: x.approval.comment ? '“' + x.approval.comment + '”' : 'Client asked for changes', chip: 'Changes', chipTone: 'sand' })),
     ...overdue.map(i => ({ key: i.id, href: '#/invoices/' + i.id, icon: 'invoices', tone: 'hero', title: `${i.no} · ${L.cname(d, i.client)}`, meta: `${money(calc(i).bal)} overdue`, chip: `${Math.max(1, Math.round((Date.parse(t) - Date.parse(i.due)) / 864e5))} days`, chipTone: 'hero' })),
     ...reminders.map(r => ({ key: r.id, href: r.note.client ? '#/clients/' + r.note.client : '#/notes', icon: 'notes', tone: 'sand', title: r.title, meta: r.note.title, chip: r.due === t ? 'Today' : 'Overdue', chipTone: 'sand' })),
     ...dueSoon.map(i => ({ key: i.id, href: '#/invoices/' + i.id, icon: 'invoices', tone: 'sage', title: `${i.no} · ${L.cname(d, i.client)}`, meta: `${money(calc(i).bal)} due soon`, chip: new Date(i.due + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' }), chipTone: 'sage' })),
