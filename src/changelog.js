@@ -2,7 +2,7 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
-  {version:'1.06',released:false,date:'',title:'Client portals that keep themselves up to date',highlights:[
+  {version:'1.06',released:true,date:'2026-10-25',title:'Client portals that keep themselves up to date',highlights:[
     ['No more “Update portal”','A client’s portal now updates by itself a moment after you change anything you share with them: task progress, project dates, documents, PRDs, links or invoices.'],
     ['Pick what to share, instantly','Under Client access, ticking or unticking a project, document or invoice changes the portal straight away. A live dot shows when it last published.'],
   ],fixes:[]},

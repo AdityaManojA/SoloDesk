@@ -2,6 +2,11 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.06 — 25 October 2026 · Client portals that keep themselves up to date
+
+- **No more “Update portal”.** A client’s portal now updates by itself a moment after you change anything you share with them: task progress, project dates, documents, PRDs, links or invoices.
+- **Pick what to share, instantly.** Under Client access, ticking or unticking a project, document or invoice changes the portal straight away. A live dot shows when it last published.
+
 ## 1.05 — 25 October 2026 · Client approvals, a new client portal and smart typing
 
 - **Send work for approval.** Open a task and choose Send for approval. Your client approves it or asks for changes in their portal, and the answer comes back to the task. A new Approvals page shows what is waiting, approved or needs changes.
