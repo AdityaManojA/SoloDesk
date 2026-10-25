@@ -4,6 +4,7 @@
 export const changelog=[
   {version:'1.08',released:false,date:'',title:'Small improvements',highlights:[
     ['Jump back in opens the work','Clicking a task, project or client under Jump back in now opens its page instead of the edit form. Notes still open right there on Home.'],
+    ['A clearer project timeline','“What you’re working on” in the calendar now labels every day with its weekday and date, shades weekends, marks today with a clear line, and stacks only projects that overlap. Bar ends show whether a project carries on past the view (›) or is ongoing.'],
     ['A calmer Home','The revenue card moved off Home; Needs attention now has the full width. Revenue is still in Reports.'],
   ],fixes:[]},
   {version:'1.07',released:true,date:'2026-10-25',title:'Small improvements',highlights:[

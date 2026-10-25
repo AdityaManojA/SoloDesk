@@ -122,28 +122,49 @@ export default function Calendar({ d, mut, open, user, taskflow, toast = () => {
 }
 
 // "What you're working on": active projects as bars across the visible period, one row per client.
+// Lanes: projects that overlap in time stack; ones that don't share a line.
+function timelineLanes(bars) {
+  const ends = [];
+  return [...bars].sort((x, y) => x.f.left - y.f.left).map(bar => {
+    let lane = ends.findIndex(end => end <= bar.f.left + 0.0001);
+    if (lane < 0) { lane = ends.length; ends.push(0); }
+    ends[lane] = bar.f.left + bar.f.width;
+    return { ...bar, lane };
+  });
+}
+
 function WorkTimeline({ d, zoom, day, toneOf, completed, client, onOpen }) {
   const range = zoom === 'day' ? zoomRange('week', day) : zoomRange(zoom, day);
   const t = today(), now = rangeFraction(t, addDaysKey(t, 1), range);
   const projects = d.projects.filter(p => !p.arch && (completed || p.status !== 'Complete') && (!client || p.client === client) && (p.start || p.end));
   const rows = [];
   for (const c of [...d.clients.filter(c => !c.arch), { id: '', name: 'No client' }]) {
-    const bars = projects.filter(p => (p.client || '') === c.id).map(p => { const s = p.start || p.end, e = p.end ? addDaysKey(p.end, 1) : addDaysKey(t, 3650); return { p, f: rangeFraction(s, e, range) }; }).filter(x => x.f);
-    if (bars.length) rows.push({ c, bars });
+    const bars = projects.filter(p => (p.client || '') === c.id).map(p => { const s = p.start || p.end, e = p.end ? addDaysKey(p.end, 1) : addDaysKey(t, 3650); return { p, f: rangeFraction(s, e, range), ongoing: !p.end }; }).filter(x => x.f);
+    if (bars.length) { const laid = timelineLanes(bars); rows.push({ c, bars: laid, lanes: Math.max(...laid.map(x => x.lane)) + 1 }); }
   }
   const undated = d.projects.filter(p => !p.arch && p.status === 'Active' && !p.start && !p.end).length;
-  const ticks = zoom === 'year' ? Array.from({ length: 12 }, (_, i) => ({ key: i, label: new Date(+range.start.slice(0, 4), i, 1).toLocaleDateString(undefined, { month: 'short' }), f: rangeFraction(`${range.start.slice(0, 4)}-${String(i + 1).padStart(2, '0')}-01`, `${range.start.slice(0, 4)}-${String(i + 1).padStart(2, '0')}-02`, range) }))
-    : Array.from({ length: (Date.parse(range.end) - Date.parse(range.start)) / 864e5 }, (_, i) => { const k = addDaysKey(range.start, i); return { key: k, label: zoom === 'month' ? (i % 7 === 0 || i === 0 ? String(+k.slice(8)) : '') : fmt(k, { weekday: 'short', day: 'numeric' }), f: rangeFraction(k, addDaysKey(k, 1), range) }; });
+  // One column per day (per month in the year view): weekday + date, weekends shaded, today marked.
+  const cols = zoom === 'year'
+    ? Array.from({ length: 12 }, (_, i) => { const k = `${range.start.slice(0, 4)}-${String(i + 1).padStart(2, '0')}-01`; return { key: k, top: '', label: fmt(k, { month: 'short' }), shade: i % 2 === 1, today: t.slice(0, 7) === k.slice(0, 7), first: true }; })
+    : Array.from({ length: Math.round((Date.parse(range.end) - Date.parse(range.start)) / 864e5) }, (_, i) => { const k = addDaysKey(range.start, i), wd = new Date(k + 'T12:00:00').getDay(); return { key: k, top: fmt(k, { weekday: zoom === 'month' ? 'narrow' : 'short' }), label: String(+k.slice(8)), shade: wd === 0 || wd === 6, today: k === t, first: wd === 1 || i === 0, month: k.slice(8) === '01' || i === 0 ? fmt(k, { month: 'short' }) : '' }; });
+  const grid = { gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` };
   const tasksFor = p => { const all = d.tasks.filter(x => x.project === p.id && !x.arch); return `${all.filter(x => x.status === 'Done').length}/${all.length} tasks`; };
-  return <section className="work-timeline card" aria-label="What you are working on">
-    <div className="block-head" style={{ margin: 0 }}><h3>What you’re working on</h3><small className="empty-note">{rows.reduce((n, r) => n + r.bars.length, 0)} project{rows.reduce((n, r) => n + r.bars.length, 0) === 1 ? '' : 's'} in this {zoom === 'day' ? 'week' : zoom}{undated ? ` · ${undated} active without dates` : ''}</small></div>
+  const range2 = p => `${p.start ? fmt(p.start, { day: 'numeric', month: 'short' }) : '?'} → ${p.end ? fmt(p.end, { day: 'numeric', month: 'short' }) : 'ongoing'}`;
+  const count = rows.reduce((n, r) => n + r.bars.length, 0);
+  return <section className={'work-timeline card zoom-' + zoom} aria-label="What you are working on">
+    <div className="block-head" style={{ margin: 0 }}><h3>What you’re working on</h3><small className="empty-note">{count} project{count === 1 ? '' : 's'} in this {zoom === 'day' ? 'week' : zoom}{undated ? ` · ${undated} active without dates` : ''}</small></div>
     {rows.length ? <div className="wt-grid">
-      <div className="wt-ticks" aria-hidden="true"><span className="wt-name" />{<div className="wt-track">{ticks.map(x => x.label && <span key={x.key} style={{ left: (x.f.left * 100) + '%' }}>{x.label}</span>)}</div>}</div>
-      {rows.map(({ c, bars }) => <div className="wt-row" key={c.id || 'none'}>
-        <a className="wt-name" href={c.id ? '#/clients/' + c.id : '#/projects'}><i style={{ background: toneOf(c.id) }} />{c.name}</a>
-        <div className="wt-track">{now && <span className="wt-now" style={{ left: ((now.left + now.width / 2) * 100) + '%' }} />}{bars.map(({ p, f }, i) => <button key={p.id} type="button" className={'wt-bar' + (f.before ? ' before' : '') + (f.after ? ' after' : '')} style={{ left: (f.left * 100) + '%', width: `max(${f.width * 100}%, 6px)`, top: i * 30, background: toneOf(c.id) }} onClick={() => onOpen('project-' + p.id)} title={`${p.name} · ${p.start || '?'} → ${p.end || 'ongoing'} · ${tasksFor(p)}`}><b>{p.name}</b><small>{tasksFor(p)}</small></button>)}<span style={{ display: 'block', height: bars.length * 30 }} /></div>
+      <div className="wt-ticks" aria-hidden="true"><span className="wt-name" /><div className="wt-days" style={grid}>{cols.map(c => <span key={c.key} className={(c.today ? 'today ' : '') + (c.shade ? 'shade ' : '') + (c.first ? 'first' : '')}>{c.month && <em>{c.month}</em>}{c.top && <small>{c.top}</small>}<b>{c.label}</b></span>)}</div></div>
+      {rows.map(({ c, bars, lanes }) => <div className="wt-row" key={c.id || 'none'}>
+        <a className="wt-name" href={c.id ? '#/clients/' + c.id : '#/projects'}><i style={{ background: toneOf(c.id) }} /><span>{c.name}</span></a>
+        <div className="wt-track" style={{ height: lanes * 34 + 8 }}>
+          {now && <span className="wt-now" aria-hidden="true" style={{ left: ((now.left + now.width / 2) * 100) + '%' }} />}
+          <div className="wt-cols" style={grid} aria-hidden="true">{cols.map(x => <span key={x.key} className={(x.shade ? 'shade ' : '') + (x.first ? 'first ' : '') + (x.today ? 'today' : '')} />)}</div>
+          {bars.map(({ p, f, lane, ongoing }) => <button key={p.id} type="button" className={'wt-bar' + (f.before ? ' before' : '') + (f.after || ongoing ? ' after' : '') + (ongoing ? ' ongoing' : '')} style={{ left: `calc(${f.left * 100}% + 2px)`, width: `max(calc(${f.width * 100}% - 4px), 10px)`, top: 4 + lane * 34, '--bar': toneOf(c.id) }} onClick={() => onOpen('project-' + p.id)} title={`${p.name} · ${range2(p)} · ${tasksFor(p)}`}>
+            {f.before && <span className="wt-arrow" aria-hidden="true">‹</span>}<b>{p.name}</b><small>{range2(p)} · {tasksFor(p)}</small>{(f.after || ongoing) && <span className="wt-arrow" aria-hidden="true">›</span>}</button>)}
+        </div>
       </div>)}
-    </div> : <p className="empty-note" style={{ margin: 0 }}>No dated projects in this period. Give a project a start and end date to see it here.</p>}
+    </div> : <p className="empty-note" style={{ margin: 0 }}>No dated projects in this period. Give a project a start date to see it here.</p>}
   </section>;
 }
 
