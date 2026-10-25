@@ -30,6 +30,14 @@ export function applyClientUpdate(workspace, clientId, update, now = new Date().
 }
 
 // The draft email for "Request a meeting" in the portal.
+function meetingDraft({ business, clientName, project }) {
+  return { subject: `Meeting request${project ? ' · ' + project : ''}`, body: `Hi ${business || 'there'},\n\nCan we have a meeting / quick call?\n\nWhat about: \nTimes that work for me: \n\nThanks,\n${clientName || ''}` };
+}
+// Opens a new Gmail message in the browser, addressed and filled in.
+export function meetingGmail(to, info) {
+  const { subject, body } = meetingDraft(info);
+  return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to || '')}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
 export function meetingMailto(to, { business, clientName, project }) {
   const subject = `Meeting request${project ? ' · ' + project : ''}`;
   const body = `Hi ${business || 'there'},\n\nCan we have a meeting / quick call?\n\nWhat about: \nTimes that work for me: \n\nThanks,\n${clientName || ''}`;

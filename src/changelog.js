@@ -2,6 +2,14 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
+  {version:'1.11',released:true,date:'2026-10-26',title:'Client portal fixes',highlights:[
+    ['Meetings open in Gmail','Request a meeting opens a ready-to-send Gmail message in the browser. Clients who prefer their own email app can use the link next to it.'],
+  ],fixes:[
+    'Client requests were not being saved; they now go through and stay.',
+    'Change password in the client portal is behind a button, so the form only shows when it is needed.',
+    'The comment box and quick buttons in the portal line up neatly, with Send under the comment.',
+    'The “Live” label on client access is now a plain “Shared”.',
+  ]},
   {version:'1.10',released:true,date:'2026-10-25',title:'Find any setting, and a steadier client portal',highlights:[
     ['Search finds settings','Search (Ctrl/⌘ K) now finds every setting and page by the words you’d use: “bank”, “IFSC”, “GST”, “dark mode”, “logo”, “backup”. Picking one opens the right section and puts the cursor in the field.'],
   ],fixes:[

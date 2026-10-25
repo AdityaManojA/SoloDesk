@@ -2,6 +2,16 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.11 — 26 October 2026 · Client portal fixes
+
+- **Meetings open in Gmail.** Request a meeting opens a ready-to-send Gmail message in the browser, with a link to use the device's email app instead.
+
+Fixes
+- Client requests were refused by the Firestore rules (the rule's wildcard was named `request`, hiding the built-in request object); they now save.
+- Change password in the portal is behind a button.
+- Portal comment box and quick buttons line up; Send sits under the comment.
+- The “Live” label on client access is now “Shared”.
+
 ## 1.10 — 25 October 2026 · Find any setting, and a steadier client portal
 
 - **Search finds settings.** Search (Ctrl/⌘ K) now finds every setting and page by the words you’d use: “bank”, “IFSC”, “GST”, “dark mode”, “logo”, “backup”. Picking one opens the right section and puts the cursor in the field.

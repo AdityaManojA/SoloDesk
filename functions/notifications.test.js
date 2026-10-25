@@ -51,3 +51,10 @@ test('request replies read as labels, with your own timing for custom', async ()
   const list = buildNotifications(ws(), [], new Date(), [{ id: 'r', clientId: 'c', title: 'Add a blog?', at: '2026-10-25T09:00:00.000Z' }]);
   assert.ok(list.some(n => n.title === 'Hytz asked: “Add a blog?”'));
 });
+
+test('meeting request can open in Gmail', async () => {
+  const { meetingGmail } = await import('../src/client-feed.js');
+  const g = meetingGmail('me@studio.co', { business: 'Studio', clientName: 'Hytz', project: 'Website' });
+  assert.match(g, /^https:\/\/mail\.google\.com\/mail\/\?view=cm&fs=1&to=me%40studio\.co&su=Meeting%20request/);
+  assert.match(decodeURIComponent(g), /Can we have a meeting \/ quick call\?/);
+});

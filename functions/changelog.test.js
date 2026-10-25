@@ -11,7 +11,7 @@ test('release notes are newest first, uniquely versioned and dated once released
     if(entry.released)assert.match(entry.date,/^\d{4}-\d{2}-\d{2}$/);
     assert.ok(entry.highlights.length&&entry.highlights.every(([title,text])=>title&&text));
   }
-  assert.equal(currentVersion(),'1.10');
+  assert.equal(currentVersion(),'1.11');
   assert.equal(shouldShowUpdate(null,false),false,'first visit: no update note');
   assert.equal(shouldShowUpdate('1.01',true),true);
   assert.equal(shouldShowUpdate('1.02',true),true);
@@ -22,6 +22,7 @@ test('release notes are newest first, uniquely versioned and dated once released
   assert.equal(shouldShowUpdate('1.07',true),true);
   assert.equal(shouldShowUpdate('1.08',true),true);
   assert.equal(shouldShowUpdate('1.09',true),true);
-  assert.equal(shouldShowUpdate('1.10',true),false);
+  assert.equal(shouldShowUpdate('1.10',true),true);
+  assert.equal(shouldShowUpdate('1.11',true),false);
   assert.equal(shouldShowUpdate(null,true),true,'returning from before notes existed');
 });

@@ -58,7 +58,8 @@ service cloud.firestore {
         allow delete: if isOwner();
       }
       // Requests and questions from the client ("Can you add a blog?"). The owner answers with a label.
-      match /requests/{request} {
+      // (Named requestId: a wildcard called `request` would hide Firestore's built-in request object.)
+      match /requests/{requestId} {
         allow read: if isOwner() || isClient();
         allow create: if isClient() &&
           request.resource.data.keys().hasOnly(['title','details','projectId','at','email']) &&

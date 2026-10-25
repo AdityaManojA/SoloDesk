@@ -2,7 +2,7 @@ import {useEffect,useState} from 'react';
 import {initializeApp,deleteApp} from 'firebase/app';
 import {getAuth,setPersistence,inMemoryPersistence,createUserWithEmailAndPassword,signOut,signInWithEmailAndPassword,signInWithPopup,sendPasswordResetEmail,updatePassword,onAuthStateChanged,EmailAuthProvider,reauthenticateWithCredential,reauthenticateWithPopup} from 'firebase/auth';
 import {doc,getDoc,setDoc,deleteDoc,onSnapshot,collection,serverTimestamp,addDoc} from 'firebase/firestore';
-import {CHEER,meetingMailto,REPLY_TONE,replyLabel} from './client-feed';
+import {CHEER,meetingMailto,meetingGmail,REPLY_TONE,replyLabel} from './client-feed';
 import {auth,db,firebaseOptions,provider} from './firebase';
 import {publishablePortal} from './workspace-upgrades';
 import {APPROVAL_LABEL,KIND_LABEL} from './approvals';
@@ -52,7 +52,7 @@ export function PortalManager({d,user,demo,client,toast}){
   const pick=(title,items,chosen,set,label,empty,key)=><fieldset className="share-picks"><legend>{title}</legend>{items.length?items.map(x=><label key={x.id} className={'share-pick'+(chosen.includes(x.id)?' on':'')}><input type="checkbox" checked={chosen.includes(x.id)} onChange={()=>toggle(x.id,chosen,set,key)}/><span>{label(x)}</span></label>):<p className="empty-note">{empty}</p>}</fieldset>;
   const approvals=d.tasks.filter(t=>t.approval&&(t.client===client.id||projectsOf.some(p=>p.id===t.project)));
   return <section className="card portal-manager">
-    <div className="block-head" style={{margin:0}}><h3>Client portal</h3>{grant?<span className="chip sage">Live</span>:<span className="chip white">Not shared yet</span>}</div>
+    <div className="block-head" style={{margin:0}}><h3>Client portal</h3>{grant?<span className="chip sage">Shared</span>:<span className="chip white">Not shared yet</span>}</div>
     <p style={{marginTop:0}}>Your client signs in to see what you pick below, plus their links and any task you send them for approval. Internal notes, other clients and payment instructions stay private. The portal updates by itself a moment after you change shared work.</p>
     {error&&<p role="alert" className="inline-error">{error}</p>}
     {grant&&<div className="portal-link-box"><Icon name="link" size={18}/><input readOnly aria-label="Portal link" value={portalUrl(user.uid)} onFocus={e=>e.target.select()}/><button type="button" className="btn sm" onClick={async()=>{try{await navigator.clipboard.writeText(portalUrl(user.uid));toast('Portal link copied.');}catch{toast('Select the link and copy it.');}}}>Copy link</button><a className="ghost sm" href={'#/portal/'+user.uid} target="_blank" rel="noopener noreferrer">Preview ↗</a></div>}
@@ -65,7 +65,7 @@ export function PortalManager({d,user,demo,client,toast}){
       {pick('Projects and their tasks',projectsOf,projects,setProjects,p=><>{p.name}<small>{d.tasks.filter(t=>t.project===p.id).length} tasks · {p.status}</small></>,'No projects for this client yet.','projectIds')}
       {pick('Documents and PRDs',docsOf,docs,setDocs,x=><>{x.title}<small>{x.kind==='prd'?'PRD · '+(x.status||'Draft'):'Linked file'}</small></>,'No documents yet. Add them under Files & docs.','docIds')}
       {pick('Sent invoices',d.invoices.filter(i=>i.client===client.id&&i.state==='sent'),invoices,setInvoices,i=><>{i.no}<small>Due {i.due}</small></>,'No sent invoices.','invoiceIds')}
-      {grant?<p className="portal-live-note"><span className="live-dot"/>Live · updates automatically{grant.data?.updatedAt?' · last published '+new Date(grant.data.updatedAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}):''}</p>:<button className="btn" disabled={busy||demo}>{busy?'Working…':'Set up client access'}</button>}
+      {grant?<p className="portal-live-note">Updates automatically{grant.data?.updatedAt?' · last published '+new Date(grant.data.updatedAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}):''}</p>:<button className="btn" disabled={busy||demo}>{busy?'Working…':'Set up client access'}</button>}
     </form>
     {demo&&<p className="mu">Sign in to publish a portal. Account creation is disabled in the demo.</p>}
     {grant&&<button className="ghost danger sm" style={{justifySelf:'start'}} disabled={busy} onClick={async()=>{setBusy(true);try{await deleteDoc(doc(db,'solodeskPortals',user.uid,'shares',client.id));toast('Portal access revoked. The client’s Firebase account is kept.');}catch(e){setError(authMessage(e));}finally{setBusy(false);}}}>Revoke portal access</button>}
@@ -168,7 +168,7 @@ function PortalShare({share,owner,user,onMessage,settings}){
       <span className="eyebrow">{data.business} · CLIENT PORTAL</span>
       <h1>Hello, {data.clientName}</h1>
       <p>Everything {data.business} is working on for you, in one place. Updated {new Date(data.updatedAt).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'})}.</p>
-      {data.contactEmail&&<a className="meeting-btn" href={meetingMailto(data.contactEmail,{business:data.business,clientName:data.clientName,project:projects.length===1?projects[0].name:''})}><Icon name="calendar" size={16}/>Request a meeting</a>}
+      {data.contactEmail&&<div className="meeting-actions"><a className="meeting-btn" target="_blank" rel="noopener noreferrer" href={meetingGmail(data.contactEmail,{business:data.business,clientName:data.clientName,project:projects.length===1?projects[0].name:''})}><Icon name="calendar" size={16}/>Request a meeting</a><a className="meeting-alt" href={meetingMailto(data.contactEmail,{business:data.business,clientName:data.clientName,project:projects.length===1?projects[0].name:''})}>Use my email app instead</a></div>}
       <div className="portal-stats">
         <button type="button" className="portal-stat hero" onClick={()=>setTab('approvals')}><strong>{pending.length}</strong><span>Waiting for your approval</span></button>
         <button type="button" className="portal-stat sand" onClick={()=>setTab('work')}><strong>{projects.length}</strong><span>Active project{projects.length===1?'':'s'}</span></button>
@@ -210,7 +210,7 @@ function PortalUser({name,email,onSignOut}){
 }
 
 export function ClientPortal({owner}){
-  const [user,setUser]=useState(auth?.currentUser),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[nextPassword,setNextPassword]=useState(''),[confirmNext,setConfirmNext]=useState(''),[currentPassword,setCurrentPassword]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[shares,setShares]=useState([]),[loaded,setLoaded]=useState(false);
+  const [user,setUser]=useState(auth?.currentUser),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[nextPassword,setNextPassword]=useState(''),[confirmNext,setConfirmNext]=useState(''),[currentPassword,setCurrentPassword]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[shares,setShares]=useState([]),[loaded,setLoaded]=useState(false),[showPassword,setShowPassword]=useState(false);
   useEffect(()=>{if(auth)return onAuthStateChanged(auth,setUser);},[]);
   useEffect(()=>{
     setShares([]);setLoaded(false);if(!user||!owner||!db)return;
@@ -226,15 +226,15 @@ export function ClientPortal({owner}){
   // The portal's Settings tab: who is signed in, and changing the password.
   const settings=user&&<div className="portal-grid portal-settings">
     <article className="portal-project"><h3>Your account</h3><p className="invoice-line"><span>Name</span><b>{shares[0]?.data?.clientName||'—'}</b></p><p className="invoice-line"><span>Login email</span><b>{user.email}</b></p><p className="invoice-line"><span>Signed in with</span><b>{hasPassword?'Email and password':'Google'}</b></p><button type="button" className="ghost sm" style={{justifySelf:'start'}} onClick={()=>action(()=>signOut(auth))}>Sign out</button></article>
-    <article className="portal-project"><h3>Change your password</h3>
+    <article className="portal-project"><h3>Password</h3>{!showPassword?<><p className="empty-note" style={{margin:0}}>{hasPassword?'Change the password you use to sign in to this portal.':'You sign in with Google. You can also set a password.'}</p><button type="button" className="ghost sm" style={{justifySelf:'start'}} onClick={()=>setShowPassword(true)}>Change password</button></>:<>
       <form className="portal-password-form" onSubmit={e=>{e.preventDefault();if(nextPassword!==confirmNext){setMessage('The two passwords don’t match. Type the same password in both fields.');return;}if(nextPassword===currentPassword){setMessage('Choose a new password that is different from your current one.');return;}action(async()=>{
         // Prove it is really them first: current password, or Google for accounts without one.
         if(hasPassword)await reauthenticateWithCredential(user,EmailAuthProvider.credential(user.email,currentPassword));else await reauthenticateWithPopup(user,provider);
-        await updatePassword(user,nextPassword);setMessage('Password updated.');});}}>
+        await updatePassword(user,nextPassword);setMessage('Password updated.');setShowPassword(false);});}}>
         {hasPassword?<label>Current password<input required type="password" autoComplete="current-password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)}/></label>:<p className="mu">You’ll confirm with Google before the new password is saved.</p>}
         <label>New password<input required type="password" minLength={12} autoComplete="new-password" value={nextPassword} onChange={e=>setNextPassword(e.target.value)}/></label>
         <label>Re-enter new password<input required type="password" minLength={12} autoComplete="new-password" value={confirmNext} aria-invalid={!!confirmNext&&confirmNext!==nextPassword} onChange={e=>setConfirmNext(e.target.value)}/>{confirmNext&&<small className={confirmNext===nextPassword?'match-ok':'match-bad'}>{confirmNext===nextPassword?'Passwords match':'Passwords don’t match yet'}</small>}</label>
-        <button className="btn" disabled={busy}>Update password</button></form></article>
+        <div className="context-actions" style={{margin:0}}><button className="btn" disabled={busy}>Update password</button><button type="button" className="ghost" onClick={()=>{setShowPassword(false);setCurrentPassword('');setNextPassword('');setConfirmNext('');}}>Cancel</button></div></form></>}</article>
   </div>;
   return <main className="portal-shell portal-v2">
     <header className="portal-top"><BrandLogo/>{user&&<PortalUser name={shares[0]?.data?.clientName} email={user.email} onSignOut={()=>action(()=>signOut(auth))}/>}</header>
