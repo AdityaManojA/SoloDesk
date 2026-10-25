@@ -901,3 +901,8 @@ input[type=radio]{border-radius:50%!important}
 .wt-bar.after .wt-arrow:last-child{margin-left:auto}
 .wt-now{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--hero-deep,#D27556);border-radius:2px;z-index:2;opacity:.9}
 @media(max-width:760px){.wt-ticks,.wt-row{grid-template-columns:96px minmax(0,1fr)}.zoom-month .wt-days span:not(.first):not(.today) b{visibility:hidden}.wt-bar small{display:none}}
+
+/* repeat on chosen days */
+.repeat-days{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 4px}
+.repeat-days button{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--ln);background:var(--card);color:var(--tx);font:inherit;font-weight:700;cursor:pointer}
+.repeat-days button[aria-pressed=true]{background:var(--hero);border-color:var(--hero);color:#141414}

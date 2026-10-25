@@ -94,3 +94,14 @@ test('repeating a task preserves the offset between its work block and deadline'
 test('reusable workflows can be recovered without touching generated invoices',()=>{
   const w=fixture();w.invoiceSchedules=[{id:'rule',name:'Retainer'}];trashReusable(w,'invoiceSchedules','rule');assert.equal(w.invoiceSchedules.length,0);assert.equal(w.invoices.length,1);restoreTrash(w,w.trash[0].id);assert.equal(w.invoiceSchedules[0].id,'rule');
 });
+
+test('TaskFlow repeats: every other day, yearly and chosen weekdays', async () => {
+  const { nextRepeat, repeatLabel } = await import('../src/productivity.js');
+  assert.equal(nextRepeat('2026-10-21', 'alternate'), '2026-10-23');
+  assert.equal(nextRepeat('2028-02-29', 'yearly', 29), '2029-02-28');
+  assert.equal(nextRepeat('2026-10-21', 'custom', 21, [1, 3, 5]), '2026-10-23');
+  assert.equal(nextRepeat('2026-10-23', 'custom', 23, [1, 3, 5]), '2026-10-26');
+  assert.throws(() => nextRepeat('2026-10-23', 'custom', 23, []));
+  assert.equal(repeatLabel('custom', [5, 1]), 'Every Mon, Fri');
+  assert.equal(repeatLabel('alternate'), 'Every other day');
+});

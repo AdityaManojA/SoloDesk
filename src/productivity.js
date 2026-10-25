@@ -6,10 +6,23 @@ import {taskflowCalendarEvents} from './taskflow-data.js';
 import {onDay,localDay} from './calendar-view.js';
 
 const collections=['clients','projects','tasks','invoices'];
-export const frequencies=[['','Does not repeat'],['daily','Daily'],['weekdays','Weekdays'],['weekly','Weekly'],['monthly','Monthly']];
+// Same repeats as TaskFlow. "custom" repeats on chosen weekdays (task.repeatDays, 0 = Sunday).
+export const frequencies=[['','Does not repeat'],['daily','Daily'],['alternate','Every other day'],['weekdays','Weekdays'],['weekly','Weekly'],['custom','On days I choose'],['monthly','Monthly'],['yearly','Yearly']];
+const DAY_NAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+export const repeatLabel=(repeat,days)=>repeat==='custom'?'Every '+(days||[]).slice().sort((a,b)=>a-b).map(d=>DAY_NAMES[d]).join(', '):(frequencies.find(([f])=>f===repeat)?.[1]||'Does not repeat');
+export const validRepeatDays=days=>days==null||Array.isArray(days)&&days.length>0&&days.length<=7&&days.every(d=>Number.isInteger(d)&&d>=0&&d<=6);
 export const validDay=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value+'T12:00:00Z'))&&new Date(value+'T12:00:00Z').toISOString().slice(0,10)===value;
-export function nextRepeat(day,frequency,anchor=Number(day?.slice(-2))){
+export function nextRepeat(day,frequency,anchor=Number(day?.slice(-2)),days){
   if(!validDay(day)||!frequencies.some(([f])=>f&&f===frequency))throw new Error('Choose a valid repeat date and frequency.');
+  if(frequency==='custom'){
+    if(!validRepeatDays(days)||!days?.length)throw new Error('Choose at least one day to repeat on.');
+    let next=addDays(day,1);while(!days.includes(new Date(next+'T12:00:00').getDay()))next=addDays(next,1);return next;
+  }
+  if(frequency==='yearly'){
+    const [y,m]=day.split('-').map(Number),last=new Date(Date.UTC(y+1,m,0)).getUTCDate();
+    return `${y+1}-${String(m).padStart(2,'0')}-${String(Math.min(Math.max(1,Number(anchor)||1),last)).padStart(2,'0')}`;
+  }
+  if(frequency==='alternate')return addDays(day,2);
   if(frequency==='monthly'){
     const x=new Date(day+'T12:00:00Z');x.setUTCDate(1);x.setUTCMonth(x.getUTCMonth()+1);
     const last=new Date(Date.UTC(x.getUTCFullYear(),x.getUTCMonth()+1,0)).getUTCDate();
@@ -26,7 +39,7 @@ export function repeatCompletedTasks(before,after){
     if(task.status!=='Done'||old?.status==='Done'||!task.repeat||!old)continue;
     if(task.repeatNextId||after.tasks.some(t=>t.repeatFrom===task.id))continue;
     const day=task.due|| (task.scheduledAt?localDay(task.scheduledAt):today());
-    const next=nextRepeat(day,task.repeat,task.repeatAnchor||Number(day.slice(-2)));
+    const next=nextRepeat(day,task.repeat,task.repeatAnchor||Number(day.slice(-2)),task.repeatDays);
     const copy={...structuredClone(task),id:rid(),status:'Todo',repeatFrom:task.id,repeatAnchor:task.repeatAnchor||Number(day.slice(-2)),createdAt:new Date().toISOString()};
     if(task.due)copy.due=next;
     if(task.scheduledAt){const date=new Date(task.scheduledAt),delta=Math.round((Date.parse(next+'T12:00:00Z')-Date.parse(day+'T12:00:00Z'))/86400000);date.setDate(date.getDate()+delta);copy.scheduledAt=date.toISOString();}

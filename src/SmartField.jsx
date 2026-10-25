@@ -37,7 +37,7 @@ export function SmartField({ label, value, onChange, workspace, chips = [], hint
 export function taskChips(p, d, now) {
   const out = [];
   if (p.due) out.push({ kind: 'when', label: fmtDay(p.due, now) + (p.time ? ' · ' + fmtTime(p.time) : '') });
-  if (p.repeat) out.push({ kind: 'repeat', label: 'Repeats ' + ({ daily: 'daily', weekdays: 'on weekdays', weekly: 'weekly', monthly: 'monthly' })[p.repeat] });
+  if (p.repeat) out.push({ kind: 'repeat', label: 'Repeats ' + (p.repeat === 'custom' ? 'every ' + p.repeatDays.map(x => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][x]).join(', ') : ({ daily: 'daily', alternate: 'every other day', weekdays: 'on weekdays', weekly: 'weekly', monthly: 'monthly', yearly: 'yearly' })[p.repeat]) });
   if (p.project) out.push({ kind: 'project', label: d.projects.find(x => x.id === p.project)?.name });
   if (p.client) out.push({ kind: 'client', label: d.clients.find(x => x.id === p.client)?.name });
   if (p.priority) out.push({ kind: 'priority', label: p.priority + ' priority' });

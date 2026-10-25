@@ -2,6 +2,7 @@ import {fresh,calc} from './lib.js';
 import {assertWorkspaceSize} from './workspace-size.js';
 import {ACTION_COLOURS,isCustomColour,actionColour} from './appearance.js';
 import {validApproval,approvalClient} from './approvals.js';
+import {validRepeatDays} from './productivity.js';
 
 export function assertUnchanged(actual,expected){
   if(actual!==expected)throw Object.assign(new Error('This workspace changed in another tab or device. Export your pending changes before loading the latest version.'),{code:'workspace-conflict'});
@@ -49,6 +50,7 @@ export function validateWorkspace(input){
   if(w.settings.taxId!=null&&typeof w.settings.taxId!=='string'||!textGroup(w.settings.bank,['accountName','bankName','accountNumber','ifsc','swift','iban','upi']))throw new Error('Invalid business settings.');
   if(w.profile!=null&&(!object(w.profile)||!strings(w.profile,['username','name','headline','bio','location'])||['public','available'].some(k=>w.profile[k]!=null&&typeof w.profile[k]!=='boolean')||w.profile.links!=null&&(!Array.isArray(w.profile.links)||w.profile.links.some(l=>!object(l)||typeof l.label!=='string'||typeof l.url!=='string'))||w.profile.clients!=null&&(!Array.isArray(w.profile.clients)||w.profile.clients.some(id=>typeof id!=='string'))))throw new Error('Invalid profile.');
   if(!w.tasks.every(t=>validApproval(t.approval)))throw new Error('Invalid task approval.');
+  if(!w.tasks.every(t=>validRepeatDays(t.repeatDays)&&(t.repeat!=='custom'||t.repeatDays?.length)))throw new Error('Invalid task repeat days.');
   for(const a of w.activity||[])if(!strings(a,['at','kind','recordId','client','title','action']))throw new Error('Invalid activity history.');
   if(w.settings.dashboardHidden!=null&&(!Array.isArray(w.settings.dashboardHidden)||w.settings.dashboardHidden.some(x=>!['metrics','overview','work'].includes(x))))throw new Error('Invalid dashboard options.');
   if(w.focusTimer!=null&&(!object(w.focusTimer)||!strings(w.focusTimer,['taskId','title','project'])||!Number.isFinite(w.focusTimer.elapsedMs)||w.focusTimer.elapsedMs<0||w.focusTimer.startedAt!=null&&!Number.isFinite(w.focusTimer.startedAt)))throw new Error('Invalid focus timer.');

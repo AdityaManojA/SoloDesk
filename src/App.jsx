@@ -16,7 +16,7 @@ import { wasSeen, rememberSeen, onboardingKey } from './experience-state';
 import { createWorkspaceSaves } from './workspace-saves';
 import { prepareClient, prepareInvoice, nextInvoiceNumber } from './invoice-input';
 import {WorkspaceSearch,Planner,Trash,Timeline,Templates,RecurringInvoices,Focus} from './ProductivityUI.jsx';
-import {repeatCompletedTasks,recordActivity,trashRecord,frequencies} from './productivity';
+import {repeatCompletedTasks,recordActivity,trashRecord,frequencies,repeatLabel} from './productivity';
 import {stampUpdated} from './recents';
 import {watchSyncInbox} from './excel-sync-client';
 import {Home,AllWork} from './Home.jsx';
@@ -248,7 +248,7 @@ function Tasks({ d, mut, open, taskflow, removeItem }) {
 function TaskPage({ d, mut, open, ask, id, removeItem, toast, user, demo }) {
   const k = d.tasks.find((x) => x.id === id);
   if (!k) return <><Back to="tasks" label="Tasks" /><Empty m="This task could not be found." /></>;
-  const rows = [['Status', k.status], ['Due date', k.due || 'No due date'], ['Priority', k.priority || 'None'], ['Repeats', k.repeat||'Does not repeat'], ['Scheduled', k.scheduledAt ? new Date(k.scheduledAt).toLocaleString() + ' · ' + (k.durationMinutes || 60) + ' minutes' : 'Not scheduled']];
+  const rows = [['Status', k.status], ['Due date', k.due || 'No due date'], ['Priority', k.priority || 'None'], ['Repeats', repeatLabel(k.repeat, k.repeatDays)], ['Scheduled', k.scheduledAt ? new Date(k.scheduledAt).toLocaleString() + ' · ' + (k.durationMinutes || 60) + ' minutes' : 'Not scheduled']];
   return (<>
     <Back to="tasks" label="Tasks" />
     <div className="hd"><h1>{k.title}</h1>
@@ -385,24 +385,25 @@ function Settings({ d, mut, toast, ask, user, logout, demo, saving, signingOut, 
 // Type the task in one line ("Call Ava tomorrow at 7pm for Website launch") and the fields below fill in,
 // as in TaskFlow. A field you change yourself stays as you set it.
 function TaskForm({ v, d, cOpts, close, save, removeItem }) {
-  const base = { priority: v.priority || '', repeat: v.repeat || '', due: v.due || '', client: v.client || '', project: v.project || '', scheduledAt: localDateTime(v.scheduledAt) };
+  const base = { priority: v.priority || '', repeat: v.repeat || '', repeatDays: v.repeatDays || null, due: v.due || '', client: v.client || '', project: v.project || '', scheduledAt: localDateTime(v.scheduledAt) };
   const [text, setText] = useState(v.title || ''), [f, setF] = useState(base), [manual, setManual] = useState(() => new Set()), [parsed, setParsed] = useState(null);
   const type = value => {
     setText(value);
     const p = parseTask(value, d);
     setParsed(p.chips.length ? p : null);
     setF(old => {
-      const next = { ...old }, from = { priority: p.priority, repeat: p.repeat, due: p.due, client: p.client, project: p.project, scheduledAt: p.time ? p.due + 'T' + p.time : '' };
-      for (const k of Object.keys(base)) if (!manual.has(k)) next[k] = from[k] || base[k];
+      const next = { ...old }, from = { priority: p.priority, repeat: p.repeat, repeatDays: p.repeatDays, due: p.due, client: p.client, project: p.project, scheduledAt: p.time ? p.due + 'T' + p.time : '' };
+      for (const k of Object.keys(base)) if (!manual.has(k === 'repeatDays' ? 'repeat' : k)) next[k] = from[k] || base[k];
       return next;
     });
   };
   const set = k => e => { const value = e.target.value; setManual(m => new Set(m).add(k)); setF(old => ({ ...old, [k]: value, ...(k === 'project' && value && !old.client ? { client: d.projects.find(p => p.id === value)?.client || '' } : {}) })); };
   const title = parsed?.title || text.trim();
-  return <Modal title={v.id ? 'Edit task' : 'New task'} onDelete={v.id ? () => removeItem('tasks',v.id) : undefined} onClose={close} onSubmit={(o) => save('tasks', { ...o, ...f, title })}>
+  return <Modal title={v.id ? 'Edit task' : 'New task'} onDelete={v.id ? () => removeItem('tasks',v.id) : undefined} onClose={close} onSubmit={(o) => { const days = f.repeat === 'custom' ? (f.repeatDays?.length ? f.repeatDays : [new Date((f.due || today()) + 'T12:00:00').getDay()]) : null; const { repeatDays, ...rest } = f; save('tasks', { ...o, ...rest, title, ...(days ? { repeatDays: days } : { repeatDays: undefined }) }); }}>
     <SmartField label="Title" required value={text} onChange={type} workspace={d} chips={parsed ? taskChips(parsed, d) : []} hint={v.id ? null : 'Try “Send the draft to Ava tomorrow at 7pm” — dates, times, clients and projects fill in as you type.'} />
     <div className="grid2"><Sel l="Status" name="status" o={['Todo', 'In progress', 'Done']} defaultValue={v.status || 'Todo'} /><Sel l="Priority" o={[['', 'None'], 'Low', 'Medium', 'High']} value={f.priority} onChange={set('priority')} /></div>
-    <Sel l="Repeat task after completion" o={frequencies} value={f.repeat} onChange={set('repeat')} /><p className="form-help">Completing this task creates one next occurrence. Existing completed occurrences stay in history.</p><Fld l="Due date (optional)" type="date" value={f.due} onChange={set('due')} /><Sel l="Client" o={cOpts} value={f.client} onChange={set('client')} />
+    <Sel l="Repeat task after completion" o={frequencies} value={f.repeat} onChange={set('repeat')} />
+    {f.repeat === 'custom' && <div className="repeat-days" role="group" aria-label="Repeat on">{['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((x, i) => { const days = f.repeatDays || [new Date((f.due || today()) + 'T12:00:00').getDay()], on = days.includes(i); return <button key={i} type="button" aria-pressed={on} aria-label={['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][i]} onClick={() => { const next = on ? days.filter(y => y !== i) : [...days, i].sort((a, b) => a - b); if (!next.length) return; setManual(m => new Set(m).add('repeat')); setF(old => ({ ...old, repeatDays: next })); }}>{x}</button>; })}</div>}<p className="form-help">Completing this task creates one next occurrence. Existing completed occurrences stay in history.</p><Fld l="Due date (optional)" type="date" value={f.due} onChange={set('due')} /><Sel l="Client" o={cOpts} value={f.client} onChange={set('client')} />
     <Sel l="Project" o={[['', '— none —'], ...projectOptions(d.projects)]} value={f.project} onChange={set('project')} /><h3>Put it on your calendar</h3><p className="mu form-help">Choose a time to reserve a work block. Otherwise, a due date appears as an all-day deadline. Times use your device’s timezone ({Intl.DateTimeFormat().resolvedOptions().timeZone}).</p><div className="grid2"><Fld l="Scheduled start (optional)" type="datetime-local" value={f.scheduledAt} onChange={set('scheduledAt')} /><Fld l="Duration (minutes)" name="durationMinutes" type="number" min="5" max="1440" step="5" defaultValue={v.durationMinutes || 60} /></div>
   </Modal>;
 }

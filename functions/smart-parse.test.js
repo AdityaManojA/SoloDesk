@@ -68,3 +68,10 @@ test('search understands days', async () => {
   const w = { tasks: [{ id: 't', title: 'Call', status: 'Todo', due: '2026-10-22' }, { id: 'x', title: 'Old', status: 'Todo', due: '2026-10-22', arch: true }], invoices: [{ id: 'i', no: 'INV-1', due: '2026-10-22', state: 'sent' }], projects: [{ id: 'p', name: 'Site', start: '2026-10-22' }] };
   assert.deepEqual(workOnDay(w, '2026-10-22').map(r => r.id), ['t', 'i', 'p']);
 });
+
+test('smart typing keeps TaskFlow repeats', () => {
+  const t = parseTask('gym every monday, wednesday and friday', W, NOW);
+  assert.deepEqual([t.repeat, t.repeatDays], ['custom', [1, 3, 5]]);
+  assert.equal(parseTask('water plants every other day', W, NOW).repeat, 'alternate');
+  assert.equal(parseTask('renew domain yearly', W, NOW).repeat, 'yearly');
+});

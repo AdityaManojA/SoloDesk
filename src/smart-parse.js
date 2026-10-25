@@ -125,7 +125,7 @@ function findName(text, items, nameOf) {
 
 // SoloDesk priorities. Only words or P1–P4 set one; a date alone does not.
 const PRIORITY = [ 'High', 'High', 'Medium', 'Low', 'Low', 'Low' ];
-const REPEATS = new Set(['daily', 'weekdays', 'weekly', 'monthly']);
+const REPEATS = new Set(['daily', 'alternate', 'weekdays', 'weekly', 'custom', 'monthly', 'yearly']);
 
 // A task typed in one line → the form's fields. Workspace is used to recognise clients and projects.
 export function parseTask(text, workspace = {}, now = new Date()) {
@@ -143,7 +143,7 @@ export function parseTask(text, workspace = {}, now = new Date()) {
   const priority = when.tier === null ? '' : PRIORITY[when.tier];
   const repeat = when.repeat && REPEATS.has(when.repeat.freq) ? when.repeat.freq : '';
   for (const chip of when.chips) if (chip.kind !== 'repeat' || repeat) chips.push(chip);
-  return { title: when.chips.length || project || client ? when.title : String(text || '').trim(), due: when.due || '', time: when.time || '', priority, repeat, client, project, chips };
+  return { title: when.chips.length || project || client ? when.title : String(text || '').trim(), due: when.due || '', time: when.time || '', priority, repeat, repeatDays: repeat === 'custom' ? when.repeat.days : undefined, client, project, chips };
 }
 
 // A project in one line: "Website launch for Ava from Nov 3 to Dec 20".
