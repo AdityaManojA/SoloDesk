@@ -706,3 +706,22 @@ input[type=radio]{border-radius:50%!important}
 .select-option.select-group[aria-expanded=true] svg{transform:rotate(180deg)}
 .select-option.in-group{color:var(--mu)}
 .select-option.in-group[aria-selected=true]{color:var(--tx)}
+
+/* smart entry (TaskFlow-style) */
+.smart-field{position:relative;display:grid;gap:6px}
+.smart-suggest{position:absolute;z-index:30;left:0;right:0;top:calc(100% - 4px);margin:0;padding:6px;list-style:none;background:var(--card);border:1px solid var(--ln);border-radius:16px;box-shadow:0 14px 34px #14141422;display:grid;gap:2px;max-height:260px;overflow:auto}
+.smart-field:has(.smart-chips) .smart-suggest,.smart-field:has(.smart-hint) .smart-suggest{top:auto;margin-top:-2px}
+.smart-suggest li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;font-size:14px}
+.smart-suggest li svg{color:var(--mu);flex:0 0 auto}
+.smart-suggest li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.smart-suggest li small{color:var(--mu);font-size:12px;white-space:nowrap}
+.smart-suggest li.on{background:var(--sf)}
+.smart-suggest kbd{font:600 10px/1 Figtree,sans-serif;border:1px solid var(--ln);border-radius:6px;padding:3px 5px;color:var(--mu)}
+.smart-chips{display:flex;flex-wrap:wrap;gap:6px}
+.smart-chip{font-size:12px;font-weight:600;border-radius:99px;padding:4px 10px;background:var(--sf);color:var(--tx)}
+.smart-chip.when{background:var(--hero);color:#141414}
+.smart-chip.project{background:var(--sand,#EFCB8A);color:#141414}
+.smart-chip.client{background:var(--sage,#A7B98B);color:#141414}
+.smart-chip.priority{background:var(--ink,#141414);color:#fff}
+.smart-chip.title{background:transparent;color:var(--mu);font-weight:500;padding-left:2px}
+.smart-hint{margin:0;font-size:12px;color:var(--mu)}

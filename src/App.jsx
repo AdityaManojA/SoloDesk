@@ -33,6 +33,8 @@ import {assertWorkspaceSize} from './workspace-size';
 import {assertUnchanged,validateWorkspace,blockers,validateDependencies,projectBudget} from './workspace-upgrades';
 import {ViewStateProvider,useViewState,PageFrame,DataNav} from './ViewState.jsx';
 import {CommandMenu} from './CommandMenu.jsx';
+import {SmartField,taskChips} from './SmartField.jsx';
+import {parseTask,parseProject,fmtDay} from './smart-parse';
 const Calendar=lazy(()=>import('./Calendar.jsx'));
 const Integrations=lazy(()=>import('./Integrations.jsx'));
 const portalView=name=>lazy(()=>import('./ClientPortal.jsx').then(module=>({default:module[name]})));
@@ -376,6 +378,32 @@ function Settings({ d, mut, toast, ask, user, logout, demo, saving, signingOut, 
   </>);
 }
 
+/* ---------- task form ---------- */
+// Type the task in one line ("Call Ava tomorrow at 7pm for Website launch") and the fields below fill in,
+// as in TaskFlow. A field you change yourself stays as you set it.
+function TaskForm({ v, d, cOpts, close, save, removeItem }) {
+  const base = { priority: v.priority || '', repeat: v.repeat || '', due: v.due || '', client: v.client || '', project: v.project || '', scheduledAt: localDateTime(v.scheduledAt) };
+  const [text, setText] = useState(v.title || ''), [f, setF] = useState(base), [manual, setManual] = useState(() => new Set()), [parsed, setParsed] = useState(null);
+  const type = value => {
+    setText(value);
+    const p = parseTask(value, d);
+    setParsed(p.chips.length ? p : null);
+    setF(old => {
+      const next = { ...old }, from = { priority: p.priority, repeat: p.repeat, due: p.due, client: p.client, project: p.project, scheduledAt: p.time ? p.due + 'T' + p.time : '' };
+      for (const k of Object.keys(base)) if (!manual.has(k)) next[k] = from[k] || base[k];
+      return next;
+    });
+  };
+  const set = k => e => { const value = e.target.value; setManual(m => new Set(m).add(k)); setF(old => ({ ...old, [k]: value, ...(k === 'project' && value && !old.client ? { client: d.projects.find(p => p.id === value)?.client || '' } : {}) })); };
+  const title = parsed?.title || text.trim();
+  return <Modal title={v.id ? 'Edit task' : 'New task'} onDelete={v.id ? () => removeItem('tasks',v.id) : undefined} onClose={close} onSubmit={(o) => save('tasks', { ...o, ...f, title })}>
+    <SmartField label="Title" required value={text} onChange={type} workspace={d} chips={parsed ? taskChips(parsed, d) : []} hint={v.id ? null : 'Try “Send the draft to Ava tomorrow at 7pm” — dates, times, clients and projects fill in as you type.'} />
+    <div className="grid2"><Sel l="Status" name="status" o={['Todo', 'In progress', 'Done']} defaultValue={v.status || 'Todo'} /><Sel l="Priority" o={[['', 'None'], 'Low', 'Medium', 'High']} value={f.priority} onChange={set('priority')} /></div>
+    <Sel l="Repeat task after completion" o={frequencies} value={f.repeat} onChange={set('repeat')} /><p className="form-help">Completing this task creates one next occurrence. Existing completed occurrences stay in history.</p><Fld l="Due date (optional)" type="date" value={f.due} onChange={set('due')} /><Sel l="Client" o={cOpts} value={f.client} onChange={set('client')} />
+    <Sel l="Project" o={[['', '— none —'], ...projectOptions(d.projects)]} value={f.project} onChange={set('project')} /><h3>Put it on your calendar</h3><p className="mu form-help">Choose a time to reserve a work block. Otherwise, a due date appears as an all-day deadline. Times use your device’s timezone ({Intl.DateTimeFormat().resolvedOptions().timeZone}).</p><div className="grid2"><Fld l="Scheduled start (optional)" type="datetime-local" value={f.scheduledAt} onChange={set('scheduledAt')} /><Fld l="Duration (minutes)" name="durationMinutes" type="number" min="5" max="1440" step="5" defaultValue={v.durationMinutes || 60} /></div>
+  </Modal>;
+}
+
 /* ---------- client form ---------- */
 const linkName = l => l.label || (() => { try { return new URL(l.url).hostname.replace(/^www\./, ''); } catch { return l.url; } })();
 function ClientLinks({ links }) {
@@ -399,6 +427,16 @@ function ProjectForm({ v, d, mut, toast, close, save, removeItem }) {
   const [client, setClient] = useState(v.client || ''), [adding, setAdding] = useState(false), [newName, setNewName] = useState('');
   const [budget, setBudget] = useState(!!(Number(v.budgetHours) || Number(v.hourlyRate)));
   const addInput = useRef(null);
+  // "Brand refresh for Ava from Nov 3 to Dec 20" fills the client and dates; fields you change stay yours.
+  const [text, setText] = useState(v.name || ''), [dates, setDates] = useState({ start: v.start || '', end: v.end || '' }), [manual, setManual] = useState(() => new Set()), [parsed, setParsed] = useState(null);
+  const type = value => {
+    setText(value);
+    const p = parseProject(value, d); setParsed(p.chips.length ? p : null);
+    if (!manual.has('client')) setClient(p.client || v.client || '');
+    setDates(old => ({ start: manual.has('start') ? old.start : p.start || v.start || '', end: manual.has('end') ? old.end : p.end || v.end || '' }));
+  };
+  const setDate = k => e => { const value = e.target.value; setManual(m => new Set(m).add(k)); setDates(old => ({ ...old, [k]: value })); };
+  const projectChips = parsed ? [...(parsed.client ? [{ kind: 'client', label: d.clients.find(c => c.id === parsed.client)?.name }] : []), ...(parsed.start ? [{ kind: 'when', label: 'Starts ' + fmtDay(parsed.start) }] : []), ...(parsed.end ? [{ kind: 'when', label: 'Ends ' + fmtDay(parsed.end) }] : []), { kind: 'title', label: 'Saves as “' + parsed.name + '”' }] : [];
   const addClient = () => {
     const result = prepareClient({ name: newName });
     if (result.error) { toast(result.error); addInput.current?.focus(); return; }
@@ -406,14 +444,14 @@ function ProjectForm({ v, d, mut, toast, close, save, removeItem }) {
     setClient(id); setNewName(''); setAdding(false); toast(`${result.client.name} added and selected.`);
   };
   const opts = [['', '— none —'], ...d.clients.filter(c => !c.arch || c.id === v.client || c.id === client).map(c => [c.id, c.name])];
-  return <Modal title={v.id ? 'Edit project' : 'New project'} onDelete={v.id ? () => removeItem('projects', v.id) : undefined} onClose={close} onSubmit={o => save('projects', { ...o, client, ...(budget ? {} : { budgetHours: '', hourlyRate: '' }) })}>
-    <Fld l="Project name" name="name" required defaultValue={v.name} />
-    <Sel l="Client" o={opts} value={client} onChange={e => setClient(e.target.value)} />
+  return <Modal title={v.id ? 'Edit project' : 'New project'} onDelete={v.id ? () => removeItem('projects', v.id) : undefined} onClose={close} onSubmit={o => save('projects', { ...o, name: parsed?.name || text.trim(), ...dates, client, ...(budget ? {} : { budgetHours: '', hourlyRate: '' }) })}>
+    <SmartField label="Project name" required value={text} onChange={type} workspace={d} names={false} chips={projectChips} hint={v.id ? null : 'Try “Brand refresh for Ava Studio from Nov 3 to Dec 20”.'} />
+    <Sel l="Client" o={opts} value={client} onChange={e => { setManual(m => new Set(m).add('client')); setClient(e.target.value); }} />
     {adding ? <div className="inline-add"><input ref={addInput} autoFocus aria-label="New client name" placeholder="Client name" value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addClient(); } if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setAdding(false); } }} /><button type="button" className="btn sm" onClick={addClient}>Add</button><button type="button" className="ghost sm" onClick={() => setAdding(false)}>Cancel</button></div>
       : <button type="button" className="add-inline-link" onClick={() => setAdding(true)}><Icon name="plus" size={16} />Add a new client</button>}
     <Sel l="Status" name="status" o={['Active', 'On hold', 'Complete']} defaultValue={v.status || 'Active'} />
     <h3>Calendar timeline</h3><p className="mu form-help">Leave the end date empty for ongoing work: the project runs from its start date until you add an end date.</p>
-    <div className="grid2"><Fld l="Start date" name="start" type="date" defaultValue={v.start} /><Fld l="End date (optional)" name="end" type="date" defaultValue={v.end} /></div>
+    <div className="grid2"><Fld l="Start date" type="date" value={dates.start} onChange={setDate('start')} /><Fld l="End date (optional)" type="date" value={dates.end} onChange={setDate('end')} /></div>
     <label className="check-row"><input type="checkbox" checked={budget} onChange={e => setBudget(e.target.checked)} /> Track an effort budget</label>
     {budget && <div className="grid2"><Fld l="Budget hours" name="budgetHours" type="number" min="0" step="0.25" defaultValue={v.budgetHours || ''} /><Fld l="Hourly rate" name="hourlyRate" type="number" min="0" step="0.01" defaultValue={v.hourlyRate || ''} /></div>}
   </Modal>;
@@ -684,11 +722,7 @@ export default function App() {
       {[['client', 'Client'], ['project', 'Project'], ['task', 'Task'], ['invoice', 'Invoice']].map(([k, t]) => <button type="button" key={k} className="row" style={{ width: '100%', font: 'inherit', color: 'inherit', cursor: 'pointer' }} onClick={() => { close(); setTimeout(() => open(k), 0); }}><b>{t}</b></button>)}</Modal>}
     {dlg?.k === 'client' && <ClientForm v={v} close={close} save={save} removeItem={removeItem} />}
     {dlg?.k === 'project' && <ProjectForm v={v} d={d} mut={mut} toast={toast} close={close} save={save} removeItem={removeItem} />}
-    {dlg?.k === 'task' && <Modal title={v.id ? 'Edit task' : 'New task'} onDelete={v.id ? () => removeItem('tasks',v.id) : undefined} onClose={close} onSubmit={(o) => save('tasks', o)}>
-      <Fld l="Title" name="title" required defaultValue={v.title} />
-      <div className="grid2"><Sel l="Status" name="status" o={['Todo', 'In progress', 'Done']} defaultValue={v.status || 'Todo'} /><Sel l="Priority" name="priority" o={[['', 'None'], 'Low', 'Medium', 'High']} defaultValue={v.priority || ''} /></div>
-      <Sel l="Repeat task after completion" name="repeat" o={frequencies} defaultValue={v.repeat||''}/><p className="form-help">Completing this task creates one next occurrence. Existing completed occurrences stay in history.</p><Fld l="Due date (optional)" name="due" type="date" defaultValue={v.due} /><Sel l="Client" name="client" o={cOpts} defaultValue={v.client || ''} />
-      <Sel l="Project" name="project" o={[['', '— none —'], ...projectOptions(d.projects)]} defaultValue={v.project || ''} /><h3>Put it on your calendar</h3><p className="mu form-help">Choose a time to reserve a work block. Otherwise, a due date appears as an all-day deadline. Times use your device’s timezone ({Intl.DateTimeFormat().resolvedOptions().timeZone}).</p><div className="grid2"><Fld l="Scheduled start (optional)" name="scheduledAt" type="datetime-local" defaultValue={localDateTime(v.scheduledAt)} /><Fld l="Duration (minutes)" name="durationMinutes" type="number" min="5" max="1440" step="5" defaultValue={v.durationMinutes || 60} /></div></Modal>}
+    {dlg?.k === 'task' && <TaskForm v={v} d={d} cOpts={cOpts} close={close} save={save} removeItem={removeItem} />}
     {dlg?.k === 'invoice' && <InvForm v={v} d={d} mut={mut} close={close} toast={toast} removeItem={removeItem} />}
     {dlg?.k === 'pay' && (() => { const b = calc(v).bal; return <Modal title="Record payment" onClose={close} onSubmit={(o) => {
       if (num(o.amt) <= 0 || num(o.amt) > b + 0.005) return toast('Enter an amount up to the remaining balance.');
