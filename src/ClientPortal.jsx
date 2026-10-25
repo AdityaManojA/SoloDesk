@@ -101,7 +101,7 @@ function ApprovalCard({task,response,project,owner,shareId,user,onMessage,curren
   </article>;
 }
 
-function PortalShare({share,owner,user,onMessage}){
+function PortalShare({share,owner,user,onMessage,settings}){
   const data=share.data,[responses,setResponses]=useState({});
   useEffect(()=>{if(!owner||!db)return;return onSnapshot(collection(db,'solodeskPortals',owner,'shares',share.id,'responses'),snap=>setResponses(Object.fromEntries(snap.docs.map(x=>{const r=x.data();return [x.id,{...r,atIso:r.at?.toDate?.().toISOString()||''}];}))),()=>{});},[owner,share.id]);
   const tasks=data.tasks||[],approvals=[...tasks.filter(t=>t.approval),...(data.approvals||[])],pending=approvals.filter(t=>!(responses[t.id]?.atIso>=t.approval.requestedAt)&&t.approval.state==='pending');
@@ -109,7 +109,7 @@ function PortalShare({share,owner,user,onMessage}){
   const currency=new Intl.NumberFormat(undefined,{style:'currency',currency:data.currency||'USD'});
   const docs=data.docs||[],links=data.links||[],invoices=data.invoices||[],projects=data.projects||[];
   const balance=invoices.reduce((s,i)=>s+(i.balance||0),0);
-  const tabs=[['approvals','Approvals',pending.length],['work','Projects & tasks',tasks.filter(t=>t.status!=='Done').length],['docs','Links & documents',docs.length+links.length],['invoices','Invoices',invoices.length]];
+  const tabs=[['approvals','Approvals',pending.length],['work','Projects & tasks',tasks.filter(t=>t.status!=='Done').length],['docs','Links & documents',docs.length+links.length],['invoices','Invoices',invoices.length],...(settings?[['settings','Settings',0]]:[])];
   return <section className="portal-share" style={data.accent?{'--hero':data.accent}:undefined}>
     <div className="portal-hero">
       <span className="eyebrow">{data.business} · CLIENT PORTAL</span>
@@ -139,6 +139,7 @@ function PortalShare({share,owner,user,onMessage}){
       </details>)}
       {!docs.length&&!links.length&&<p className="portal-empty">No links or documents have been shared yet.</p>}
     </div>}
+    {tab==='settings'&&settings}
     {tab==='invoices'&&<div className="portal-grid">{invoices.map(i=><article className="portal-project" key={i.id}><div className="approval-head"><span className={'chip '+(i.balance>0?'hero':'sage')}>{i.balance>0?'Due '+day(i.due):'Paid'}</span><small>Issued {day(i.issue)}</small></div><h3>{i.no}</h3>{i.items.map((l,n)=><p key={n} className="invoice-line"><span>{l.desc}</span><span>{l.qty} × {currency.format(l.price)}</span></p>)}<p className="invoice-line total"><span>Total</span><b>{currency.format(i.total)}</b></p><p className="invoice-line"><span>Paid</span><span>{currency.format(i.paid)}</span></p><p className="invoice-line"><span>Balance</span><b>{currency.format(i.balance)}</b></p></article>)}{!invoices.length&&<p className="portal-empty">No invoices have been shared.</p>}</div>}
   </section>;
 }
@@ -164,19 +165,25 @@ export function ClientPortal({owner}){
   const action=async fn=>{setBusy(true);setMessage('');try{await fn();}catch(e){setMessage(authMessage(e));}finally{setBusy(false);setPassword('');setNextPassword('');setConfirmNext('');setCurrentPassword('');}};
   if(!auth)return <div className="mid">Client sign-in is not configured.</div>;
   const hasPassword=user?.providerData.some(x=>x.providerId==='password');
-  return <main className="portal-shell portal-v2">
-    <header className="portal-top"><BrandLogo/>{user&&<PortalUser name={shares[0]?.data?.clientName} email={user.email} onSignOut={()=>action(()=>signOut(auth))}/>}</header>
-    {message&&<p role="status" className="notice soft portal-message">{message}</p>}
-    {!user?<section className="portal-signin"><span className="eyebrow">CLIENT PORTAL</span><h1>Welcome back</h1><p>Sign in to see your projects, approve work and open shared documents.</p><form onSubmit={e=>{e.preventDefault();action(()=>signInWithEmailAndPassword(auth,email.trim(),password));}}><label>Email<input required type="email" autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)}/></label><label>Password<input required type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label><button className="btn" disabled={busy}>Sign in</button></form><div className="portal-signin-alt"><button className="ghost" disabled={busy} onClick={()=>action(()=>signInWithPopup(auth,provider))}>Continue with Google</button><button className="ghost" disabled={busy||!email.trim()} onClick={()=>action(async()=>{await sendPasswordResetEmail(auth,email.trim());setMessage('If this email has an eligible account, password reset instructions have been sent.');})}>Forgot password</button></div></section>
-    :<>{!loaded?<p className="portal-empty">Loading your shared work…</p>:!shares.length?<p className="portal-empty">No work has been shared with this account at this portal link yet.</p>:shares.map(share=><PortalShare key={share.id} share={share} owner={owner} user={user} onMessage={setMessage}/>)}
-      <details className="card portal-password"><summary>Change your password</summary><form onSubmit={e=>{e.preventDefault();if(nextPassword!==confirmNext){setMessage('The two passwords don’t match. Type the same password in both fields.');return;}if(nextPassword===currentPassword){setMessage('Choose a new password that is different from your current one.');return;}action(async()=>{
+  // The portal's Settings tab: who is signed in, and changing the password.
+  const settings=user&&<div className="portal-grid portal-settings">
+    <article className="portal-project"><h3>Your account</h3><p className="invoice-line"><span>Name</span><b>{shares[0]?.data?.clientName||'—'}</b></p><p className="invoice-line"><span>Login email</span><b>{user.email}</b></p><p className="invoice-line"><span>Signed in with</span><b>{hasPassword?'Email and password':'Google'}</b></p><button type="button" className="ghost sm" style={{justifySelf:'start'}} onClick={()=>action(()=>signOut(auth))}>Sign out</button></article>
+    <article className="portal-project"><h3>Change your password</h3>
+      <form className="portal-password-form" onSubmit={e=>{e.preventDefault();if(nextPassword!==confirmNext){setMessage('The two passwords don’t match. Type the same password in both fields.');return;}if(nextPassword===currentPassword){setMessage('Choose a new password that is different from your current one.');return;}action(async()=>{
         // Prove it is really them first: current password, or Google for accounts without one.
         if(hasPassword)await reauthenticateWithCredential(user,EmailAuthProvider.credential(user.email,currentPassword));else await reauthenticateWithPopup(user,provider);
         await updatePassword(user,nextPassword);setMessage('Password updated.');});}}>
         {hasPassword?<label>Current password<input required type="password" autoComplete="current-password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)}/></label>:<p className="mu">You’ll confirm with Google before the new password is saved.</p>}
         <label>New password<input required type="password" minLength={12} autoComplete="new-password" value={nextPassword} onChange={e=>setNextPassword(e.target.value)}/></label>
         <label>Re-enter new password<input required type="password" minLength={12} autoComplete="new-password" value={confirmNext} aria-invalid={!!confirmNext&&confirmNext!==nextPassword} onChange={e=>setConfirmNext(e.target.value)}/>{confirmNext&&<small className={confirmNext===nextPassword?'match-ok':'match-bad'}>{confirmNext===nextPassword?'Passwords match':'Passwords don’t match yet'}</small>}</label>
-        <button className="btn" disabled={busy}>Update password</button></form></details></>}
+        <button className="btn" disabled={busy}>Update password</button></form></article>
+  </div>;
+  return <main className="portal-shell portal-v2">
+    <header className="portal-top"><BrandLogo/>{user&&<PortalUser name={shares[0]?.data?.clientName} email={user.email} onSignOut={()=>action(()=>signOut(auth))}/>}</header>
+    {message&&<p role="status" className="notice soft portal-message">{message}</p>}
+    {!user?<section className="portal-signin"><span className="eyebrow">CLIENT PORTAL</span><h1>Welcome back</h1><p>Sign in to see your projects, approve work and open shared documents.</p><form onSubmit={e=>{e.preventDefault();action(()=>signInWithEmailAndPassword(auth,email.trim(),password));}}><label>Email<input required type="email" autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)}/></label><label>Password<input required type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label><button className="btn" disabled={busy}>Sign in</button></form><div className="portal-signin-alt"><button className="ghost" disabled={busy} onClick={()=>action(()=>signInWithPopup(auth,provider))}>Continue with Google</button><button className="ghost" disabled={busy||!email.trim()} onClick={()=>action(async()=>{await sendPasswordResetEmail(auth,email.trim());setMessage('If this email has an eligible account, password reset instructions have been sent.');})}>Forgot password</button></div></section>
+    :<>{!loaded?<p className="portal-empty">Loading your shared work…</p>:!shares.length?<><p className="portal-empty">No work has been shared with this account at this portal link yet.</p>{settings}</>:shares.map(share=><PortalShare key={share.id} share={share} owner={owner} user={user} onMessage={setMessage} settings={settings}/>)}
+</>}
   </main>;
 }
 
@@ -190,5 +197,5 @@ export function PortalPreview(){
     docs:[{id:'d',kind:'prd',title:'Website PRD',status:'In review',problem:'The current site is slow and hard to update.',goals:'Loads in under 2 seconds on 4G.',outOfScope:'',requirements:[{title:'Editors can publish pages',done:true},{title:'Homepage loads under 2s',done:false}]},{id:'e',kind:'link',title:'Content inventory',url:'https://drive.google.com/'}],
     approvals:[{id:'q',kind:'quote',title:'INV-0008 · Phase 2',projectId:'p',approval:{state:'pending',note:'Quote for phase 2. Happy to go ahead?',requestedAt:today},quote:{no:'INV-0008',items:[{desc:'Blog templates',qty:1,price:18000},{desc:'Content migration',qty:10,price:1200}],tax:18,total:35400}},{id:'d2',kind:'prd',title:'Website PRD',projectId:'p',approval:{state:'pending',note:'',requestedAt:today},prd:{problem:'The current site is slow and hard to update.',goals:'Loads in under 2 seconds on 4G.',outOfScope:'',requirements:[{title:'Editors can publish pages'},{title:'Homepage loads under 2s'}]}}],
     invoices:[{id:'i',no:'INV-0007',issue:'2026-10-20',due:'2026-11-03',items:[{desc:'Website design',qty:1,price:12000}],total:12000,paid:0,balance:12000}]}};
-  return <main className="portal-shell portal-v2"><header className="portal-top"><BrandLogo/><span className="chip sand">Preview · sample data</span><PortalUser name={share.data.clientName} email="studio@example.com" onSignOut={()=>{}}/></header><PortalShare share={share} owner="" user={{email:''}} onMessage={()=>{}}/></main>;
+  return <main className="portal-shell portal-v2"><header className="portal-top"><BrandLogo/><span className="chip sand">Preview · sample data</span><PortalUser name={share.data.clientName} email="studio@example.com" onSignOut={()=>{}}/></header><PortalShare share={share} owner="" user={{email:''}} onMessage={()=>{}} settings={<div className="portal-grid portal-settings"><article className="portal-project"><h3>Your account</h3><p className="invoice-line"><span>Name</span><b>Ava Studio</b></p><p className="invoice-line"><span>Login email</span><b>studio@example.com</b></p><p className="invoice-line"><span>Signed in with</span><b>Email and password</b></p></article><article className="portal-project"><h3>Change your password</h3><form className="portal-password-form" onSubmit={e=>e.preventDefault()}><label>Current password<input type="password" disabled/></label><label>New password<input type="password" disabled/></label><label>Re-enter new password<input type="password" disabled/></label><button className="btn" disabled>Update password</button></form></article></div>}/></main>;
 }

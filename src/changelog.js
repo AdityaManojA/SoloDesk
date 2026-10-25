@@ -2,6 +2,15 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
+  {version:'1.09',released:false,date:'',title:'Approvals for everything, billable time and room to grow',highlights:[
+    ['Approve PRDs, files and quotes','Send a PRD, a linked file or a draft invoice (as a quote) for approval, not just tasks. Clients read the PRD, open the file or see the quote’s lines and total in their portal, then approve or ask for changes. An approved PRD is marked Approved by itself.'],
+    ['Invoice unbilled hours','A project’s Budget tab shows logged time that is not on an invoice yet. One click turns it into a draft invoice, one line per task at the project’s hourly rate.'],
+    ['Repeats like TaskFlow','Tasks can repeat every other day, yearly, or on the weekdays you pick, and smart typing fills these in from “every Mon, Wed and Fri”.'],
+    ['Room to grow','Notes, documents, activity, focus history and Trash are now stored separately from the rest of your workspace, so it can keep growing well past the old 1 MB limit.'],
+    ['Requested changes on Home','When a client asks for changes, it shows in Needs attention with their comment.'],
+    ['Portal settings','Clients change their password in a new Settings tab in their portal, which also shows the name and email they are signed in with.'],
+    ['Approval emails (coming with Blaze)','Ready for when the Blaze plan is on: clients get an email when you send something for approval, and you get one when they answer.'],
+  ],fixes:[]},
   {version:'1.08',released:true,date:'2026-10-25',title:'A clearer timeline and a calmer Home',highlights:[
     ['Jump back in opens the work','Clicking a task, project or client under Jump back in now opens its page instead of the edit form. Notes still open right there on Home.'],
     ['A clearer project timeline','“What you’re working on” in the calendar now labels every day with its weekday and date, shades weekends, marks today with a clear line, and stacks only projects that overlap. Bar ends show whether a project carries on past the view (›) or is ongoing.'],

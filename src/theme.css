@@ -924,3 +924,7 @@ input[type=radio]{border-radius:50%!important}
 .approval-prd p{margin:4px 0 8px}
 .approval-quote{display:grid;gap:4px;background:var(--sf);border-radius:16px;padding:12px 14px}
 .approval-box.compact{margin:4px 0 0;background:var(--card)}
+
+.portal-password-form{display:grid;gap:10px}
+.portal-password-form .btn{justify-self:start}
+.portal-settings .invoice-line b{font-weight:600}
