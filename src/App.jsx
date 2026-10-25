@@ -271,7 +271,7 @@ function TaskPage({ d, mut, open, ask, id, removeItem, toast, user, demo }) {
       {k.project && <p style={{ margin: '4px 0' }}><small>Project</small><br />{d.projects.find((p) => p.id === k.project)?.name || '—'}</p>}
     </div>
     <Focus d={d} mut={mut} toast={toast} taskId={id}/>
-    <ApprovalBox d={d} mut={mut} user={user} demo={demo} task={k} toast={toast}/>
+    <ApprovalBox d={d} mut={mut} user={user} demo={demo} item={k} kind="task" toast={toast}/>
     <RecordExtras d={d} mut={mut} task={k} toast={toast}/>
     <p><button className="btn" onClick={() => toggleTask(mut, id)}>{k.status === 'Done' ? 'Mark not done' : 'Mark complete'}</button></p>
   </>);
@@ -292,7 +292,7 @@ function Invoices({ d, open }) {
   </>);
 }
 
-function InvoicePage({ d, mut, open, ask, id, removeItem, toast }) {
+function InvoicePage({ d, mut, open, ask, id, removeItem, toast, user, demo }) {
   const i = d.invoices.find((x) => x.id === id);
   const editor = useInvoiceEdit(i, d, mut, toast);
   if (!i) return <><Back to="invoices" label="Invoices" /><Empty m="This invoice could not be found." /></>;
@@ -319,6 +319,7 @@ function InvoicePage({ d, mut, open, ask, id, removeItem, toast }) {
       <InvoiceSheet i={i} d={d} edit={editor.api} />
       {editor.panel}
     </div>
+    {!editor.editing && <div className="noprint"><ApprovalBox d={d} mut={mut} user={user} demo={demo} item={i} kind="quote" toast={toast}/></div>}
     {!editor.editing && <div className="noprint">
       <h3>Payments</h3>
       {i.pays.length ? i.pays.map((p) => <div className="row" key={p.id}><div className="grow"><b>{money(num(p.amt))}</b><small>{p.date}{p.note ? ' · ' + p.note : ''}</small></div><button className="ghost danger sm" onClick={() => removeItem('payments',p.id,i.id)}>Delete payment</button></div>) : <p className="mu">No payments recorded yet.</p>}

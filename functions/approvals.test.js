@@ -55,3 +55,19 @@ test('a portal is republished only when what it shares has changed', async () =>
   assert.equal(portalUpdate(w, { ...share, data: again }), null, 'private fields do not trigger a publish');
   assert.equal(portalUpdate(w, { ...share, clientId: 'gone' }), null);
 });
+
+test('PRDs, files and draft invoices can go out for approval', () => {
+  const w = ws(); w.invoices = [{ id: 'inv', no: 'INV-0001', client: 'c', state: 'draft', issue: '2026-10-25', due: '2026-11-08', items: [{ desc: 'Design', qty: 1, price: 100 }], tax: 0, pays: [] }];
+  requestApproval(w, 'd1', 'Please review', new Date('2026-10-25T10:00:00Z'));
+  requestApproval(w, 'd2'); requestApproval(w, 'inv');
+  assert.equal(w.docs[0].status, 'In review');
+  const s = publishablePortal(w, 'c', ['p'], [], []);
+  assert.deepEqual(s.approvals.map(x => x.kind).sort(), ['link', 'prd', 'quote']);
+  assert.equal(s.approvals.find(x => x.kind === 'quote').quote.total, 100);
+  assert.deepEqual(s.approvalIds.sort(), ['d1', 'd2', 'inv']);
+  assert.deepEqual(applyResponses(w, 'c', [{ taskId: 'd1', decision: 'approved', at: '2026-10-25T11:00:00.000Z' }]), ['d1']);
+  assert.equal(w.docs[0].status, 'Approved');
+  w.invoices[0].state = 'sent'; delete w.invoices[0].approval;
+  assert.throws(() => requestApproval(w, 'inv'), /draft/);
+  assert.ok(validateWorkspace(w));
+});

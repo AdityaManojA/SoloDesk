@@ -6,6 +6,8 @@ import { rid } from './lib';
 import { trashReusable } from './productivity';
 import { excel } from './excel-sync-client';
 import { ago } from './Home.jsx';
+import { ApprovalBox } from './Approvals.jsx';
+import { APPROVAL_LABEL } from './approvals';
 
 const LABEL = { title: 'Task', status: 'Status', due: 'Due date', priority: 'Priority', hours: 'Logged hours', id: 'SoloDesk ID' };
 const DIRECTION = { both: 'Both ways', in: 'Sheet → SoloDesk', out: 'SoloDesk → sheet', locked: 'Kept by SoloDesk' };
@@ -65,7 +67,7 @@ function ExcelSync({ scope, user, demo, toast }) {
   </div>;
 }
 
-function PrdEditor({ doc: p, d, mut, toast, scope, close }) {
+function PrdEditor({ doc: p, d, mut, toast, scope, close, user, demo }) {
   const edit = fn => mut(n => { const row = (n.docs || []).find(x => x.id === p.id); if (row) fn(row); });
   const [req, setReq] = useState('');
   const field = (key, label, rows = 3) => <label>{label}<textarea key={key + p.id} rows={rows} defaultValue={p[key] || ''} maxLength={5000} onBlur={e => { if (e.target.value !== (p[key] || '')) edit(r => { r[key] = e.target.value; }); }} /></label>;
@@ -89,12 +91,13 @@ function PrdEditor({ doc: p, d, mut, toast, scope, close }) {
       <button type="button" className="icon-x" aria-label={'Remove ' + r.title} onClick={() => edit(row => { row.requirements = row.requirements.filter(y => y.id !== r.id); })}>×</button></div>; })}
     <form className="add-row" style={{ background: 'var(--card)' }} onSubmit={e => { e.preventDefault(); const title = req.trim(); if (!title) return; edit(r => { r.requirements = [...(r.requirements || []), { id: rid(), title: title.slice(0, 300), done: false }]; }); setReq(''); }}><Icon name="plus" size={16} /><input aria-label="New requirement" placeholder="Add a requirement…" value={req} onChange={e => setReq(e.target.value)} /><button className="btn sm">Add</button></form>
     <button className="ghost" style={{ justifySelf: 'start' }} onClick={toTasks}>Turn requirements into tasks</button>
+    <ApprovalBox d={d} mut={mut} user={user} demo={demo} item={p} kind="prd" toast={toast} compact />
   </div>;
 }
 
 export function FilesAndDocs({ d, mut, toast, scope, user, demo }) {
   const key = scope.kind, items = (d.docs || []).filter(x => x[key] === scope.id).sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
-  const [openId, setOpenId] = useState(null), [adding, setAdding] = useState(false), [link, setLink] = useState({ title: '', url: '' });
+  const [openId, setOpenId] = useState(null), [adding, setAdding] = useState(false), [link, setLink] = useState({ title: '', url: '' }), [approveId, setApproveId] = useState(null);
   const owner = () => { const project = key === 'project' ? d.projects.find(p => p.id === scope.id) : null; return { client: key === 'client' ? scope.id : project?.client || '', project: key === 'project' ? scope.id : '' }; };
   const newPrd = () => { const id = rid(); mut(n => { n.docs = [{ id, kind: 'prd', title: 'Untitled PRD', status: 'Draft', problem: '', goals: '', outOfScope: '', requirements: [], ...owner() }, ...(n.docs || [])]; }); setOpenId(id); };
   const addLink = e => { e.preventDefault(); const url = safeLink(link.url); if (!link.title.trim() || !url) return toast('Add a name and a full web address starting with https://.'); mut(n => { n.docs = [{ id: rid(), kind: 'link', title: link.title.trim().slice(0, 120), url, ...owner() }, ...(n.docs || [])]; }); setLink({ title: '', url: '' }); setAdding(false); };
@@ -107,11 +110,12 @@ export function FilesAndDocs({ d, mut, toast, scope, user, demo }) {
         {adding && <form onSubmit={addLink} style={{ display: 'grid', gap: 8 }}><label>Name<input value={link.title} onChange={e => setLink({ ...link, title: e.target.value })} placeholder="Content inventory" /></label><label>Link<input type="url" value={link.url} onChange={e => setLink({ ...link, url: e.target.value })} placeholder="https://drive.google.com/…" /></label><button className="btn sm" style={{ justifySelf: 'start' }}>Add link</button></form>}
         {items.map(x => <div key={x.id} className="file-row"><span className="file-badge" style={{ background: x.kind === 'prd' ? 'var(--hero-deep)' : '#4A5566' }}>{x.kind === 'prd' ? 'P' : <Icon name="link" size={16} />}</span>
           <span className="grow"><b>{x.title}</b><small>{x.kind === 'prd' ? `Written in SoloDesk · ${(x.requirements || []).length} requirements` : host(x.url)}</small></span>
-          {x.kind === 'prd' ? <><span className={'chip ' + (x.status === 'Approved' ? 'sage' : x.status === 'In review' ? 'sand' : 'white')}>{x.status || 'Draft'}</span><button className="ghost sm" onClick={() => setOpenId(openId === x.id ? null : x.id)}>{openId === x.id ? 'Close' : 'Open'}</button></> : <a className="ghost sm" href={safeLink(x.url)} target="_blank" rel="noopener noreferrer">Open ↗</a>}
+          {x.kind === 'prd' ? <><span className={'chip ' + (x.status === 'Approved' ? 'sage' : x.status === 'In review' ? 'sand' : 'white')}>{x.status || 'Draft'}</span><button className="ghost sm" onClick={() => setOpenId(openId === x.id ? null : x.id)}>{openId === x.id ? 'Close' : 'Open'}</button></> : <>{x.approval && <span className={'chip ' + ({ pending: 'hero', approved: 'sage', changes: 'sand' })[x.approval.state]}>{APPROVAL_LABEL[x.approval.state]}</span>}<button className="ghost sm" aria-expanded={approveId === x.id} onClick={() => setApproveId(approveId === x.id ? null : x.id)}>Approval</button><a className="ghost sm" href={safeLink(x.url)} target="_blank" rel="noopener noreferrer">Open ↗</a></>}
           <button className="icon-x" aria-label={'Move ' + x.title + ' to Trash'} onClick={() => { mut(n => trashReusable(n, 'docs', x.id)); toast('Moved to Trash.'); }}>×</button></div>)}
         {!items.length && <p className="empty-note">Write a PRD here, or link files from Google Drive, OneDrive, Notion or Figma.</p>}
       </div>
-      {open && <PrdEditor doc={open} d={d} mut={mut} toast={toast} scope={scope} close={() => setOpenId(null)} />}
+      {items.filter(x => x.id === approveId && x.kind === 'link').map(x => <ApprovalBox key={x.id} d={d} mut={mut} user={user} demo={demo} item={x} kind="link" toast={toast} />)}
+      {open && <PrdEditor doc={open} d={d} mut={mut} toast={toast} scope={scope} close={() => setOpenId(null)} user={user} demo={demo} />}
     </div>
   </div>;
 }

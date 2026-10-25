@@ -4,7 +4,7 @@ import {getAuth,setPersistence,inMemoryPersistence,createUserWithEmailAndPasswor
 import {doc,getDoc,setDoc,deleteDoc,onSnapshot,collection,serverTimestamp} from 'firebase/firestore';
 import {auth,db,firebaseOptions,provider} from './firebase';
 import {publishablePortal} from './workspace-upgrades';
-import {APPROVAL_LABEL} from './approvals';
+import {APPROVAL_LABEL,KIND_LABEL} from './approvals';
 import BrandLogo from './BrandLogo';
 import Icon from './Icon';
 
@@ -75,7 +75,8 @@ const APPROVAL_CHIP={pending:'hero',approved:'sage',changes:'sand'};
 const day=iso=>iso?new Date(iso.length===10?iso+'T12:00:00':iso).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}):'';
 const host=url=>{try{return new URL(url).hostname.replace(/^www\./,'');}catch{return url;}};
 
-function ApprovalCard({task,response,project,owner,shareId,user,onMessage}){
+function ApprovalCard({task,response,project,owner,shareId,user,onMessage,currency}){
+  const kind=task.kind||'task';
   const [comment,setComment]=useState(''),[busy,setBusy]=useState(false);
   // Their own answer shows straight away; the published state catches up once the owner opens SoloDesk.
   const fresh=response&&response.atIso>=task.approval.requestedAt;
@@ -88,11 +89,14 @@ function ApprovalCard({task,response,project,owner,shareId,user,onMessage}){
   };
   return <article className={'approval-card state-'+state}>
     <div className="approval-head"><span className={'chip '+APPROVAL_CHIP[state]}>{state==='pending'?'Needs your approval':APPROVAL_LABEL[state]}</span><small>Sent {day(task.approval.requestedAt)}</small></div>
-    <h3>{task.title}</h3>
+    <h3><span className={'kind-tag '+kind}>{KIND_LABEL[kind]}</span> {task.title}</h3>
     {project&&<small className="approval-project">{project.name}</small>}
     {task.approval.note&&<p className="approval-note">“{task.approval.note}”</p>}
     {(task.checklist||[]).length>0&&<ul className="portal-checks">{task.checklist.map((c,i)=><li key={i} className={c.done?'done':''}><i/>{c.title}</li>)}</ul>}
-    {state==='pending'?<div className="approval-actions"><label>Comment (needed for changes)<textarea rows="2" maxLength={1000} value={comment} onChange={e=>setComment(e.target.value)} placeholder="Looks great, or: please make the logo bigger…"/></label><div><button type="button" className="btn approve" disabled={busy} onClick={()=>answer('approved')}><Icon name="check" size={16}/>Approve</button><button type="button" className="ghost" disabled={busy} onClick={()=>answer('changes')}>Request changes</button></div></div>
+    {kind==='link'&&<a className="portal-file" href={task.url} target="_blank" rel="noopener noreferrer"><span className="file-badge"><Icon name="link" size={16}/></span><span className="grow"><b>Open the file</b><small>{host(task.url)}</small></span><span aria-hidden="true">↗</span></a>}
+    {kind==='prd'&&<details className="approval-prd"><summary>Read the PRD</summary>{[['Problem',task.prd.problem],['Goals and success measures',task.prd.goals],['Out of scope',task.prd.outOfScope]].filter(([,v])=>v).map(([k,v])=><div key={k}><small>{k}</small><p>{v}</p></div>)}{task.prd.requirements.length>0&&<><small>Requirements</small><ul className="portal-checks">{task.prd.requirements.map((r,i)=><li key={i}><i/>R{i+1} · {r.title}</li>)}</ul></>}</details>}
+    {kind==='quote'&&<div className="approval-quote">{task.quote.items.map((l,n)=><p key={n} className="invoice-line"><span>{l.desc}</span><span>{l.qty} × {currency.format(l.price)}</span></p>)}{task.quote.tax>0&&<p className="invoice-line"><span>Tax</span><span>{task.quote.tax}%</span></p>}<p className="invoice-line total"><span>Total</span><b>{currency.format(task.quote.total)}</b></p></div>}
+    {state==='pending'?<div className="approval-actions"><label>{kind==='quote'?'Comment (needed if you want changes)':'Comment (needed for changes)'}<textarea rows="2" maxLength={1000} value={comment} onChange={e=>setComment(e.target.value)} placeholder="Looks great, or: please make the logo bigger…"/></label><div><button type="button" className="btn approve" disabled={busy} onClick={()=>answer('approved')}><Icon name="check" size={16}/>{kind==='quote'?'Accept quote':'Approve'}</button><button type="button" className="ghost" disabled={busy} onClick={()=>answer('changes')}>Request changes</button></div></div>
       :<p className="approval-result">{state==='approved'?'You approved this':'You asked for changes'}{(fresh?response.atIso:task.approval.decidedAt)?' on '+day(fresh?response.atIso:task.approval.decidedAt):''}.{said&&<><br/><span>“{said}”</span></>}</p>}
   </article>;
 }
@@ -100,7 +104,7 @@ function ApprovalCard({task,response,project,owner,shareId,user,onMessage}){
 function PortalShare({share,owner,user,onMessage}){
   const data=share.data,[responses,setResponses]=useState({});
   useEffect(()=>{if(!owner||!db)return;return onSnapshot(collection(db,'solodeskPortals',owner,'shares',share.id,'responses'),snap=>setResponses(Object.fromEntries(snap.docs.map(x=>{const r=x.data();return [x.id,{...r,atIso:r.at?.toDate?.().toISOString()||''}];}))),()=>{});},[owner,share.id]);
-  const tasks=data.tasks||[],approvals=tasks.filter(t=>t.approval),pending=approvals.filter(t=>!(responses[t.id]?.atIso>=t.approval.requestedAt)&&t.approval.state==='pending');
+  const tasks=data.tasks||[],approvals=[...tasks.filter(t=>t.approval),...(data.approvals||[])],pending=approvals.filter(t=>!(responses[t.id]?.atIso>=t.approval.requestedAt)&&t.approval.state==='pending');
   const [tab,setTab]=useState(pending.length?'approvals':'work');
   const currency=new Intl.NumberFormat(undefined,{style:'currency',currency:data.currency||'USD'});
   const docs=data.docs||[],links=data.links||[],invoices=data.invoices||[],projects=data.projects||[];
@@ -119,7 +123,7 @@ function PortalShare({share,owner,user,onMessage}){
       </div>
     </div>
     <nav className="tabs-pill portal-tabs" aria-label="Portal sections">{tabs.map(([k,l,n])=><button type="button" key={k} aria-pressed={tab===k} onClick={()=>setTab(k)}>{l}{n>0&&<span className="tab-count">{n}</span>}</button>)}</nav>
-    {tab==='approvals'&&<div className="portal-grid">{approvals.length?[...approvals].sort((a,b)=>(pending.includes(b)-pending.includes(a))||b.approval.requestedAt.localeCompare(a.approval.requestedAt)).map(t=><ApprovalCard key={t.id} task={t} response={responses[t.id]} project={projects.find(p=>p.id===t.projectId)} owner={owner} shareId={share.id} user={user} onMessage={onMessage}/>):<p className="portal-empty">Nothing to approve right now. When {data.business} sends you work to check, it appears here.</p>}</div>}
+    {tab==='approvals'&&<div className="portal-grid">{approvals.length?[...approvals].sort((a,b)=>(pending.includes(b)-pending.includes(a))||b.approval.requestedAt.localeCompare(a.approval.requestedAt)).map(t=><ApprovalCard key={t.id} task={t} response={responses[t.id]} project={projects.find(p=>p.id===t.projectId)} owner={owner} shareId={share.id} user={user} onMessage={onMessage} currency={currency}/>):<p className="portal-empty">Nothing to approve right now. When {data.business} sends you work to check, it appears here.</p>}</div>}
     {tab==='work'&&<div className="portal-grid">{projects.map(p=>{const list=tasks.filter(t=>t.projectId===p.id),done=list.filter(t=>t.status==='Done').length;return <article className="portal-project" key={p.id}>
       <div className="approval-head"><span className={'chip '+(p.status==='Complete'?'sage':p.status==='On hold'?'sand':'hero')}>{p.status}</span><small>{p.start?day(p.start)+' → '+(p.end?day(p.end):'ongoing'):''}</small></div>
       <h3>{p.name}</h3>
@@ -184,6 +188,7 @@ export function PortalPreview(){
     projects:[{id:'p',name:'Website launch',status:'Active',start:'2026-10-16',end:''}],
     tasks:[{id:'a',projectId:'p',title:'Homepage design',status:'In progress',due:'2026-10-30',checklist:[{title:'Hero section',done:true},{title:'Footer',done:false}],approval:{state:'pending',note:'Here is the homepage. Happy for it to go live?',requestedAt:today}},{id:'b',projectId:'p',title:'Brand colours',status:'Done',due:'',checklist:[],approval:{state:'approved',note:'',requestedAt:'2026-10-20T10:00:00.000Z',decidedAt:'2026-10-21T10:00:00.000Z',comment:'Love it'}},{id:'c',projectId:'p',title:'Content inventory',status:'Todo',due:'2026-11-04',checklist:[]}],
     docs:[{id:'d',kind:'prd',title:'Website PRD',status:'In review',problem:'The current site is slow and hard to update.',goals:'Loads in under 2 seconds on 4G.',outOfScope:'',requirements:[{title:'Editors can publish pages',done:true},{title:'Homepage loads under 2s',done:false}]},{id:'e',kind:'link',title:'Content inventory',url:'https://drive.google.com/'}],
+    approvals:[{id:'q',kind:'quote',title:'INV-0008 · Phase 2',projectId:'p',approval:{state:'pending',note:'Quote for phase 2. Happy to go ahead?',requestedAt:today},quote:{no:'INV-0008',items:[{desc:'Blog templates',qty:1,price:18000},{desc:'Content migration',qty:10,price:1200}],tax:18,total:35400}},{id:'d2',kind:'prd',title:'Website PRD',projectId:'p',approval:{state:'pending',note:'',requestedAt:today},prd:{problem:'The current site is slow and hard to update.',goals:'Loads in under 2 seconds on 4G.',outOfScope:'',requirements:[{title:'Editors can publish pages'},{title:'Homepage loads under 2s'}]}}],
     invoices:[{id:'i',no:'INV-0007',issue:'2026-10-20',due:'2026-11-03',items:[{desc:'Website design',qty:1,price:12000}],total:12000,paid:0,balance:12000}]}};
   return <main className="portal-shell portal-v2"><header className="portal-top"><BrandLogo/><span className="chip sand">Preview · sample data</span><PortalUser name={share.data.clientName} email="studio@example.com" onSignOut={()=>{}}/></header><PortalShare share={share} owner="" user={{email:''}} onMessage={()=>{}}/></main>;
 }

@@ -1,7 +1,7 @@
 import {fresh,calc} from './lib.js';
 import {assertWorkspaceSize} from './workspace-size.js';
 import {ACTION_COLOURS,isCustomColour,actionColour} from './appearance.js';
-import {validApproval,approvalClient} from './approvals.js';
+import {validApproval,approvalClient,approvalItems} from './approvals.js';
 import {validRepeatDays} from './productivity.js';
 
 export function assertUnchanged(actual,expected){
@@ -49,7 +49,7 @@ export function validateWorkspace(input){
   if(w.docs!=null&&(!Array.isArray(w.docs)||w.docs.some(d=>!object(d)||typeof d.id!=='string'||typeof d.title!=='string'||!strings(d,['kind','url','status','client','project','problem','goals','outOfScope','updatedAt'])||d.requirements!=null&&!checklist(d.requirements))))throw new Error('Invalid documents.');
   if(w.settings.taxId!=null&&typeof w.settings.taxId!=='string'||!textGroup(w.settings.bank,['accountName','bankName','accountNumber','ifsc','swift','iban','upi']))throw new Error('Invalid business settings.');
   if(w.profile!=null&&(!object(w.profile)||!strings(w.profile,['username','name','headline','bio','location'])||['public','available'].some(k=>w.profile[k]!=null&&typeof w.profile[k]!=='boolean')||w.profile.links!=null&&(!Array.isArray(w.profile.links)||w.profile.links.some(l=>!object(l)||typeof l.label!=='string'||typeof l.url!=='string'))||w.profile.clients!=null&&(!Array.isArray(w.profile.clients)||w.profile.clients.some(id=>typeof id!=='string'))))throw new Error('Invalid profile.');
-  if(!w.tasks.every(t=>validApproval(t.approval)))throw new Error('Invalid task approval.');
+  if(![...w.tasks,...(w.docs||[]),...w.invoices].every(t=>validApproval(t.approval)))throw new Error('Invalid approval.');
   if(!w.tasks.every(t=>validRepeatDays(t.repeatDays)&&(t.repeat!=='custom'||t.repeatDays?.length)))throw new Error('Invalid task repeat days.');
   for(const a of w.activity||[])if(!strings(a,['at','kind','recordId','client','title','action']))throw new Error('Invalid activity history.');
   if(w.settings.dashboardHidden!=null&&(!Array.isArray(w.settings.dashboardHidden)||w.settings.dashboardHidden.some(x=>!['metrics','overview','work'].includes(x))))throw new Error('Invalid dashboard options.');
@@ -102,7 +102,12 @@ export function publishablePortal(workspace,clientId,projectIds,invoiceIds,docId
   const tasks=workspace.tasks.filter(t=>!t.arch&&((projects.some(p=>p.id===t.project)&&(!t.client||t.client===clientId))||(t.approval&&approvalClient(workspace,t)===clientId))).map(t=>({id:t.id,projectId:projects.some(p=>p.id===t.project)?t.project:'',title:t.title,status:t.status,due:t.due||'',priority:t.priority||'',checklist:(t.checklist||[]).map(c=>({title:c.title,done:!!c.done})),...(t.approval?{approval:approval(t.approval)}:{})}));
   const invoices=workspace.invoices.filter(i=>i.client===clientId&&invoiceIds.includes(i.id)&&i.state==='sent').map(i=>({id:i.id,no:i.no,issue:i.issue,due:i.due,items:i.items.map(l=>({desc:l.desc,qty:l.qty,price:l.price})),tax:i.tax||0,total:calc(i).total,paid:calc(i).paid,balance:calc(i).bal}));
   const docs=(workspace.docs||[]).filter(x=>docIds.includes(x.id)&&(x.client===clientId||projects.some(p=>p.id===x.project))).map(x=>x.kind==='prd'?{id:x.id,kind:'prd',title:x.title,status:x.status||'Draft',projectId:x.project||'',problem:x.problem||'',goals:x.goals||'',outOfScope:x.outOfScope||'',requirements:(x.requirements||[]).map(r=>{const task=r.taskId&&workspace.tasks.find(t=>t.id===r.taskId);return {title:r.title,done:task?task.status==='Done':!!r.done};})}:{id:x.id,kind:'link',title:x.title,url:x.url,projectId:x.project||''});
-  return {business:workspace.settings.biz||'SoloDesk',clientName:client.name,currency:workspace.settings.cur,accent:actionColour(workspace.settings.actionColour).hex,links:(client.links||[]).map(l=>({label:l.label||'',url:l.url})),projects,tasks,docs,invoices,approvalIds:tasks.filter(t=>t.approval?.state==='pending').map(t=>t.id),updatedAt:new Date().toISOString()};
+  // PRDs, files and quotes sent for approval go out with what the client needs to decide.
+  const approvals=approvalItems(workspace).filter(x=>x.kind!=='task'&&approvalClient(workspace,x.row)===clientId).map(({kind,row,title})=>({id:row.id,kind,title,projectId:projects.some(p=>p.id===row.project)?row.project:'',approval:approval(row.approval),
+    ...(kind==='link'?{url:row.url}:{}),
+    ...(kind==='prd'?{prd:{problem:row.problem||'',goals:row.goals||'',outOfScope:row.outOfScope||'',requirements:(row.requirements||[]).map(r=>({title:r.title}))}}:{}),
+    ...(kind==='quote'?{quote:{no:row.no,title:row.title||'',issue:row.issue,due:row.due,items:row.items.map(l=>({desc:l.desc,qty:l.qty,price:l.price})),tax:row.tax||0,total:calc(row).total}}:{})}));
+  return {business:workspace.settings.biz||'SoloDesk',clientName:client.name,currency:workspace.settings.cur,accent:actionColour(workspace.settings.actionColour).hex,links:(client.links||[]).map(l=>({label:l.label||'',url:l.url})),projects,tasks,docs,invoices,approvals,approvalIds:[...tasks,...approvals].filter(t=>t.approval?.state==='pending').map(t=>t.id),updatedAt:new Date().toISOString()};
 }
 
 const comparable = data => JSON.stringify({ ...data, updatedAt: '' });

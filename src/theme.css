@@ -914,3 +914,13 @@ input[type=radio]{border-radius:50%!important}
 .budget-big small{font-family:var(--font-body);font-size:16px;font-weight:600;color:var(--mu)}
 .unbilled-card.has{background:color-mix(in srgb,var(--hero) 22%,var(--card));border:2px solid var(--hero)}
 .unbilled-card .btn{justify-self:start;display:inline-flex;align-items:center;gap:8px}
+
+/* approvals for PRDs, files and quotes */
+.kind-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:6px;padding:2px 6px;margin-right:4px;vertical-align:middle;background:var(--sf);color:var(--tx)}
+.kind-tag.prd{background:var(--hero);color:#141414}.kind-tag.quote{background:var(--sand,#EFCB8A);color:#141414}.kind-tag.link{background:var(--sage,#A7B98B);color:#141414}
+.approval-card h3 .kind-tag{font-size:10px}
+.approval-prd summary{cursor:pointer;font-weight:600}
+.approval-prd small{color:var(--mu);font-weight:700;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.approval-prd p{margin:4px 0 8px}
+.approval-quote{display:grid;gap:4px;background:var(--sf);border-radius:16px;padding:12px 14px}
+.approval-box.compact{margin:4px 0 0;background:var(--card)}
