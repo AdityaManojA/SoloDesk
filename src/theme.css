@@ -1078,3 +1078,13 @@ input[type=radio]{border-radius:50%!important}
 .search-place{background:color-mix(in srgb,var(--hero) 12%,var(--card))}
 @keyframes search-flash{0%,60%{box-shadow:0 0 0 3px var(--hero)}100%{box-shadow:0 0 0 0 transparent}}
 .search-flash{animation:search-flash 2.2s ease-out;border-radius:12px}
+
+/* portal task rows: title keeps its width; chips wrap below on narrow cards */
+.portal-task-row{flex-wrap:wrap}
+.portal-task-row .grow{flex:1 1 160px;min-width:140px}
+.portal-task-row .grow b{overflow-wrap:break-word;word-break:normal}
+.portal-task-row .chip,.portal-task-row .comment-toggle{flex:0 0 auto}
+/* portal link editor: stacked fields, buttons on their own row */
+.link-editor{display:grid;grid-template-columns:auto auto 1fr;gap:8px;align-items:center;padding:8px 0}
+.link-editor input{grid-column:1/-1;width:100%!important;min-width:0}
+.link-editor .btn,.link-editor .ghost{grid-row:auto;justify-self:start}

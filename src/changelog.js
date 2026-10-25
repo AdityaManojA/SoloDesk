@@ -2,10 +2,12 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
-  {version:'1.10',released:false,date:'',title:'Find any setting',highlights:[
+  {version:'1.10',released:true,date:'2026-10-25',title:'Find any setting, and a steadier client portal',highlights:[
     ['Search finds settings','Search (Ctrl/⌘ K) now finds every setting and page by the words you’d use: “bank”, “IFSC”, “GST”, “dark mode”, “logo”, “backup”. Picking one opens the right section and puts the cursor in the field.'],
   ],fixes:[
     'The custom action colour is gone; the 16 presets all keep text readable. A custom colour chosen earlier shows as Terracotta.',
+    'Client portals no longer flicker when SoloDesk is open in more than one tab: an older tab can no longer overwrite a newer portal.',
+    'Portal task names no longer squeeze into one letter per line, and the link editor fits narrow cards.',
   ]},
   {version:'1.09',released:true,date:'2026-10-25',title:'Approvals for everything, billable time and room to grow',highlights:[
     ['Notifications','A bell in the top bar shows when clients approve, ask for changes, comment, cheer you on, send a request or update a link, plus overdue invoices, reminders and tasks due today. The Approvals menu item shows how many answers and requests are new.'],

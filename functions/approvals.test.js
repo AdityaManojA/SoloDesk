@@ -71,3 +71,13 @@ test('PRDs, files and draft invoices can go out for approval', () => {
   assert.throws(() => requestApproval(w, 'inv'), /draft/);
   assert.ok(validateWorkspace(w));
 });
+
+test('an older copy of the workspace never overwrites a newer portal', async () => {
+  const { portalUpdate, publishablePortal } = await import('../src/workspace-upgrades.js');
+  const w = ws(); w.tasks[0].updatedAt = '2026-10-25T10:00:00.000Z';
+  const share = { clientId: 'c', projectIds: ['p'], invoiceIds: [], docIds: [] };
+  const newer = structuredClone(w); newer.tasks.push({ id: 'n', title: 'New', status: 'Todo', project: 'p', updatedAt: '2026-10-25T11:00:00.000Z' });
+  const published = publishablePortal(newer, 'c', ['p'], [], []);
+  assert.equal(portalUpdate(w, { ...share, data: published }), null, 'stale tab stays quiet');
+  assert.ok(portalUpdate(newer, { ...share, data: publishablePortal(w, 'c', ['p'], [], []) }), 'newer tab can publish');
+});

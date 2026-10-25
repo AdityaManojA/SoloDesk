@@ -95,6 +95,14 @@ export function projectBudget(workspace,project){
 // What a client sees in their portal. Only what you pick is copied out of your private workspace: the chosen
 // projects and their tasks, the chosen documents and sent invoices, the client's own links, and any task you sent
 // them for approval. Internal notes, other clients and payment instructions never leave the workspace.
+// The newest change anywhere in the workspace. Published with each portal so an older copy (another tab that
+// has not reloaded) can tell it is behind and does not overwrite a newer portal.
+export function workspaceStamp(w){
+  let max='';const see=v=>{if(typeof v==='string'&&v>max)max=v;};
+  for(const list of ['clients','projects','tasks','invoices','docs','notes'])for(const row of w[list]||[]){see(row.updatedAt);see(row.createdAt);see(row.approval?.requestedAt);see(row.approval?.decidedAt);}
+  for(const a of w.activity||[])see(a.at);
+  return max;
+}
 export function publishablePortal(workspace,clientId,projectIds,invoiceIds,docIds=[],ownerEmail=''){
   const client=workspace.clients.find(c=>c.id===clientId);if(!client)throw new Error('Choose a client.');
   const projects=workspace.projects.filter(p=>p.client===clientId&&projectIds.includes(p.id)).map(p=>({id:p.id,name:p.name,status:p.status,start:p.start||'',end:p.end||''}));
@@ -107,7 +115,7 @@ export function publishablePortal(workspace,clientId,projectIds,invoiceIds,docId
     ...(kind==='link'?{url:row.url}:{}),
     ...(kind==='prd'?{prd:{problem:row.problem||'',goals:row.goals||'',outOfScope:row.outOfScope||'',requirements:(row.requirements||[]).map(r=>({title:r.title}))}}:{}),
     ...(kind==='quote'?{quote:{no:row.no,title:row.title||'',issue:row.issue,due:row.due,items:row.items.map(l=>({desc:l.desc,qty:l.qty,price:l.price})),tax:row.tax||0,total:calc(row).total}}:{})}));
-  return {business:workspace.settings.biz||'SoloDesk',contactEmail:workspace.settings.email||ownerEmail||'',clientName:client.name,currency:workspace.settings.cur,accent:actionColour(workspace.settings.actionColour).hex,links:(client.links||[]).map(l=>({label:l.label||'',url:l.url})),projects,tasks,docs,invoices,approvals,approvalIds:[...tasks,...approvals].filter(t=>t.approval?.state==='pending').map(t=>t.id),updatedAt:new Date().toISOString()};
+  return {business:workspace.settings.biz||'SoloDesk',contactEmail:workspace.settings.email||ownerEmail||'',clientName:client.name,currency:workspace.settings.cur,accent:actionColour(workspace.settings.actionColour).hex,links:(client.links||[]).map(l=>({label:l.label||'',url:l.url})),projects,tasks,docs,invoices,approvals,approvalIds:[...tasks,...approvals].filter(t=>t.approval?.state==='pending').map(t=>t.id),wsStamp:workspaceStamp(workspace),updatedAt:new Date().toISOString()};
 }
 
 const comparable = data => JSON.stringify({ ...data, updatedAt: '' });
@@ -116,6 +124,7 @@ const comparable = data => JSON.stringify({ ...data, updatedAt: '' });
 export function portalUpdate(workspace, share, ownerEmail = '') {
   let next;
   try { next = publishablePortal(workspace, share.clientId, share.projectIds || [], share.invoiceIds || [], share.docIds || [], ownerEmail); } catch { return null; }
+  if (share.data?.wsStamp && share.data.wsStamp > next.wsStamp) return null; // a newer copy already published
   return share.data && comparable(share.data) === comparable(next) ? null : next;
 }
 

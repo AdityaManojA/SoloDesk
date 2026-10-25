@@ -9,16 +9,18 @@ import { applyClientUpdate } from './client-feed';
 
 const DELAY = 2000;
 export function usePortalSync({ d, user, demo, mut, toast }) {
-  const [shares, setShares] = useState([]), [comments, setComments] = useState([]), [requests, setRequests] = useState([]), timer = useRef(null), writing = useRef(new Set());
+  const [shares, setShares] = useState([]), [comments, setComments] = useState([]), [requests, setRequests] = useState([]), timer = useRef(null), writing = useRef(new Set()), latestShares = useRef([]);
+  latestShares.current = shares;
+  const config = shares.map(s => [s.id, ...(s.projectIds || []), '|', ...(s.invoiceIds || []), '|', ...(s.docIds || [])].join(',')).join(';');
   useEffect(() => {
     if (demo || !user || !db) { setShares([]); return; }
     return onSnapshot(collection(db, 'solodeskPortals', user.uid, 'shares'), snap => setShares(snap.docs.map(x => ({ id: x.id, ...x.data() }))), () => setShares([]));
   }, [user?.uid, demo]);
   useEffect(() => {
-    if (!d || !shares.length) return;
+    if (!d || !latestShares.current.length) return;
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
-      for (const share of shares) {
+      for (const share of latestShares.current) {
         const data = portalUpdate(d, share, user?.email);
         if (!data || writing.current.has(share.id)) continue;
         writing.current.add(share.id);
@@ -27,7 +29,7 @@ export function usePortalSync({ d, user, demo, mut, toast }) {
       }
     }, DELAY);
     return () => clearTimeout(timer.current);
-  }, [d, shares]);
+  }, [d, config]);
   // Client comments (live) and link updates (applied once, then removed).
   const ids = shares.map(s => s.id).sort().join(',');
   useEffect(() => {

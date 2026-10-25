@@ -2,6 +2,15 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.10 — 25 October 2026 · Find any setting, and a steadier client portal
+
+- **Search finds settings.** Search (Ctrl/⌘ K) now finds every setting and page by the words you’d use: “bank”, “IFSC”, “GST”, “dark mode”, “logo”, “backup”. Picking one opens the right section and puts the cursor in the field.
+
+Fixes
+- The custom action colour is gone; the 16 presets all keep text readable. A custom colour chosen earlier shows as Terracotta.
+- Client portals no longer flicker when SoloDesk is open in more than one tab: an older tab can no longer overwrite a newer portal.
+- Portal task names no longer squeeze into one letter per line, and the link editor fits narrow cards.
+
 ## 1.09 — 25 October 2026 · Approvals for everything, billable time and room to grow
 
 - **Notifications.** A bell in the top bar shows when clients approve, ask for changes, comment, cheer you on, send a request or update a link, plus overdue invoices, reminders and tasks due today. The Approvals menu item shows how many answers and requests are new.

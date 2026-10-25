@@ -17,8 +17,9 @@ export async function republishShare(d,uid,clientId){
   if(!db||!uid)return false;
   const ref=doc(db,'solodeskPortals',uid,'shares',clientId),snap=await getDoc(ref);
   if(!snap.exists())return false;
-  const s=snap.data();
-  await setDoc(ref,{ownerUid:s.ownerUid,clientId:s.clientId,recipientUid:s.recipientUid,recipientEmail:s.recipientEmail,projectIds:s.projectIds||[],invoiceIds:s.invoiceIds||[],docIds:s.docIds||[],data:publishablePortal(d,clientId,s.projectIds||[],s.invoiceIds||[],s.docIds||[],auth?.currentUser?.email||'')});
+  const s=snap.data(),data=publishablePortal(d,clientId,s.projectIds||[],s.invoiceIds||[],s.docIds||[],auth?.currentUser?.email||'');
+  if(s.data?.wsStamp&&s.data.wsStamp>data.wsStamp)return true;
+  await setDoc(ref,{ownerUid:s.ownerUid,clientId:s.clientId,recipientUid:s.recipientUid,recipientEmail:s.recipientEmail,projectIds:s.projectIds||[],invoiceIds:s.invoiceIds||[],docIds:s.docIds||[],data});
   return true;
 }
 
