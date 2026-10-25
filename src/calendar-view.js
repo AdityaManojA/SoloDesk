@@ -110,3 +110,12 @@ export function layoutTimed(events, day) {
   if (cluster.length) finish();
   return rows;
 }
+
+// How full a day is: everything on it (project timelines, tasks, deadlines, TaskFlow items) and how many
+// different clients are involved. Levels drive the free / light / busy / packed colours.
+export function dayLoad(events, day) {
+  const items = events.filter(e => onDay(e, day));
+  const clients = new Set(items.map(e => e.client?.id).filter(Boolean));
+  const count = items.length;
+  return { count, clients: clients.size, projects: items.filter(e => e.type === 'project').length, level: count === 0 ? 'free' : count <= 2 ? 'light' : count <= 4 ? 'busy' : 'packed' };
+}

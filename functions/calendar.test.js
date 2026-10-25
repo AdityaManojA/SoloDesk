@@ -36,3 +36,12 @@ test('ICS has UTC blocks, exclusive date ends, escaped text and folded UTF-8 lin
   assert.ok(ics.endsWith('END:VCALENDAR\r\n'));
   for (const line of ics.split('\r\n')) assert.ok(Buffer.byteLength(line, 'utf8') <= 75);
 });
+
+test('a project with a start and no end is ongoing; exports keep it to its start day', async () => {
+  const { calendarEvents } = await import('./calendar.js');
+  const [e] = calendarEvents({ clients: [], projects: [{ id: 'p', name: 'Retainer', start: '2026-10-01', status: 'Active' }], tasks: [] });
+  assert.equal(e.ongoing, true);
+  assert.deepEqual([e.start, e.end], ['2026-10-01', '2026-10-02']);
+  const [closed] = calendarEvents({ clients: [], projects: [{ id: 'q', name: 'Sprint', start: '2026-10-01', end: '2026-10-05', status: 'Active' }], tasks: [] });
+  assert.equal(closed.ongoing, false);
+});

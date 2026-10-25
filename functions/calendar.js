@@ -12,7 +12,8 @@ export function calendarEvents(workspace, { from, to, includeCompleted = false }
     const start = isDate(p.start) ? p.start : isDate(p.end) ? p.end : null;
     const end = isDate(p.end) ? p.end : start;
     if (!start || end < start) continue;
-    events.push({ id: `project-${p.id}`, type: 'project', title: p.name, start, end: nextDate(end), allDay: true, availability: 'free', status: p.status, client: client(p.client) ? { id: p.client, name: client(p.client).name } : null, projectId: p.id, description: `Project timeline${client(p.client) ? ' · ' + client(p.client).name : ''}`, path: '/projects' });
+    // A project with a start but no end is ongoing; views may extend it, exports keep it to its start day.
+    events.push({ id: `project-${p.id}`, type: 'project', title: p.name, start, end: nextDate(end), ongoing: isDate(p.start) && !isDate(p.end), allDay: true, availability: 'free', status: p.status, client: client(p.client) ? { id: p.client, name: client(p.client).name } : null, projectId: p.id, description: `Project timeline${client(p.client) ? ' · ' + client(p.client).name : ''}`, path: '/projects' });
   }
   for (const task of workspace.tasks || []) {
     if (!includeCompleted && (task.status === 'Done'||task.arch)) continue;

@@ -186,7 +186,7 @@ function ProjectPage({ d, mut, open, id, removeItem, user, demo, toast }) {
   const tasks = d.tasks.filter(t => t.project === id && !t.arch), done = tasks.filter(t => t.status === 'Done').length, budget = projectBudget(d,p);
   return <>
     <Back to="projects" label="Projects" />
-    <div className="page-head"><div className="grow"><h1>{p.name}</h1><div className="tag-row"><span className={'chip ' + (p.status === 'Active' ? 'hero' : p.status === 'Complete' ? 'sage' : 'sand')}>{p.status}</span>{p.client && <a href={'#/clients/' + p.client}>{L.cname(d,p.client)}</a>}{p.start && <span>· {p.start}{p.end ? ' – ' + p.end : ''}</span>}<span>· {done} of {tasks.length} tasks complete</span></div></div>
+    <div className="page-head"><div className="grow"><h1>{p.name}</h1><div className="tag-row"><span className={'chip ' + (p.status === 'Active' ? 'hero' : p.status === 'Complete' ? 'sage' : 'sand')}>{p.status}</span>{p.client && <a href={'#/clients/' + p.client}>{L.cname(d,p.client)}</a>}{p.start && <span>· {p.start}{p.end ? ' – ' + p.end : ' · ongoing'}</span>}<span>· {done} of {tasks.length} tasks complete</span></div></div>
       <button className="ghost" onClick={() => open('project', p)}>Edit</button><button className="btn" onClick={() => open('task', { project: id, client: p.client })}>+ Task</button></div>
     <div className="section-tabs" role="group" aria-label="Project sections">{[['tasks','Tasks ' + tasks.length],['notes','Notes'],['files','Files & docs'],['budget','Budget']].map(([key,title])=><button type="button" key={key} aria-pressed={section===key} onClick={()=>setSection(key)}>{title}</button>)}</div>
     {section==='tasks'&&<section aria-label="Project tasks">{tasks.length ? tasks.map(k => <div className="row task-row" data-priority={k.priority || 'None'} key={k.id}><button className="chk" aria-pressed={k.status === 'Done'} aria-label={k.status === 'Done' ? 'Mark not done' : 'Mark complete'} onClick={() => toggleTask(mut, k.id)}>{k.status === 'Done' ? '☑' : '☐'}</button><a className="grow" href={'#/tasks/' + k.id}><b style={{ textDecoration: k.status === 'Done' ? 'line-through' : 'none' }}>{k.title}</b><small>{k.status}{k.due ? ` · due ${k.due}` : ''}{k.priority ? ` · ${k.priority} priority` : ''}</small></a></div>) : <Empty m="No tasks yet for this project." label="Add task" onClick={() => open('task', { project: id, client: p.client })} />}</section>}
@@ -370,6 +370,31 @@ function Settings({ d, mut, toast, ask, user, logout, demo, saving, signingOut, 
     <section id="settings-whats-new" className="settings-section"><WhatsNew/></section>
     <section id="settings-account" className="settings-section"><div className="card account-settings"><h2 style={{marginTop:0}}>Account</h2><p className="mu">{demo ? 'You are exploring the demo with sample data.' : 'Signed in as ' + (user?.email || user?.displayName || 'your Google account') + '.'} Signing out returns to the login page. Workspace deletion keeps your shared TaskFlow account.</p><div className="end" style={{ justifyContent: 'flex-start' }}><button className="ghost" disabled={signingOut} onClick={logout}>{signingOut ? 'Signing out…' : 'Sign out'}</button><button className="ghost danger" disabled={signingOut || (!demo && saving === 'saving')} onClick={del}>Delete SoloDesk workspace</button></div></div></section>
   </>);
+}
+
+/* ---------- project form ---------- */
+function ProjectForm({ v, d, mut, toast, close, save, removeItem }) {
+  const [client, setClient] = useState(v.client || ''), [adding, setAdding] = useState(false), [newName, setNewName] = useState('');
+  const [budget, setBudget] = useState(!!(Number(v.budgetHours) || Number(v.hourlyRate)));
+  const addInput = useRef(null);
+  const addClient = () => {
+    const result = prepareClient({ name: newName });
+    if (result.error) { toast(result.error); addInput.current?.focus(); return; }
+    const id = rid(); mut(n => { n.clients.push({ id, arch: false, ...result.client }); });
+    setClient(id); setNewName(''); setAdding(false); toast(`${result.client.name} added and selected.`);
+  };
+  const opts = [['', '— none —'], ...d.clients.filter(c => !c.arch || c.id === v.client || c.id === client).map(c => [c.id, c.name])];
+  return <Modal title={v.id ? 'Edit project' : 'New project'} onDelete={v.id ? () => removeItem('projects', v.id) : undefined} onClose={close} onSubmit={o => save('projects', { ...o, client, ...(budget ? {} : { budgetHours: '', hourlyRate: '' }) })}>
+    <Fld l="Project name" name="name" required defaultValue={v.name} />
+    <Sel l="Client" o={opts} value={client} onChange={e => setClient(e.target.value)} />
+    {adding ? <div className="inline-add"><input ref={addInput} autoFocus aria-label="New client name" placeholder="Client name" value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addClient(); } if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setAdding(false); } }} /><button type="button" className="btn sm" onClick={addClient}>Add</button><button type="button" className="ghost sm" onClick={() => setAdding(false)}>Cancel</button></div>
+      : <button type="button" className="add-inline-link" onClick={() => setAdding(true)}><Icon name="plus" size={16} />Add a new client</button>}
+    <Sel l="Status" name="status" o={['Active', 'On hold', 'Complete']} defaultValue={v.status || 'Active'} />
+    <h3>Calendar timeline</h3><p className="mu form-help">Leave the end date empty for ongoing work: the project runs from its start date until you add an end date.</p>
+    <div className="grid2"><Fld l="Start date" name="start" type="date" defaultValue={v.start} /><Fld l="End date (optional)" name="end" type="date" defaultValue={v.end} /></div>
+    <label className="check-row"><input type="checkbox" checked={budget} onChange={e => setBudget(e.target.checked)} /> Track an effort budget</label>
+    {budget && <div className="grid2"><Fld l="Budget hours" name="budgetHours" type="number" min="0" step="0.25" defaultValue={v.budgetHours || ''} /><Fld l="Hourly rate" name="hourlyRate" type="number" min="0" step="0.01" defaultValue={v.hourlyRate || ''} /></div>}
+  </Modal>;
 }
 
 /* ---------- invoice form ---------- */
@@ -638,8 +663,7 @@ export default function App() {
     {dlg?.k === 'client' && <Modal title={v.id ? 'Edit client' : 'New client'} onDelete={v.id ? () => removeItem('clients',v.id) : undefined} onClose={close} onSubmit={(o) => save('clients', o)}>
       <Fld l="Name" name="name" required defaultValue={v.name} /><Fld l="Email" name="email" type="email" defaultValue={v.email} /><Fld l="Phone" name="phone" type="tel" defaultValue={v.phone} />
       <label>Address<textarea name="address" rows="2" defaultValue={v.address} /></label><label>Notes<textarea name="notes" rows="2" defaultValue={v.notes} /></label></Modal>}
-    {dlg?.k === 'project' && <Modal title={v.id ? 'Edit project' : 'New project'} onDelete={v.id ? () => removeItem('projects',v.id) : undefined} onClose={close} onSubmit={(o) => save('projects', o)}>
-      <Fld l="Project name" name="name" required defaultValue={v.name} /><Sel l="Client" name="client" o={cOpts} defaultValue={v.client} /><Sel l="Status" name="status" o={['Active', 'On hold', 'Complete']} defaultValue={v.status || 'Active'} /><h3>Calendar timeline</h3><p className="mu form-help">Optional dates appear as a project span in your calendar. The end date is included.</p><div className="grid2"><Fld l="Start date" name="start" type="date" defaultValue={v.start} /><Fld l="End date" name="end" type="date" defaultValue={v.end} /></div><h3>Effort budget</h3><div className="grid2"><Fld l="Budget hours" name="budgetHours" type="number" min="0" step="0.25" defaultValue={v.budgetHours||''}/><Fld l="Hourly rate" name="hourlyRate" type="number" min="0" step="0.01" defaultValue={v.hourlyRate||''}/></div></Modal>}
+    {dlg?.k === 'project' && <ProjectForm v={v} d={d} mut={mut} toast={toast} close={close} save={save} removeItem={removeItem} />}
     {dlg?.k === 'task' && <Modal title={v.id ? 'Edit task' : 'New task'} onDelete={v.id ? () => removeItem('tasks',v.id) : undefined} onClose={close} onSubmit={(o) => save('tasks', o)}>
       <Fld l="Title" name="title" required defaultValue={v.title} />
       <div className="grid2"><Sel l="Status" name="status" o={['Todo', 'In progress', 'Done']} defaultValue={v.status || 'Todo'} /><Sel l="Priority" name="priority" o={[['', 'None'], 'Low', 'Medium', 'High']} defaultValue={v.priority || ''} /></div>

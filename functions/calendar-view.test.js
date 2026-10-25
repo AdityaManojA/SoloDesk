@@ -89,3 +89,13 @@ test('spanning items pack into lanes and timed items share columns only when the
   assert.deepEqual(rangeFraction('2026-10-15', '2026-11-10', { start: '2026-10-01', end: '2026-11-01' }), { left: 14 / 31, width: 17 / 31, before: false, after: true });
   assert.equal(rangeFraction('2026-12-01', '2026-12-05', { start: '2026-10-01', end: '2026-11-01' }), null);
 });
+
+test('day load counts everything on a day and grades it free, light, busy or packed', async () => {
+  const { dayLoad } = await import('../src/calendar-view.js');
+  const span = (id, start, end, client) => ({ id, type: 'project', allDay: true, start, end, client: client ? { id: client } : null });
+  const events = [span('a', '2026-10-12', '2026-11-03', 'x'), span('b', '2026-10-16', '2026-11-03', 'y'), span('c', '2026-10-19', '2026-11-03', 'x'), { id: 't', type: 'task', allDay: true, start: '2026-10-26', end: '2026-10-27', client: { id: 'z' } }];
+  assert.deepEqual(dayLoad(events, '2026-10-11'), { count: 0, clients: 0, projects: 0, level: 'free' });
+  assert.equal(dayLoad(events, '2026-10-13').level, 'light');
+  assert.deepEqual(dayLoad(events, '2026-10-26'), { count: 4, clients: 3, projects: 3, level: 'busy' });
+  assert.equal(dayLoad(events, '2026-11-03').level, 'free', 'end dates are exclusive');
+});

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { calendarEvents, calendarIcs } from '../functions/calendar';
 import { download, today } from './lib';
-import { localDay, monthDays, onDay, matchesCalendarFilters, sortCalendarItems, ZOOMS, zoomRange, shiftZoom, spanLanes, rangeFraction, layoutTimed, addDaysKey, weekStartKey, dateKey } from './calendar-view';
+import { localDay, monthDays, onDay, matchesCalendarFilters, sortCalendarItems, ZOOMS, zoomRange, shiftZoom, spanLanes, rangeFraction, layoutTimed, addDaysKey, weekStartKey, dateKey, dayLoad } from './calendar-view';
 import Icon from './Icon';
 import { Select, DateInput } from './Controls';
 import { moveCalendarItem } from './calendar-move';
@@ -15,6 +15,9 @@ import { scheduleTask } from './productivity';
 
 const HOUR = 56;
 const ZOOM_LABEL = { year: 'Year', month: 'Month', week: 'Week', day: 'Day' };
+const LOAD_LABEL = { free: 'Free', light: 'Light', busy: 'Busy', packed: 'Packed' };
+const loadText = (load, day, t) => load.count ? `${load.count} item${load.count === 1 ? '' : 's'}${load.clients > 1 ? ` · ${load.clients} clients` : ''}` : day >= t ? 'Free' : '';
+function LoadLegend() { return <div className="load-legend" aria-label="How full each day is">{Object.entries(LOAD_LABEL).map(([k, l]) => <span key={k}><i className={'load-' + k} />{l}{k === 'light' ? ' 1–2' : k === 'busy' ? ' 3–4' : k === 'packed' ? ' 5+' : ''}</span>)}</div>; }
 // Each client gets a colour from the palette, in a stable order; work without a client uses the card colour.
 const CLIENT_TONES = ['var(--hero)', 'var(--sage)', 'var(--sand)', '#A3B8C4', '#D9B8A0', '#B9C7A0'];
 const fmt = (day, o) => new Date(day + 'T12:00:00').toLocaleDateString(undefined, o);
@@ -29,7 +32,8 @@ export default function Calendar({ d, mut, open, user, taskflow, toast = () => {
 
   const toneOf = useMemo(() => { const order = d.clients.map(c => c.id); return id => id && order.includes(id) ? CLIENT_TONES[order.indexOf(id) % CLIENT_TONES.length] : 'var(--card)'; }, [d.clients]);
   const shared = useMemo(() => showShared ? taskflowCalendarEvents(taskflow.data) : [], [taskflow.data, showShared]);
-  const own = useMemo(() => calendarEvents(d, { includeCompleted: completed }), [d, completed]);
+  // Ongoing projects (no end date) run on from their start date in every view.
+  const own = useMemo(() => calendarEvents(d, { includeCompleted: completed }).map(e => e.ongoing ? { ...e, end: addDaysKey(today(), 3650), description: e.description + ' · ongoing' } : e), [d, completed]);
   const events = useMemo(() => [...own, ...shared].filter(e => matchesCalendarFilters(e, client, '')).sort((a, b) => a.start.localeCompare(b.start) || a.id.localeCompare(b.id)), [own, shared, client]);
   const range = zoomRange(zoom, day);
   const inRange = useMemo(() => events.filter(e => (e.allDay ? e.end > range.start && e.start < range.end : Date.parse(e.end) > new Date(range.start + 'T00:00:00').getTime() && Date.parse(e.start) < new Date(range.end + 'T00:00:00').getTime())), [events, range.start, range.end]);
@@ -91,6 +95,7 @@ export default function Calendar({ d, mut, open, user, taskflow, toast = () => {
         <label className="cal-check"><input type="checkbox" checked={completed} onChange={e => setCompleted(e.target.checked)} /> Completed</label>
       </div>
     </div>
+    {zoom !== 'day' && <LoadLegend />}
     <p className="calendar-move-status" role="status" aria-live="polite">{drag ? `Moving ${drag.title}${over ? ' to ' + over.replace('|', ' at ') : ' — drop on a day or time; Escape cancels'}` : moveMessage}</p>
 
     <WorkTimeline d={d} zoom={zoom} day={day} toneOf={toneOf} completed={completed} client={client} onOpen={id => setEventId(id)} />
@@ -108,7 +113,7 @@ export default function Calendar({ d, mut, open, user, taskflow, toast = () => {
     {selected && createPortal(<section ref={inspector} tabIndex={-1} className="event-inspector card" aria-label="Selected calendar event">
       <div className="section-head"><div><span className="eyebrow">{selected.source === 'taskflow' ? (selected.reminder ? 'FROM TASKFLOW · READ ONLY' : 'GOOGLE CALENDAR VIA TASKFLOW · READ ONLY') : selected.type === 'task' ? 'TASK' : 'PROJECT'}</span><h2>{selected.title}</h2></div><button className="icon-button" aria-label="Close event details" onClick={() => setEventId(null)}><Icon name="close" /></button></div>
       <p>{selected.description}</p>
-      <p><b>{selected.allDay ? 'All day' : new Date(selected.start).toLocaleString()}</b>{selected.allDay ? ` · ${selected.start} to ${addDaysKey(selected.end, -1)}` : selected.reminder ? ' · Due time reminder, not a reserved work block' : ` · ${selected.durationMinutes} minutes`} · {selected.availability === 'busy' ? 'Busy' : 'Free'}</p>
+      <p><b>{selected.allDay ? 'All day' : new Date(selected.start).toLocaleString()}</b>{selected.allDay ? (selected.ongoing ? ` · ongoing since ${selected.start}` : ` · ${selected.start} to ${addDaysKey(selected.end, -1)}`) : selected.reminder ? ' · Due time reminder, not a reserved work block' : ` · ${selected.durationMinutes} minutes`} · {selected.availability === 'busy' ? 'Busy' : 'Free'}</p>
       {selected.source !== 'taskflow' && <div className="calendar-move-form"><label>Move to date<DateInput aria-label="Move to date" value={moveDate} onChange={e => setMoveDate(e.target.value)} /></label><button type="button" className="btn" disabled={!moveDate || moveDate === localDay(selected.start)} onClick={() => moveItem(selected.id, localDay(selected.start), moveDate)}>Move {selected.type}</button><p className="form-help">Task times and project lengths stay the same. Moving a timed task also shifts its own deadline. Moving a project shifts its timeline only.</p></div>}
       <div className="export-actions">{selected.source === 'taskflow' ? <a className="btn" href={selected.url} target="_blank" rel="noopener noreferrer">Open in {selected.reminder ? 'TaskFlow' : 'source calendar'} ↗</a> : <><button className="btn" onClick={() => edit(selected)}>Edit {selected.type}</button>{selected.type === 'project' && <a className="ghost" href={'#/projects/' + selected.projectId}>Open project</a>}</>}<button className="ghost" onClick={() => exportEvents([selected], 'solodesk-' + selected.id)}>Export · ICS</button><button className="ghost" onClick={() => { setEventId(null); zoomTo('day', localDay(selected.start) < range.start ? range.start : localDay(selected.start)); }}>Show day</button></div>
       <p className="form-help">{selected.source === 'taskflow' && 'This item is shared live by TaskFlow. Changes must be made in its source app. '}Imported ICS files are separate copies; later edits here won’t update them.</p>
@@ -123,7 +128,7 @@ function WorkTimeline({ d, zoom, day, toneOf, completed, client, onOpen }) {
   const projects = d.projects.filter(p => !p.arch && (completed || p.status !== 'Complete') && (!client || p.client === client) && (p.start || p.end));
   const rows = [];
   for (const c of [...d.clients.filter(c => !c.arch), { id: '', name: 'No client' }]) {
-    const bars = projects.filter(p => (p.client || '') === c.id).map(p => { const s = p.start || p.end, e = addDaysKey(p.end || p.start, 1); return { p, f: rangeFraction(s, e, range) }; }).filter(x => x.f);
+    const bars = projects.filter(p => (p.client || '') === c.id).map(p => { const s = p.start || p.end, e = p.end ? addDaysKey(p.end, 1) : addDaysKey(t, 3650); return { p, f: rangeFraction(s, e, range) }; }).filter(x => x.f);
     if (bars.length) rows.push({ c, bars });
   }
   const undated = d.projects.filter(p => !p.arch && p.status === 'Active' && !p.start && !p.end).length;
@@ -136,7 +141,7 @@ function WorkTimeline({ d, zoom, day, toneOf, completed, client, onOpen }) {
       <div className="wt-ticks" aria-hidden="true"><span className="wt-name" />{<div className="wt-track">{ticks.map(x => x.label && <span key={x.key} style={{ left: (x.f.left * 100) + '%' }}>{x.label}</span>)}</div>}</div>
       {rows.map(({ c, bars }) => <div className="wt-row" key={c.id || 'none'}>
         <a className="wt-name" href={c.id ? '#/clients/' + c.id : '#/projects'}><i style={{ background: toneOf(c.id) }} />{c.name}</a>
-        <div className="wt-track">{now && <span className="wt-now" style={{ left: ((now.left + now.width / 2) * 100) + '%' }} />}{bars.map(({ p, f }, i) => <button key={p.id} type="button" className={'wt-bar' + (f.before ? ' before' : '') + (f.after ? ' after' : '')} style={{ left: (f.left * 100) + '%', width: `max(${f.width * 100}%, 6px)`, top: i * 30, background: toneOf(c.id) }} onClick={() => onOpen('project-' + p.id)} title={`${p.name} · ${p.start || '?'} → ${p.end || '?'} · ${tasksFor(p)}`}><b>{p.name}</b><small>{tasksFor(p)}</small></button>)}<span style={{ display: 'block', height: bars.length * 30 }} /></div>
+        <div className="wt-track">{now && <span className="wt-now" style={{ left: ((now.left + now.width / 2) * 100) + '%' }} />}{bars.map(({ p, f }, i) => <button key={p.id} type="button" className={'wt-bar' + (f.before ? ' before' : '') + (f.after ? ' after' : '')} style={{ left: (f.left * 100) + '%', width: `max(${f.width * 100}%, 6px)`, top: i * 30, background: toneOf(c.id) }} onClick={() => onOpen('project-' + p.id)} title={`${p.name} · ${p.start || '?'} → ${p.end || 'ongoing'} · ${tasksFor(p)}`}><b>{p.name}</b><small>{tasksFor(p)}</small></button>)}<span style={{ display: 'block', height: bars.length * 30 }} /></div>
       </div>)}
     </div> : <p className="empty-note" style={{ margin: 0 }}>No dated projects in this period. Give a project a start and end date to see it here.</p>}
   </section>;
@@ -144,11 +149,10 @@ function WorkTimeline({ d, zoom, day, toneOf, completed, client, onOpen }) {
 
 function YearView({ day, events, onPick, onMonth, t }) {
   const year = day.slice(0, 4);
-  const busy = useMemo(() => { const m = new Map(); for (const e of events) { if (e.type === 'project') continue; const k = localDay(e.start); if (k.startsWith(year)) m.set(k, (m.get(k) || 0) + 1); } return m; }, [events, year]);
-  const projectDays = useMemo(() => { const s = new Set(); for (const e of events) if (e.type === 'project') for (let k = e.start; k < e.end && k <= year + '-12-31'; k = addDaysKey(k, 1)) if (k >= year + '-01-01') s.add(k); return s; }, [events, year]);
+  const loads = useMemo(() => { const m = new Map(); for (let k = year + '-01-01'; k <= year + '-12-31'; k = addDaysKey(k, 1)) m.set(k, dayLoad(events, k)); return m; }, [events, year]);
   return <div className="year-grid">{Array.from({ length: 12 }, (_, i) => { const m = `${year}-${String(i + 1).padStart(2, '0')}`; const days = monthDays(m);
     return <section key={m} className="year-month"><button type="button" className="year-title" onClick={() => onMonth(m)}>{new Date(m + '-15T12:00:00').toLocaleDateString(undefined, { month: 'long' })}</button>
-      <div className="mini-cal">{['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((x, j) => <span key={j} className="dow">{x}</span>)}{days.map(k => k.slice(0, 7) !== m ? <span key={k} /> : <a key={k} href="#/calendar" onClick={e => { e.preventDefault(); onPick(k); }} className={(k === t ? 'today ' : '') + (busy.get(k) ? 'has ' : '') + (projectDays.has(k) ? 'in-project' : '')} aria-label={fmt(k, { dateStyle: 'full' }) + (busy.get(k) ? `, ${busy.get(k)} items` : '')}>{+k.slice(8)}</a>)}</div>
+      <div className="mini-cal">{['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((x, j) => <span key={j} className="dow">{x}</span>)}{days.map(k => k.slice(0, 7) !== m ? <span key={k} /> : <a key={k} href="#/calendar" onClick={e => { e.preventDefault(); onPick(k); }} className={(k === t ? 'today ' : '') + 'load-' + loads.get(k).level} aria-label={fmt(k, { dateStyle: 'full' }) + ', ' + (loads.get(k).count ? loadText(loads.get(k), k, t) : 'free')}>{+k.slice(8)}</a>)}</div>
     </section>; })}</div>;
 }
 
@@ -159,8 +163,9 @@ function MonthView({ day, events, t, chip, toneOf, cellProps, dragProps, over, o
     {weeks.map(week => { const spans = spanLanes(events.filter(e => e.allDay && (e.type === 'project' || addDaysKey(e.start, 1) < e.end)), week); const lanes = Math.min(3, spans.reduce((n, s) => Math.max(n, s.lane + 1), 0));
       return <div className="month-b-week" role="row" key={week[0]} style={{ '--lanes': lanes }}>
         {week.map((k, i) => { const singles = sortCalendarItems(events.filter(e => onDay(e, k) && !(e.allDay && (e.type === 'project' || addDaysKey(e.start, 1) < e.end)))); const hidden = spans.filter(s => s.lane >= 3 && s.col <= i && i < s.col + s.span).length; const shown = singles.slice(0, 3), extra = singles.length - shown.length + hidden;
-          return <div key={k} role="gridcell" className={'month-b-cell' + (k.slice(0, 7) !== month ? ' outside' : '') + (over === k ? ' drop-target' : '')} style={{ gridColumn: i + 1 }} {...cellProps(k)}>
-            <button type="button" className={'month-b-num' + (k === t ? ' today' : '')} onClick={() => onPickDay(k)} aria-label={fmt(k, { dateStyle: 'full' }) + ', open day'}>{+k.slice(8)}{k.slice(8) === '01' ? ' ' + fmt(k, { month: 'short' }) : ''}</button>
+          const load = dayLoad(events, k);
+          return <div key={k} role="gridcell" className={'month-b-cell load-' + load.level + (k.slice(0, 7) !== month ? ' outside' : '') + (over === k ? ' drop-target' : '')} style={{ gridColumn: i + 1 }} {...cellProps(k)}>
+            <div className="month-b-top"><button type="button" className={'month-b-num' + (k === t ? ' today' : '')} onClick={() => onPickDay(k)} aria-label={fmt(k, { dateStyle: 'full' }) + ', ' + (loadText(load, k, t) || 'nothing scheduled') + ', open day'}>{+k.slice(8)}{k.slice(8) === '01' ? ' ' + fmt(k, { month: 'short' }) : ''}</button>{load.count ? <span className={'load-count load-' + load.level} title={loadText(load, k, t)} aria-hidden="true">{load.count}{load.clients > 1 ? <small> · {load.clients}c</small> : null}</span> : k >= t && k.slice(0, 7) === month ? <span className="load-tag" aria-hidden="true">Free</span> : null}</div>
             <div className="month-b-items" style={{ marginTop: lanes * 24 }}>{shown.map(e => chip(e, k))}{extra > 0 && <button type="button" className="more-events" onClick={() => onPickDay(k)}>+{extra} more</button>}</div>
           </div>; })}
         {spans.filter(s => s.lane < 3).map(s => <button key={s.event.id + week[0]} type="button" className={'month-b-span' + (s.before ? ' before' : '') + (s.after ? ' after' : '') + (s.event.source === 'taskflow' ? ' shared' : '')} style={{ gridColumn: `${s.col + 1} / span ${s.span}`, top: 34 + s.lane * 24, background: s.event.source === 'taskflow' ? 'var(--sf)' : toneOf(s.event.client?.id) }} {...(s.event.source !== 'taskflow' ? dragProps(s.event, week[s.col]) : {})} onClick={() => onOpen(s.event.id)} title={s.event.title}>{s.event.title}</button>)}
@@ -175,7 +180,7 @@ function TimeGrid({ days, events, t, toneOf, dragProps, cellProps, over, onOpen,
   const allDay = spanLanes(events.filter(e => e.allDay), days), lanes = allDay.reduce((n, s) => Math.max(n, s.lane + 1), 0);
   const cols = `56px repeat(${days.length}, minmax(0,1fr))`;
   return <div className={'timegrid card' + (days.length === 1 ? ' single' : '')}>
-    <div className="tg-head" style={{ gridTemplateColumns: cols }}><span />{days.map(k => <button key={k} type="button" className={'tg-day' + (k === t ? ' today' : '')} onClick={() => onPickDay(k)} aria-label={'Open ' + fmt(k, { dateStyle: 'full' })}><small>{fmt(k, { weekday: 'short' })}</small><b>{+k.slice(8)}</b></button>)}</div>
+    <div className="tg-head" style={{ gridTemplateColumns: cols }}><span />{days.map(k => <button key={k} type="button" className={'tg-day' + (k === t ? ' today' : '')} onClick={() => onPickDay(k)} aria-label={'Open ' + fmt(k, { dateStyle: 'full' })}><small>{fmt(k, { weekday: 'short' })}</small><b>{+k.slice(8)}</b><span className={'load-pill load-' + dayLoad(events, k).level}>{loadText(dayLoad(events, k), k, t) || LOAD_LABEL[dayLoad(events, k).level]}</span></button>)}</div>
     <div className="tg-allday" style={{ gridTemplateColumns: cols, minHeight: Math.max(1, lanes) * 26 + 10 }}><span className="tg-label">All day</span>{days.map((k, i) => <div key={k} className={'tg-allday-cell' + (over === k ? ' drop-target' : '')} style={{ gridColumn: i + 2, gridRow: 1 }} {...cellProps(k)} />)}
       {allDay.map(s => <button key={s.event.id} type="button" className={'month-b-span' + (s.before ? ' before' : '') + (s.after ? ' after' : '') + (s.event.source === 'taskflow' ? ' shared' : '')} style={{ gridColumn: `${s.col + 2} / span ${s.span}`, gridRow: 1, marginTop: 4 + s.lane * 26, background: s.event.source === 'taskflow' ? 'var(--sf)' : toneOf(s.event.client?.id) }} {...(s.event.source !== 'taskflow' ? dragProps(s.event, days[s.col]) : {})} onClick={() => onOpen(s.event.id)}>{s.event.type === 'task' ? 'Due · ' : ''}{s.event.title}</button>)}</div>
     <div className="tg-scroll" ref={scroll}><div className="tg-body" style={{ gridTemplateColumns: cols, height: 24 * HOUR }}>

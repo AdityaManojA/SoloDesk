@@ -2,6 +2,15 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
+  {version:'1.05',released:false,date:'',title:'See your free days at a glance',highlights:[
+    ['Free and busy days','Every day in the calendar is coloured by how full it is — free, light, busy or packed — with a count of items and clients. The year view becomes a heatmap of your free days.'],
+    ['Projects across every day','Project timelines now stretch across every day they cover in the month view, instead of showing only at the start of each week.'],
+    ['Ongoing projects','Leave a project’s end date empty and it runs on from its start date until you add one.'],
+    ['Add a client while creating a project','“Add a new client” sits right under the client list in the project form.'],
+    ['Effort budget when you need it','Budget hours and hourly rate only appear when you tick “Track an effort budget”.'],
+  ],fixes:[
+    'Calendar zoom buttons are easier to spot.',
+  ]},
   {version:'1.04',released:true,date:'2026-10-25',title:'Edit what you were working on, right from Home',highlights:[
     ['Jump back in, editable','Home now shows the notes, tasks, projects and clients you edited most recently. Open a note, tick a checklist item or a task, or edit a project or client without leaving Home.'],
     ['TaskFlow, tucked away','Your TaskFlow quests sit in a small pill next to the greeting; tap it for a quick list.'],
