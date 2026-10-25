@@ -12,4 +12,6 @@ A license or permission covering the inherited material must be obtained from it
 
 ## Dependencies
 
+The Bricolage Grotesque and Figtree typefaces are bundled from `@fontsource-variable` packages under the SIL Open Font License 1.1.
+
 Dependencies retain their own licenses. Their package manifests, distributed license files and notices govern those components. The root `LICENSE` does not replace those terms.

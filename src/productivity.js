@@ -71,7 +71,7 @@ export function trashRecord(workspace,kind,id,invoiceId){
 export function restoreTrash(workspace,id){
   const entry=workspace.trash?.find(x=>x.id===id);if(!entry)throw new Error('This item is no longer in Trash.');
   for(const change of entry.changes){
-    const current=workspace[change.list].find(x=>x.id===change.before.id);
+    const current=(workspace[change.list]||[]).find(x=>x.id===change.before.id);
     if(change.after===null&&current)throw new Error('A record with this ID already exists. Nothing was restored.');
     if(change.after!==null&&(!current||change.fields.some(key=>JSON.stringify(current[key])!==JSON.stringify(change.after[key]))))throw new Error('A linked record changed after deletion. Undo those changes before restoring this bundle.');
   }
@@ -93,9 +93,9 @@ export function restoreTrash(workspace,id){
   workspace.trash=workspace.trash.filter(x=>x.id!==id);
 }
 export function trashReusable(workspace,list,id){
-  if(!['projectTemplates','invoiceSchedules'].includes(list))throw new Error('Choose a reusable workflow.');
-  const record=workspace[list]?.find(x=>x.id===id);if(!record)throw new Error('This workflow is no longer available.');
-  workspace.trash=[{id:rid(),at:new Date().toISOString(),title:record.name,changes:[{list,before:structuredClone(record),after:null}]},...(workspace.trash||[])];
+  if(!['projectTemplates','invoiceSchedules','notes','docs'].includes(list))throw new Error('Choose a reusable workflow.');
+  const record=workspace[list]?.find(x=>x.id===id);if(!record)throw new Error('This item is no longer available.');
+  workspace.trash=[{id:rid(),at:new Date().toISOString(),title:record.name||record.title||'Untitled',changes:[{list,before:structuredClone(record),after:null}]},...(workspace.trash||[])];
   workspace[list]=workspace[list].filter(x=>x.id!==id);
 }
 

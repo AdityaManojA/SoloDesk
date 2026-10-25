@@ -27,22 +27,29 @@ export function validateWorkspace(input){
   for(const key of ['biz','email','phone','addr','pay','cur','logo'])if(w.settings[key]!=null&&typeof w.settings[key]!=='string')throw new Error('Invalid business settings.');
   if(w.settings.cur&&!/^[A-Z]{3}$/.test(w.settings.cur))throw new Error('Invalid currency.');
   if(w.settings.logo&&!/^data:image\/(png|jpeg);base64,[a-zA-Z0-9+/=]+$/.test(w.settings.logo))throw new Error('Backup logo must be an embedded PNG or JPG.');
-  for(const list of ['projectTemplates','invoiceSchedules','focusSessions','activity','trash','notes'])if(w[list]!=null&&!Array.isArray(w[list]))throw new Error('Invalid '+list+' in backup.');
+  for(const list of ['projectTemplates','invoiceSchedules','focusSessions','activity','trash','notes','docs'])if(w[list]!=null&&!Array.isArray(w[list]))throw new Error('Invalid '+list+' in backup.');
   const strings=(row,fields)=>fields.every(key=>row[key]==null||typeof row[key]==='string');
   const checklist=items=>items==null||Array.isArray(items)&&items.every(c=>object(c)&&typeof c.title==='string'&&(c.id==null||typeof c.id==='string')&&(c.done==null||typeof c.done==='boolean'));
   if(!w.clients.every(c=>strings(c,['email','phone','address','notes']))||!w.projects.every(p=>strings(p,['client','status']))||!w.tasks.every(t=>strings(t,['client','project','status','priority','notes','scheduledAt','repeat'])&&checklist(t.checklist)))throw new Error('Invalid text or checklist fields.');
-  for(const list of ['projectTemplates','invoiceSchedules','focusSessions','activity','trash','notes']){
+  for(const list of ['projectTemplates','invoiceSchedules','focusSessions','activity','trash','notes','docs']){
     const ids=new Set();for(const row of w[list]||[]){if(!object(row)||typeof row.id!=='string'||!row.id||ids.has(row.id))throw new Error('Invalid '+list+' IDs.');ids.add(row.id);}
   }
   for(const p of w.projects)for(const key of ['budgetHours','hourlyRate'])if(p[key]!=null&&(!Number.isFinite(Number(p[key]))||Number(p[key])<0))throw new Error('Invalid project budget.');
   for(const t of w.projectTemplates||[])if(typeof t.name!=='string'||!Array.isArray(t.tasks)||!Array.isArray(t.milestones)||[...t.tasks,...t.milestones].some(x=>!object(x)||typeof x.title!=='string'||!Number.isInteger(x.offset)||x.offset<0||x.offset>999)||t.milestones.some(m=>!Number.isFinite(Number(m.amount))||Number(m.amount)<=0))throw new Error('Invalid project template.');
   for(const r of w.invoiceSchedules||[])if(!strings(r,['name','client','repeat','notes'])||!['daily','weekdays','weekly','monthly'].includes(r.repeat)||!r.next||!date(r.next)||!Array.isArray(r.items)||!r.items.length||r.items.some(i=>!object(i)||typeof i.desc!=='string'||!Number.isFinite(Number(i.qty))||Number(i.qty)<=0||!Number.isFinite(Number(i.price))||Number(i.price)<0)||!Number.isFinite(Number(r.tax||0))||Number(r.tax||0)<0||!Number.isFinite(calc({...r,pays:[]}).total))throw new Error('Invalid recurring invoice schedule.');
   for(const session of w.focusSessions||[])if(!strings(session,['taskId','project','title','at'])||!Number.isFinite(session.seconds)||session.seconds<0)throw new Error('Invalid focus history.');
-  for(const n of w.notes||[])if(!strings(n,['title','body','project','createdAt'])||!checklist(n.checklist))throw new Error('Invalid note.');
+  for(const n of w.notes||[])if(!strings(n,['title','body','project','client','createdAt','updatedAt'])||!checklist(n.checklist)||(n.checklist||[]).some(c=>c.due!=null&&c.due!==''&&!date(c.due)))throw new Error('Invalid note.');
+  for(const list of ['clients','projects','tasks','invoices'])for(const row of w[list])if(row.updatedAt!=null&&typeof row.updatedAt!=='string')throw new Error('Invalid '+list+' timestamp.');
+  const textGroup=(value,keys)=>value==null||object(value)&&keys.every(key=>value[key]==null||typeof value[key]==='string');
+  for(const i of w.invoices)if(!strings(i,['title','reference','taxLabel','pay'])||!textGroup(i.from,['name','email','phone','address','taxId'])||!textGroup(i.billTo,['name','email','address'])||!textGroup(i.bank,['accountName','bankName','accountNumber','ifsc','swift','iban','upi']))throw new Error('Invalid invoice details.');
+  if(w.settings.actionColour!=null&&!['terracotta','clay','rust','apricot','sienna','brick','peach','dusty-blue'].includes(w.settings.actionColour))throw new Error('Invalid appearance settings.');
+  if(w.docs!=null&&(!Array.isArray(w.docs)||w.docs.some(d=>!object(d)||typeof d.id!=='string'||typeof d.title!=='string'||!strings(d,['kind','url','status','client','project','problem','goals','outOfScope','updatedAt'])||d.requirements!=null&&!checklist(d.requirements))))throw new Error('Invalid documents.');
+  if(w.settings.taxId!=null&&typeof w.settings.taxId!=='string'||!textGroup(w.settings.bank,['accountName','bankName','accountNumber','ifsc','swift','iban','upi']))throw new Error('Invalid business settings.');
+  if(w.profile!=null&&(!object(w.profile)||!strings(w.profile,['username','name','headline','bio','location'])||['public','available'].some(k=>w.profile[k]!=null&&typeof w.profile[k]!=='boolean')||w.profile.links!=null&&(!Array.isArray(w.profile.links)||w.profile.links.some(l=>!object(l)||typeof l.label!=='string'||typeof l.url!=='string'))||w.profile.clients!=null&&(!Array.isArray(w.profile.clients)||w.profile.clients.some(id=>typeof id!=='string'))))throw new Error('Invalid profile.');
   for(const a of w.activity||[])if(!strings(a,['at','kind','recordId','client','title','action']))throw new Error('Invalid activity history.');
   if(w.settings.dashboardHidden!=null&&(!Array.isArray(w.settings.dashboardHidden)||w.settings.dashboardHidden.some(x=>!['metrics','overview','work'].includes(x))))throw new Error('Invalid dashboard options.');
   if(w.focusTimer!=null&&(!object(w.focusTimer)||!strings(w.focusTimer,['taskId','title','project'])||!Number.isFinite(w.focusTimer.elapsedMs)||w.focusTimer.elapsedMs<0||w.focusTimer.startedAt!=null&&!Number.isFinite(w.focusTimer.startedAt)))throw new Error('Invalid focus timer.');
-  for(const entry of w.trash||[])if(!strings(entry,['title','at'])||!Array.isArray(entry.changes)||entry.changes.some(c=>!object(c)||!['clients','projects','tasks','invoices','projectTemplates','invoiceSchedules','notes'].includes(c.list)||!object(c.before)||typeof c.before.id!=='string'||c.after!=null&&(!object(c.after)||!Array.isArray(c.fields)||c.fields.some(f=>typeof f!=='string'||['__proto__','prototype','constructor'].includes(f)))))throw new Error('Invalid Trash recovery entry.');
+  for(const entry of w.trash||[])if(!strings(entry,['title','at'])||!Array.isArray(entry.changes)||entry.changes.some(c=>!object(c)||!['clients','projects','tasks','invoices','projectTemplates','invoiceSchedules','notes','docs'].includes(c.list)||!object(c.before)||typeof c.before.id!=='string'||c.after!=null&&(!object(c.after)||!Array.isArray(c.fields)||c.fields.some(f=>typeof f!=='string'||['__proto__','prototype','constructor'].includes(f)))))throw new Error('Invalid Trash recovery entry.');
   for(const entry of w.trash||[])for(const change of entry.changes){validateWorkspace({...fresh(),[change.list]:[change.before]});if(change.after)validateWorkspace({...fresh(),[change.list]:[change.after]});}
   // Backups never grant portal access or retain credentials. Portal membership is managed separately.
   delete w.portal;delete w.portalAccess;
@@ -60,7 +67,7 @@ export function restoreBackup(current,incoming,mode){
   if(mode==='replace')return valid;
   if(mode!=='merge')throw new Error('Choose merge or replace.');
   const next=structuredClone(current);
-  for(const list of ['clients','projects','tasks','invoices','projectTemplates','invoiceSchedules','focusSessions','activity','notes']){
+  for(const list of ['clients','projects','tasks','invoices','projectTemplates','invoiceSchedules','focusSessions','activity','notes','docs']){
     const ids=new Set((next[list]||[]).map(x=>x.id));
     next[list]=[...(next[list]||[]),...(valid[list]||[]).filter(x=>!ids.has(x.id))];
   }

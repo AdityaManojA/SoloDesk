@@ -20,6 +20,41 @@ service cloud.firestore {
         request.resource.data.recipientUid is string && request.resource.data.recipientEmail is string;
       allow delete: if request.auth != null && request.auth.uid == owner;
     }
+    // Solodesk public profiles (Profile → Public profile), one document per username. Anyone with the link can
+    // open a single profile, signed in or not, but nobody can list them. Only the owner writes or deletes theirs.
+    // While private the document holds only the name, so the page can say the profile is private.
+    function sdProfileShape(d, username) {
+      return d.username == username && username.matches('^[a-z0-9][a-z0-9_-]{2,29}$')
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 60
+        && d.updatedAt == request.time
+        && ((d.public == false && d.keys().hasOnly(['uid', 'username', 'name', 'public', 'updatedAt']))
+          || (d.public == true
+            && d.keys().hasOnly(['uid', 'username', 'name', 'public', 'headline', 'bio', 'location', 'available', 'links', 'clients', 'updatedAt'])
+            && d.headline is string && d.headline.size() <= 120 && d.bio is string && d.bio.size() <= 600
+            && d.location is string && d.location.size() <= 60 && d.available is bool
+            && d.links is list && d.links.size() <= 10 && d.clients is list && d.clients.size() <= 20));
+    }
+    match /solodeskProfiles/{username} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid
+        && sdProfileShape(request.resource.data, username);
+      allow update: if request.auth != null && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == request.auth.uid && sdProfileShape(request.resource.data, username);
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+    // Solodesk live Excel sync. Only the server (Admin SDK) writes these. The owner can read their connection
+    // status and linked sheets, and clears inbox entries after applying them. Microsoft tokens, OAuth states,
+    // subscriptions, locks and queues (solodeskPrivate, solodeskSync*) have no rule, so browsers cannot reach them.
+    match /solodeskSync/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+    }
+    match /solodeskSync/{uid}/links/{link} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+    }
+    match /solodeskSync/{uid}/inbox/{item} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+    }
     // TaskFlow: each signed-in user can read/write only their own TaskFlow data (sync chunks and the
     // share/open summary Solodesk reads). Same uid, so Solodesk can read it for the same person.
     match /taskflowUsers/{uid}/{document=**} {

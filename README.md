@@ -14,9 +14,21 @@ Big shoutout to her for laying the foundation for this project!
 
 Original contributions by AdityaManojA are available under the [MIT License](LICENSE). The original MVP currently has no published license; inherited code and third-party dependencies are excluded from that grant. See [third-party notices and licensing scope](THIRD_PARTY_NOTICES.md) before reusing the combined application.
 
-A freelancer business manager for clients, projects, tasks, invoices, payments and reports. The interface now matches the supplied TaskFlow reference: cream surfaces, ink outlines, flat pastels, rounded controls and a floating navigation dock. The original React/Firebase data model and hash routes are retained. Calendar exports now turn project timelines and dated tasks into scheduler events.
+A business workspace for independent professionals and studios: clients, projects, tasks, invoices, payments and reports. **Current version: 1.02** ([release notes](CHANGELOG.md), also in the app under Settings → What's new). The interface uses the 1.02 design: a black sidebar, the Terracotta palette (sage, sand, cream) with a per-workspace action colour, Bricolage Grotesque and Figtree type, and a floating dock on phones. The original React/Firebase data model and hash routes are retained. Calendar exports turn project timelines and dated tasks into scheduler events.
 
-**Status:** frontend deployed to https://taskflow-solodesk.web.app in `taskflow-dailytracker`, separately from TaskFlow’s Hosting site. The latest 20 October 2026 update passes all **103 automated tests** and the production build. TaskFlow quests and its shared Google events are read-only in SoloDesk. Live sign-in/cloud-save round trips still need an account-level check. The standalone integration API and background server functions are not deployed on the Spark plan.
+## What's new in 1.02
+
+- **New design and action colour** — every page restyled ([`src/theme.css`](src/theme.css)); Settings → Appearance picks the highlight colour ([`src/appearance.js`](src/appearance.js)).
+- **Home: Jump back in** — the three most recently edited clients, projects and TaskFlow quests ([`src/recents.js`](src/recents.js)), revenue, needs-attention, mini calendar and today's timeline. **All work** at `#/work`.
+- **Notes, checklists and reminders** on every client and project; **project pages** at `#/projects/<id>`.
+- **Files & docs** — PRDs written in SoloDesk with requirements that become tasks, plus file links.
+- **Live Microsoft Excel sync** per project or client (server code in `functions/excel-*.js`; needs Blaze and a Microsoft app — [setup](docs/excel-sync-setup.md)).
+- **Public profile** at `/<username>`, private by default ([`src/profile.js`](src/profile.js); Firestore collection `solodeskProfiles`).
+- **Invoice editing on the page** with bank details and defaults; **What's new** in Settings and an update note for returning users.
+
+Deploying 1.02 needs the updated `firestore.rules` (public profiles and Excel sync status). Copy it to TaskFlow's rules file first so both stay identical, then deploy rules before Hosting.
+
+**Status:** frontend deployed to https://taskflow-solodesk.web.app in `taskflow-dailytracker`, separately from TaskFlow’s Hosting site. Version 1.02 (25 October 2026) passes all **123 automated tests** and the production build. TaskFlow quests and its shared Google events are read-only in SoloDesk. Live sign-in/cloud-save round trips still need an account-level check. The standalone integration API and background server functions are not deployed on the Spark plan.
 
 ## Shared calendar markers
 

@@ -12,6 +12,18 @@ const paths = {
   sun: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M12 2v2 M12 20v2 M2 12h2 M20 12h2 M5 5l1 1 M18 18l1 1 M5 19l1-1 M18 6l1-1',
   moon: 'M20 15A9 9 0 0 1 9 4a9 9 0 1 0 11 11',
   close: 'M6 6l12 12 M6 18L18 6', search: 'M21 21l-5-5 M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14',
+  work: 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M17.5 14v7 M14 17.5h7',
+  home: 'M3 10.5 12 3l9 7.5 M5 9.5V21h14V9.5',
+  notes: 'M5 3h14v18H5z M9 7h6 M9 11h6 M9 15h4',
+  profile: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M4 21c0-4 4-6 8-6s8 2 8 6',
+  planner: 'M4 5h16v16H4z M4 10h16 M8 3v4 M16 3v4 M8 14h3 M8 17h6',
+  focus: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18 M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8',
+  sheet: 'M3 3h18v18H3z M3 9h18 M3 15h18 M9 3v18',
+  doc: 'M6 3h9l4 4v14H6z M14 3v5h5 M9 13h7 M9 17h5',
+  link: 'M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1 M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1',
+  bell: 'M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z M10 21h4',
+  left: 'M19 12H5 M11 6l-6 6 6 6',
+  sync: 'M21 12a9 9 0 1 1-3-6.7L21 8 M21 3v5h-5',
   check: 'M5 12l4 4L19 6', logout: 'M9 3H4v18h5 M9 12h12 M16 7l5 5-5 5', more: 'M5 5h14 M5 12h14 M5 19h14',
 };
 export default function Icon({ name, size = 20, ...props }) {

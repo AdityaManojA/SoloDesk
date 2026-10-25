@@ -23,7 +23,30 @@ export function prepareInvoice(workspace, values, lines, editingId) {
   if (!Number.isFinite(tax) || tax < 0) return {error:'Enter a valid non-negative tax rate.'};
   const subtotal=items.reduce((sum,item)=>sum+item.qty*item.price,0);
   if (!Number.isFinite(subtotal*(1+tax/100))) return {error:'The invoice total is too large. Check quantities and prices.'};
-  return {invoice:{client:client.id,issue:values.issue,due:values.due,tax,notes:String(values.notes || '').trim(),items}};
+  const invoice={client:client.id,issue:values.issue,due:values.due,tax,notes:String(values.notes || '').trim(),items};
+  if (values.no !== undefined) {
+    const no=String(values.no).trim();
+    if (!/^[A-Za-z0-9][A-Za-z0-9 ._/#-]{0,39}$/.test(no)) return {error:'Use 1–40 letters, numbers, spaces or . _ / # - for the invoice number.'};
+    if (workspace.invoices.some(i=>i.id!==editingId && String(i.no || '').toLowerCase()===no.toLowerCase())) return {error:`Invoice number ${no} is already used.`};
+    invoice.no=no;
+  }
+  for (const key of ['title','reference','taxLabel','pay']) if (values[key] !== undefined) invoice[key]=String(values[key]).trim().slice(0,key==='pay'?600:120);
+  for (const [group,keys] of Object.entries(PARTY_FIELDS)) if (values[group] !== undefined) invoice[group]=Object.fromEntries(keys.map(key=>[key,String(values[group]?.[key] || '').trim().slice(0,300)]));
+  if (invoice.billTo?.email && !/^[^\s@]+@[^\s@]+$/.test(invoice.billTo.email)) return {error:'Enter a valid billing email address, or leave it blank.'};
+  return {invoice};
+}
+
+// Editable invoice blocks. Empty values fall back to business settings and the client record.
+export const PARTY_FIELDS={from:['name','email','phone','address','taxId'],billTo:['name','email','address'],bank:['accountName','bankName','accountNumber','ifsc','swift','iban','upi']};
+export function invoiceView(invoice, settings = {}, client = {}) {
+  const pick=(own,fallback)=>Object.fromEntries(Object.entries(fallback).map(([key,value])=>[key,own?.[key] || value || '']));
+  return {
+    from:pick(invoice.from,{name:settings.biz,email:settings.email,phone:settings.phone,address:settings.addr,taxId:settings.taxId}),
+    billTo:pick(invoice.billTo,{name:client.name,email:client.email,address:client.address}),
+    bank:pick(invoice.bank,Object.fromEntries(PARTY_FIELDS.bank.map(key=>[key,settings.bank?.[key]]))),
+    pay:invoice.pay || settings.pay || '',
+    taxLabel:invoice.taxLabel || 'Tax',
+  };
 }
 
 export function nextInvoiceNumber(workspace) {

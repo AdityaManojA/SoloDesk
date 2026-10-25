@@ -17,6 +17,17 @@ import { createWorkspaceSaves } from './workspace-saves';
 import { prepareClient, prepareInvoice, nextInvoiceNumber } from './invoice-input';
 import {WorkspaceSearch,Planner,Trash,Timeline,Templates,RecurringInvoices,Focus} from './ProductivityUI.jsx';
 import {repeatCompletedTasks,recordActivity,trashRecord,frequencies} from './productivity';
+import {stampUpdated} from './recents';
+import {watchSyncInbox} from './excel-sync-client';
+import {Home,AllWork} from './Home.jsx';
+import {NoteBoard} from './ClientNotes.jsx';
+import {FilesAndDocs} from './FilesDocs.jsx';
+import {ProfileEditor,PublicProfile} from './Profile.jsx';
+import {InvoiceSheet,useInvoiceEdit} from './InvoiceEditor.jsx';
+import {AppearanceSettings,InvoiceDefaults,WhatsNew,UpdateNotice} from './SettingsParts.jsx';
+import {applyActionColour} from './appearance';
+import {profileRoute,PROFILE_COLLECTION} from './profile';
+import {currentVersion,shouldShowUpdate} from './changelog';
 import {assertWorkspaceSize} from './workspace-size';
 import {assertUnchanged,validateWorkspace,blockers,validateDependencies,projectBudget} from './workspace-upgrades';
 import {ViewStateProvider,useViewState,PageFrame,DataNav} from './ViewState.jsx';
@@ -32,12 +43,19 @@ import './polish.css';
 import * as L from './lib';
 const { rid, num, today, addDays, calc, status, money, fresh } = L;
 
-const NAV = [['dash', 'Dashboard'], ['clients', 'Clients'], ['projects', 'Projects'], ['tasks', 'Tasks'], ['calendar', 'Calendar'], ['invoices', 'Invoices'], ['reports', 'Reports'], ['integrations', 'Data & connections'], ['settings', 'Settings'],['planner','Daily planner'],['templates','Project templates'],['recurring','Recurring drafts'],['focus','Focus timer'],['trash','Trash'],['backups','Backup & restore'],['notes','Notes & checklists']];
+const NAV = [['dash', 'Home'], ['work', 'All work'], ['clients', 'Clients'], ['projects', 'Projects'], ['tasks', 'Tasks'], ['calendar', 'Calendar'], ['invoices', 'Invoices'], ['reports', 'Reports'], ['integrations', 'Data & connections'], ['settings', 'Settings'],['planner','Daily planner'],['templates','Project templates'],['recurring','Recurring drafts'],['focus','Focus timer'],['trash','Trash'],['backups','Backup & restore'],['notes','Notes & checklists'],['profile','Profile']];
 const MOB = [['dash', 'Home'], ['tasks', 'Tasks'], ['calendar', 'Calendar'], ['more', 'More']];
-const MORE = [['clients','Clients'],['projects','Projects'],['invoices','Invoices'],['reports','Reports'],['notes','Notes & checklists'],['focus','Focus timer'],['integrations','Data & connections'],['settings','Settings']];
+const MORE = [['work','All work'],['clients','Clients'],['projects','Projects'],['invoices','Invoices'],['reports','Reports'],['notes','Notes & checklists'],['focus','Focus timer'],['integrations','Data & connections'],['profile','Profile'],['settings','Settings']];
+// Sidebar groups (desktop). Other tools stay reachable from their pages and from More.
+const GROUPS = [['General',['dash','clients','projects','tasks','calendar','invoices']],['Tools',['work','notes','planner','reports','integrations']],['Account',['profile','settings']]];
+const NAV_ICON = {dash:'home',work:'work',notes:'notes',planner:'planner',profile:'profile',focus:'focus'};
 
 /* ---------- routing (hash based, so the browser back button works) ---------- */
-const parse = () => { const pathPage = window.location.pathname.replace(/\/$/, '').slice(1); const [p, id] = (window.location.hash.slice(2) || (['privacy', 'cookies'].includes(pathPage) ? pathPage : 'dash')).split('/'); return { page: p || 'dash', id }; };
+const parse = () => {
+  const pathPage = window.location.pathname.replace(/\/$/, '').slice(1), hash = window.location.hash.slice(2).split('?')[0];
+  if (!hash && !['privacy', 'cookies'].includes(pathPage)) { const username = profileRoute(window.location.pathname); if (username) return { page: 'u', id: username }; }
+  const [p, id] = (hash || (['privacy', 'cookies'].includes(pathPage) ? pathPage : 'dash')).split('/'); return { page: p || 'dash', id };
+};
 const localDateTime = iso => { if (!iso || !Number.isFinite(Date.parse(iso))) return ''; const d = new Date(iso); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,16); };
 const nav = (p, id) => { window.location.hash = '#/' + p + (id ? '/' + id : ''); };
 
@@ -110,24 +128,6 @@ function Login({ onDemo }) {
   return <><InstallNotice/><div className="login-layout"><section className="login-story"><a className="wordmark" href="#/dash"><BrandLogo /></a><div><span className="eyebrow">A LITTLE STRUCTURE. A LOT OF POSSIBILITY.</span><h1>Independent work.<br /><em>All together.</em></h1><p>A considered space for the business behind your craft. From the first brief to the final invoice.</p><div className="login-tags"><span>Clients & projects</span><span>Tasks & invoices</span><span>One workspace</span></div></div><small>Make room for your best work.</small></section><section className="login-panel"><div className="login"><span className="eyebrow">YOUR NEXT CHAPTER</span><h2>Welcome to your desk.</h2><p className="mu">Less admin. More of what you do best.</p><button className="btn" disabled={busy} onClick={go}>{busy ? 'Connecting…' : 'Continue with Google'}<Icon name="arrow" /></button><div className="login-divider">OR TAKE A LOOK AROUND</div><button className="ghost" onClick={onDemo}>Explore the demo<Icon name="arrow" /></button><p className="login-note">The demo uses sample data stored in this browser. Your real workspace stays separate.</p>{e && <p className="inline-error" role="alert">{e}</p>}<LegalLinks /></div></section></div></>;
 }
 
-function Dash({ d, open, mut }) {
-  const t = today(), pays = L.allPays(d), ks = L.months(addDays(t, -165), t).slice(-6);
-  const rev = pays.filter(p => p.date.slice(0, 7) === t.slice(0, 7)).reduce((s, p) => s + num(p.amt), 0);
-  const tasks = d.tasks.filter(k => k.status !== 'Done').sort((a,b) => (a.due || '9').localeCompare(b.due || '9'));
-  const att = d.invoices.filter(i => status(i) === 'Overdue');
-  const active = d.projects.filter(p => p.status === 'Active');
-  return <section className="dashboard-custom" data-hide-metrics={d.settings.dashboardHidden?.includes('metrics')} data-hide-overview={d.settings.dashboardHidden?.includes('overview')} data-hide-work={d.settings.dashboardHidden?.includes('work')}>
-    <div className="page-intro"><div><span className="eyebrow">A CLEAR VIEW OF YOUR BUSINESS</span><h1>Your work, in perspective<span className="accent-dot">.</span></h1><p>Here’s what’s happening at your desk.</p></div><button className="btn" onClick={() => open('new')}><Icon name="plus" />Create new</button></div>
-    <div className="cards metrics">
-      {[[money(rev), 'Revenue this month', 'From recorded payments', 'reports'], [money(L.outstanding(d)), 'Outstanding balance', `${att.length} overdue ${att.length === 1 ? 'invoice' : 'invoices'}`, 'invoices'], [String(active.length).padStart(2,'0'), 'Active projects', `${d.clients.filter(c => !c.arch).length} clients in your workspace`, 'projects'], [String(tasks.filter(k => k.due && k.due >= t && k.due <= addDays(t,7)).length).padStart(2,'0'), 'Due this week', `${tasks.length} open tasks in total`, 'tasks']].map(([value,label,note,to]) => <a href={'#/' + to} className="metric" key={label}><div className="metric-label">{label}<Icon name="arrow" size={16} /></div><strong>{value}</strong><small>{note}</small></a>)}
-    </div>
-    <div className="dashboard-grid"><section className="card revenue-panel"><div className="section-head"><div><span className="eyebrow">THE BIGGER PICTURE</span><h3>Revenue overview</h3></div><span className="period">Last 6 months</span></div><Chart data={L.revBy(ks, pays)} /><div className="chart-foot"><span><i /> Payments received</span><a href="#/reports">View reports <Icon name="arrow" size={15} /></a></div></section>
-      <section className="attention-panel"><span className="eyebrow">KEEP THINGS MOVING</span><h3>A little attention</h3>{att.length ? <><span className="attention-number">{String(att.length).padStart(2, '0')}</span><p>{att.length === 1 ? 'Invoice is' : 'Invoices are'} past due.<br />A follow-up could make a difference.</p>{att.slice(0,2).map(i => <a className="attention-invoice" href={'#/invoices/' + i.id} key={i.id}><div><b>{L.cname(d,i.client)}</b><small>{i.no} · {money(calc(i).bal)}</small></div><Icon name="arrow" /></a>)}</> : <><span className="attention-number"><Icon name="check" size={52} /></span><p>Nothing overdue.<br />You’re all caught up.</p><a className="attention-invoice" href="#/invoices">Review invoices<Icon name="arrow" /></a></>}</section></div>
-    <div className="dashboard-grid lower-grid"><section><div className="section-head"><h3>On your radar <span className="count">{tasks.length}</span></h3><a href="#/tasks">All tasks <Icon name="arrow" size={15} /></a></div>{tasks.length ? tasks.slice(0,4).map(k => <div className="row task-row" data-priority={k.priority || 'None'} key={k.id}><button className="task-check" aria-label={'Complete ' + k.title} onClick={() => toggleTask(mut,k.id)} /><a className="grow" href={'#/tasks/' + k.id}><b>{k.title}</b><small>{L.cname(d,k.client)}{k.due ? ' · ' + (k.due === t ? 'Today' : k.due) : ''}</small></a>{k.priority && <span className={'priority priority-' + k.priority}>{k.priority}</span>}</div>) : <Empty m="A clear desk. Add a task when you’re ready." label="Add task" onClick={() => open('task')} />}</section>
-      <section><div className="section-head"><h3>Active projects</h3><a href="#/projects">View all <Icon name="arrow" size={15} /></a></div>{active.length ? active.slice(0,3).map(p => { const all = d.tasks.filter(k => k.project === p.id), done = all.filter(k => k.status === 'Done').length; return <button key={p.id} className="project-preview" onClick={() => open('project',p)}><div className="project-preview-title"><span>{p.name}</span><Icon name="arrow" size={16} /></div><small>{L.cname(d,p.client)} · {done}/{all.length} tasks complete</small><div className="progress-track"><span style={{ width: (all.length ? done/all.length*100 : 0) + '%' }} /></div></button>; }) : <Empty m="Your next project starts here." label="Add project" onClick={() => open('project')} />}</section></div>
-  </section>;
-}
-
 /* ---------- clients ---------- */
 function Clients({ d, open }) {
   const [q, setQ] = useViewState('clients.query',''), [arch, setArch] = useViewState('clients.archived',false);
@@ -149,30 +149,51 @@ function ClientPage({ d, mut, open, id, removeItem, user, demo, toast }) {
   const c = d.clients.find((x) => x.id === id);
   if (!c) return <><Back to="clients" label="Clients" /><Empty m="This client could not be found." /></>;
   const info = [['Email', c.email], ['Phone', c.phone], ['Address', c.address], ['Notes', c.notes]].filter(([, v]) => v);
+  const active = d.projects.some(p => p.client === id && p.status === 'Active');
   return (<>
     <Back to="clients" label="Clients" />
-    <div className="hd"><h1>{c.name} {c.arch && <span className="b">Archived</span>}</h1>
-      <div className="end" style={{ margin: 0 }}>
-        <button className="ghost sm" onClick={() => open('client', c)}>Edit</button>
-        <button className="ghost sm" onClick={() => mut((n) => { const x = n.clients.find((y) => y.id === id); x.arch = !x.arch; })}>{c.arch ? 'Restore' : 'Archive'}</button>
-        <button className="ghost danger sm" onClick={() => removeItem('clients',id)}>Delete client</button>
-      </div></div>
-    <div className="section-tabs" role="group" aria-label="Client sections">{[['overview','Overview'],['work','Work'],['invoices','Invoices'],['access','Access']].map(([key,title])=><button type="button" key={key} aria-pressed={section===key} onClick={()=>setSection(key)}>{title}</button>)}</div>
-    {section==='overview'&&<section aria-label="Client overview">    <div className="card">{info.length ? info.map(([k, v]) => <p key={k} style={{ margin: '4px 0', whiteSpace: 'pre-line' }}><small>{k}</small><br />{v}</p>) : <p className="mu">No contact details yet.</p>}</div>
-<div className="client-summary-grid">{[['Projects',d.projects.filter(p=>p.client===id).length,'work'],['Open tasks',d.tasks.filter(t=>t.client===id&&t.status!=='Done'&&!t.arch).length,'work'],['Invoices',d.invoices.filter(i=>i.client===id).length,'invoices']].map(([label,count,target])=><button className="card client-summary" key={label} onClick={()=>setSection(target)}><strong>{count}</strong><span>{label}</span></button>)}</div><details className="card"><summary>Activity timeline</summary><Timeline d={d} client={id}/></details></section>}
+    <div className="page-head"><span className="avatar-xl">{(c.name || '?').split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase()}</span>
+      <div className="grow"><h1>{c.name}</h1><div className="tag-row">{c.arch ? <span className="chip white">Archived</span> : <span className={'chip ' + (active ? 'sage' : 'white')}>{active ? 'Active' : 'No active projects'}</span>}{c.email && <span>{c.email}</span>}{c.phone && <span>· {c.phone}</span>}</div></div>
+      <button className="ghost" onClick={() => open('client', c)}>Edit</button><button className="btn" onClick={() => open('invoice', { client: id })}>+ Invoice</button>
+    </div>
+    <div className="section-tabs" role="group" aria-label="Client sections">{[['overview','Overview'],['work','Work'],['notes','Notes & checklists'],['files','Files & docs'],['invoices','Invoices'],['access','Client access']].map(([key,title])=><button type="button" key={key} aria-pressed={section===key} onClick={()=>setSection(key)}>{title}</button>)}</div>
+    {section==='overview'&&<section aria-label="Client overview" style={{display:'grid',gap:16}}><div className="card">{info.length ? info.map(([k, v]) => <p key={k} style={{ margin: '4px 0', whiteSpace: 'pre-line' }}><small>{k}</small><br />{v}</p>) : <p className="mu">No contact details yet.</p>}</div>
+<div className="client-summary-grid">{[['Projects',d.projects.filter(p=>p.client===id).length,'work'],['Open tasks',d.tasks.filter(t=>t.client===id&&t.status!=='Done'&&!t.arch).length,'work'],['Invoices',d.invoices.filter(i=>i.client===id).length,'invoices']].map(([label,count,target])=><button className="card client-summary" key={label} onClick={()=>setSection(target)}><strong>{count}</strong><span>{label}</span></button>)}</div><details className="card"><summary>Activity timeline</summary><Timeline d={d} client={id}/></details>
+      <div className="end" style={{ justifyContent: 'flex-start', margin: 0 }}><button className="ghost sm" onClick={() => mut((n) => { const x = n.clients.find((y) => y.id === id); x.arch = !x.arch; })}>{c.arch ? 'Restore client' : 'Archive client'}</button><button className="ghost danger sm" onClick={() => removeItem('clients',id)}>Delete client</button></div></section>}
     {section==='work'&&<section aria-label="Client work">    <div className="hd" style={{ marginTop: 16 }}><h3 style={{ margin: 0 }}>Projects</h3><button className="ghost sm" onClick={() => open('project', { client: id })}>+ Project</button></div>
-    {d.projects.filter((p) => p.client === id).map((p) => <button type="button" className="row project-row" key={p.id} onClick={() => open('project', p)}><b>{p.name}</b><span className="b">{p.status}</span></button>)}
+    {d.projects.filter((p) => p.client === id).map((p) => <a className="row project-row" key={p.id} href={'#/projects/' + p.id}><b>{p.name}</b><span className="b">{p.status}</span></a>)}
     {!d.projects.some((p) => p.client === id) && <p className="mu">No projects yet.</p>}
     <div className="hd" style={{ marginTop: 16 }}><h3 style={{ margin: 0 }}>Tasks</h3><button className="ghost sm" onClick={() => open('task', { client: id })}>+ Task</button></div>
     {d.tasks.filter((k) => k.client === id).map((k) => <a className="row" key={k.id} href={'#/tasks/' + k.id}><div><b>{k.title}</b><small>{k.status}{blockers(d,k).length?' · Blocked':''}{k.due ? ` · due ${k.due}` : ''}</small></div><span aria-hidden="true">›</span></a>)}
     {!d.tasks.some((k) => k.client === id) && <p className="mu">No tasks yet.</p>}
 </section>}
+    {section==='notes'&&<NoteBoard d={d} mut={mut} toast={toast} scope={{client:id}} onFiles={()=>setSection('files')}/>}
+    {section==='files'&&<FilesAndDocs d={d} mut={mut} toast={toast} scope={{kind:'client',id}} user={user} demo={demo}/>}
     {section==='invoices'&&<section aria-label="Client invoices">    <div className="hd" style={{ marginTop: 16 }}><h3 style={{ margin: 0 }}>Invoices</h3><button className="ghost sm" onClick={() => open('invoice', { client: id })}>+ Invoice</button></div>
-    {d.invoices.filter((i) => i.client === id).map((i) => <a className="row" key={i.id} href={'#/invoices/' + i.id}><div><b>{i.no}</b><small>Total {money(calc(i).total)} · Balance {money(calc(i).bal)}</small></div><Badge s={status(i)} /></a>)}
+    {d.invoices.filter((i) => i.client === id).map((i) => <a className="row" key={i.id} href={'#/invoices/' + i.id}><div><b>{i.no}{i.title ? ' · ' + i.title : ''}</b><small>Total {money(calc(i).total)} · Balance {money(calc(i).bal)}</small></div><Badge s={status(i)} /></a>)}
     {!d.invoices.some((i) => i.client === id) && <p className="mu">No invoices yet.</p>}
 </section>}
     {section==='access'&&<Suspense fallback={<ScreenLoading label="Loading client access"/>}><PortalManager d={d} user={user} demo={demo} client={c} toast={toast}/></Suspense>}
   </>);
+}
+
+/* ---------- project page ---------- */
+function ProjectPage({ d, mut, open, id, removeItem, user, demo, toast }) {
+  const [section,setSection]=useViewState('project.'+id+'.section','tasks');
+  const p = d.projects.find(x => x.id === id);
+  if (!p) return <><Back to="projects" label="Projects" /><Empty m="This project could not be found." /></>;
+  const tasks = d.tasks.filter(t => t.project === id && !t.arch), done = tasks.filter(t => t.status === 'Done').length, budget = projectBudget(d,p);
+  return <>
+    <Back to="projects" label="Projects" />
+    <div className="page-head"><div className="grow"><h1>{p.name}</h1><div className="tag-row"><span className={'chip ' + (p.status === 'Active' ? 'hero' : p.status === 'Complete' ? 'sage' : 'sand')}>{p.status}</span>{p.client && <a href={'#/clients/' + p.client}>{L.cname(d,p.client)}</a>}{p.start && <span>· {p.start}{p.end ? ' – ' + p.end : ''}</span>}<span>· {done} of {tasks.length} tasks complete</span></div></div>
+      <button className="ghost" onClick={() => open('project', p)}>Edit</button><button className="btn" onClick={() => open('task', { project: id, client: p.client })}>+ Task</button></div>
+    <div className="section-tabs" role="group" aria-label="Project sections">{[['tasks','Tasks ' + tasks.length],['notes','Notes'],['files','Files & docs'],['budget','Budget']].map(([key,title])=><button type="button" key={key} aria-pressed={section===key} onClick={()=>setSection(key)}>{title}</button>)}</div>
+    {section==='tasks'&&<section aria-label="Project tasks">{tasks.length ? tasks.map(k => <div className="row task-row" data-priority={k.priority || 'None'} key={k.id}><button className="chk" aria-pressed={k.status === 'Done'} aria-label={k.status === 'Done' ? 'Mark not done' : 'Mark complete'} onClick={() => toggleTask(mut, k.id)}>{k.status === 'Done' ? '☑' : '☐'}</button><a className="grow" href={'#/tasks/' + k.id}><b style={{ textDecoration: k.status === 'Done' ? 'line-through' : 'none' }}>{k.title}</b><small>{k.status}{k.due ? ` · due ${k.due}` : ''}{k.priority ? ` · ${k.priority} priority` : ''}</small></a></div>) : <Empty m="No tasks yet for this project." label="Add task" onClick={() => open('task', { project: id, client: p.client })} />}</section>}
+    {section==='notes'&&<NoteBoard d={d} mut={mut} toast={toast} scope={{project:id}} onFiles={()=>setSection('files')}/>}
+    {section==='files'&&<FilesAndDocs d={d} mut={mut} toast={toast} scope={{kind:'project',id}} user={user} demo={demo}/>}
+    {section==='budget'&&<section className="card" aria-label="Project budget"><p style={{marginTop:0}}><b>{budget.hours.toFixed(1)}h</b> logged{budget.budget ? ` of ${budget.budget}h · ${budget.over ? budget.over.toFixed(1) + 'h over' : budget.remaining.toFixed(1) + 'h left'}` : ''}</p>{p.hourlyRate ? <p>Time value {money(budget.value)} at {money(p.hourlyRate)}/h</p> : <p className="mu">Add budget hours and an hourly rate in Edit to track this project’s effort.</p>}</section>}
+    <div className="end" style={{ justifyContent: 'flex-start', marginTop: 24 }}><button className="ghost sm" onClick={()=>mut(n=>{const row=n.projects.find(x=>x.id===id);row.arch=!row.arch;})}>{p.arch?'Unarchive project':'Archive project'}</button><button className="ghost danger sm" onClick={() => removeItem('projects',id)}>Delete project</button></div>
+  </>;
 }
 
 /* ---------- projects ---------- */
@@ -182,7 +203,7 @@ function Projects({ d, mut, open, removeItem }) {
   return <>
     <div className="hd"><h1>Projects <span className="heading-count">{d.projects.length}</span></h1><button className="btn" onClick={() => open('project')}><Icon name="plus" size={17} />Add project</button></div>
     <div className="list-toolbar"><div className="search-field"><Icon name="search" size={17} /><input aria-label="Search projects" placeholder="Find a project or client…" value={query} onChange={e => setQuery(e.target.value)} /></div><Select aria-label="Filter projects by status" value={filter} onChange={e => setFilter(e.target.value)}><option value="">All statuses</option>{['Active','On hold','Complete'].map(x => <option key={x}>{x}</option>)}</Select></div>
-    <label className="archive-toggle"><input type="checkbox" checked={archived} onChange={e=>setArchived(e.target.checked)}/>Show archived projects</label><div className="context-actions"><a className="ghost sm" href="#/templates">Project templates</a></div><div className="project-grid">{projects.map(p => { const tasks = d.tasks.filter(t => t.project === p.id), done = tasks.filter(t => t.status === 'Done').length, budget=projectBudget(d,p); return <article className="project-card" key={p.id}><button type="button" className="project-open" onClick={() => open('project',p)}><div className="project-card-top"><Icon name="projects" size={23} /><span className="b">{p.status}</span></div><small>{L.cname(d,p.client)}</small><h3>{p.name}</h3>{(budget.budget>0||budget.hours>0)&&<p className="project-budget-summary">{budget.hours.toFixed(1)}h logged{budget.budget?` / ${budget.budget}h · ${budget.over?budget.over.toFixed(1)+'h over':budget.remaining.toFixed(1)+'h left'}`:''}{p.hourlyRate?' · Time value '+money(budget.value):''}</p>}<div className="project-card-bottom"><span>{done} of {tasks.length} tasks complete</span><Icon name="arrow" size={16} /></div><div className="progress-track"><span style={{width: (tasks.length ? done/tasks.length*100 : 0) + '%'}} /></div></button><button className="ghost sm" onClick={()=>mut(n=>{const row=n.projects.find(x=>x.id===p.id);row.arch=!row.arch;})}>{p.arch?'Unarchive':'Archive'}</button><button type="button" className="ghost danger sm project-delete" aria-label={'Delete project '+p.name} onClick={() => removeItem('projects',p.id)}>Delete project</button></article>; })}</div>
+    <label className="archive-toggle"><input type="checkbox" checked={archived} onChange={e=>setArchived(e.target.checked)}/>Show archived projects</label><div className="context-actions"><a className="ghost sm" href="#/templates">Project templates</a></div><div className="project-grid">{projects.map(p => { const tasks = d.tasks.filter(t => t.project === p.id), done = tasks.filter(t => t.status === 'Done').length, budget=projectBudget(d,p); return <article className="project-card" key={p.id}><a className="project-open" href={'#/projects/' + p.id}><div className="project-card-top"><Icon name="projects" size={23} /><span className="b">{p.status}</span></div><small>{L.cname(d,p.client)}</small><h3>{p.name}</h3>{(budget.budget>0||budget.hours>0)&&<p className="project-budget-summary">{budget.hours.toFixed(1)}h logged{budget.budget?` / ${budget.budget}h · ${budget.over?budget.over.toFixed(1)+'h over':budget.remaining.toFixed(1)+'h left'}`:''}{p.hourlyRate?' · Time value '+money(budget.value):''}</p>}<div className="project-card-bottom"><span>{done} of {tasks.length} tasks complete</span><Icon name="arrow" size={16} /></div><div className="progress-track"><span style={{width: (tasks.length ? done/tasks.length*100 : 0) + '%'}} /></div></a><button className="ghost sm" onClick={()=>mut(n=>{const row=n.projects.find(x=>x.id===p.id);row.arch=!row.arch;})}>{p.arch?'Unarchive':'Archive'}</button><button type="button" className="ghost danger sm project-delete" aria-label={'Delete project '+p.name} onClick={() => removeItem('projects',p.id)}>Delete project</button></article>; })}</div>
     {!projects.length && <Empty m={d.projects.length ? 'No projects match your search.' : 'No projects yet. Link your first project to a client.'} label={d.projects.length ? '' : 'Add project'} onClick={() => open('project')} />}
   </>;
 }
@@ -254,57 +275,35 @@ function Invoices({ d, open }) {
 
 function InvoicePage({ d, mut, open, ask, id, removeItem, toast }) {
   const i = d.invoices.find((x) => x.id === id);
+  const editor = useInvoiceEdit(i, d, mut, toast);
   if (!i) return <><Back to="invoices" label="Invoices" /><Empty m="This invoice could not be found." /></>;
-  const c = calc(i), s = status(i), st = d.settings, cl = d.clients.find((x) => x.id === i.client) || {};
+  const c = calc(i), s = status(i), cl = d.clients.find((x) => x.id === i.client) || {};
   const upd = (fn) => mut((n) => fn(n.invoices.find((x) => x.id === id)));
   const pdf = () => { const t = document.title; document.title = i.no + (cl.name ? ' - ' + cl.name : ''); window.print(); setTimeout(() => { document.title = t; }, 1000); };
   const reissue = () => { let number;try{number=nextInvoiceNumber(d);}catch(error){toast(error.message);return;} const nid = rid(); mut((n) => { n.seq=number.seq; n.invoices.push(L.reissuedInvoice(i,nid,number.no)); }); nav('invoices', nid); };
   return (<>
     <div className="noprint">
       <Back to="invoices" label="Invoices" />
-      <div className="hd"><h1>{i.no} <Badge s={s} /></h1>
+      <div className="page-head"><div className="grow"><h1>{i.no} <Badge s={s} /></h1><p className="empty-note" style={{ margin: '6px 0 0' }}>{editor.editing ? 'Click any highlighted text to change it. Empty fields use your defaults.' : i.title || L.cname(d, i.client)}</p></div>
         <div className="end" style={{ margin: 0 }}>
-          {i.state === 'draft' && <><button className="ghost sm" onClick={() => open('invoice', i)}>Edit</button><button className="btn sm" onClick={() => upd((x) => { x.state = 'sent'; })}>Mark as sent</button>
-            </>}
+          {editor.editing ? <><button className="ghost sm" onClick={editor.cancel}>Discard</button><button className="btn sm" onClick={editor.save}>Save invoice</button></> : <>
+          {i.state === 'draft' && <><button className="ghost sm" onClick={editor.start}>Edit on the invoice</button><button className="btn sm" onClick={() => upd((x) => { x.state = 'sent'; })}>Mark as sent</button></>}
           {i.state === 'sent' && <>{c.bal >= 0.005 && <button className="btn sm" onClick={() => open('pay', i)}>Record payment</button>}
             <button className="ghost sm" onClick={() => ask('Void this invoice? It will no longer count as outstanding. You can reissue a corrected draft afterwards.', () => upd((x) => { x.state = 'void'; }))}>Void</button></>}
           {i.state === 'void' && <button className="btn sm" onClick={reissue}>Void &amp; reissue as new draft</button>}
           <button className="ghost sm" onClick={pdf}>Download PDF</button>
-          <button className="ghost danger sm" onClick={() => removeItem('invoices',id)}>Delete invoice</button>
+          <button className="ghost danger sm" onClick={() => removeItem('invoices',id)}>Delete invoice</button></>}
         </div></div>
-      <small>Download PDF opens your browser's print window. Choose "Save as PDF" as the destination.</small>
+      {!editor.editing && <small>Download PDF opens your browser's print window. Choose "Save as PDF" as the destination.</small>}
     </div>
-
-    <article className="sheet" aria-label={'Invoice ' + i.no}>
-      <div className="sh-top">
-        <div>
-          {st.logo && <img className="logo" src={st.logo} alt="" />}
-          <b className="biz">{st.biz || 'Your business'}</b>
-          <div className="sm-t">{st.email}{st.email && <br />}{st.phone}{st.phone && <br />}<span style={{ whiteSpace: 'pre-line' }}>{st.addr}</span></div>
-        </div>
-        <div className="sh-r">
-          <div className="ttl">INVOICE</div><div>{i.no}</div><div>Issued {i.issue}</div><div>Due {i.due}</div>
-          <div className="stamp">{L.ICON[s]}{s}</div>
-        </div>
-      </div>
-      <div className="sh-bill"><small>BILL TO</small><b>{cl.name || '—'}</b>{[cl.email, cl.address].filter(Boolean).join('\n')}</div>
-      <div className="tw" tabIndex={0} role="region" aria-label="Invoice line items, scroll horizontally on small screens"><table><tbody>
-        <tr><th>Description</th><th className="r">Qty</th><th className="r">Price</th><th className="r">Amount</th></tr>
-        {i.items.map((l, k) => <tr key={k}><td>{l.desc}</td><td className="r">{l.qty}</td><td className="r">{money(num(l.price))}</td><td className="r">{money(num(l.qty) * num(l.price))}</td></tr>)}
-        <tr><td colSpan="3" className="r">Subtotal</td><td className="r">{money(c.sub)}</td></tr>
-        <tr><td colSpan="3" className="r">Tax ({num(i.tax)}%)</td><td className="r">{money(c.tax)}</td></tr>
-        <tr className="tot"><td colSpan="3" className="r">Total</td><td className="r">{money(c.total)}</td></tr>
-        <tr><td colSpan="3" className="r">Paid</td><td className="r">{money(c.paid)}</td></tr>
-        <tr className="tot"><td colSpan="3" className="r">Balance due</td><td className="r">{money(c.bal)}</td></tr>
-      </tbody></table></div>
-      {i.notes && <p style={{ whiteSpace: 'pre-line' }}><small>NOTES</small><br />{i.notes}</p>}
-      {st.pay && <p style={{ whiteSpace: 'pre-line' }}><small>PAYMENT INSTRUCTIONS</small><br />{st.pay}</p>}
-    </article>
-
-    <div className="noprint">
+    <div className={editor.editing ? 'two-col sheet-edit' : ''} style={{ marginTop: 12 }}>
+      <InvoiceSheet i={i} d={d} edit={editor.api} />
+      {editor.panel}
+    </div>
+    {!editor.editing && <div className="noprint">
       <h3>Payments</h3>
       {i.pays.length ? i.pays.map((p) => <div className="row" key={p.id}><div className="grow"><b>{money(num(p.amt))}</b><small>{p.date}{p.note ? ' · ' + p.note : ''}</small></div><button className="ghost danger sm" onClick={() => removeItem('payments',p.id,i.id)}>Delete payment</button></div>) : <p className="mu">No payments recorded yet.</p>}
-    </div>
+    </div>}
   </>);
 }
 
@@ -324,16 +323,15 @@ function Reports({ d }) {
 }
 
 /* ---------- settings ---------- */
-function Settings({ d, mut, toast, ask, user, logout, demo, saving, signingOut, startOnboarding, startTour, offlineReady }) {
-  const s = d.settings;
-  const [groups,setGroups]=useViewState('settings.groups',[]);
-  const toggleGroup=(key,opened)=>setGroups(values=>opened?(values.includes(key)?values:[...values,key]):values.filter(value=>value!==key));
-  const del = () => ask('This permanently deletes your SoloDesk workspace, clients, projects, tasks and invoices. Your shared TaskFlow sign-in is kept. Consider exporting CSVs first.', async () => {
+function Settings({ d, mut, toast, ask, user, logout, demo, saving, signingOut, startOnboarding, startTour, offlineReady, id, theme, setTheme }) {
+  const s = d.settings, tab = ['business','invoices','appearance','data','whats-new','account'].includes(id) ? id : 'business';
+  const del = () => ask('This permanently deletes your SoloDesk workspace, clients, projects, tasks, invoices and public profile. Your shared TaskFlow sign-in is kept. Consider exporting a backup first.', async () => {
     if (demo) { localStorage.removeItem('sd_demo'); await logout({force:true}); return; }
     try {
       await reauthenticateWithPopup(user, provider);
       const shares=await getDocs(collection(fdb,'solodeskPortals',user.uid,'shares'));
       for(let i=0;i<shares.docs.length;i+=400){const batch=writeBatch(fdb);shares.docs.slice(i,i+400).forEach(s=>batch.delete(s.ref));await batch.commit();}
+      if(d.profile?.username)await deleteDoc(doc(fdb,PROFILE_COLLECTION,d.profile.username)).catch(()=>{});
       await deleteDoc(doc(fdb, workspaceCollection, user.uid));
       await logout({force:true});
     } catch { toast('Workspace deletion did not complete. Check your connection and try again.'); }
@@ -344,20 +342,22 @@ function Settings({ d, mut, toast, ask, user, logout, demo, saving, signingOut, 
     try { const u = await logoFile(f); mut((n) => { n.settings.logo = u; }); toast('Logo updated.'); } catch { toast('Could not read that image. Try a PNG or JPG.'); }
   };
   return (<>
-    <h1>Settings</h1>
-    <details className="settings-group" open={groups.includes('business')} onToggle={e=>toggleGroup('business',e.currentTarget.open)}><summary>Business details</summary>    <form className="settings-business-form" onSubmit={(e) => { e.preventDefault(); const o = Object.fromEntries(new FormData(e.target)); mut((n) => { Object.assign(n.settings, o); }); toast('Settings saved.'); }}>
+    <div className="page-head"><div className="grow"><h1>Settings</h1><p className="empty-note" style={{ margin: '6px 0 0' }}>Make SoloDesk yours. SoloDesk {currentVersion()}.</p></div></div>
+    <nav className="tabs-pill" aria-label="Settings sections" style={{ marginBottom: 18 }}>{[['business','Business'],['invoices','Invoices & bank'],['appearance','Appearance'],['data','Data & connections'],['whats-new',"What's new"],['account','Account']].map(([k,l])=><a key={k} href={'#/settings/'+k} aria-current={tab===k?'page':undefined}>{l}</a>)}</nav>
+    {tab==='business'&&<form className="card form-grid" onSubmit={(e) => { e.preventDefault(); const o = Object.fromEntries(new FormData(e.target)); mut((n) => { Object.assign(n.settings, o); }); toast('Settings saved.'); }}>
+      <h2 className="full" style={{margin:0}}>Business details</h2>
       <Fld l="Business name" name="biz" defaultValue={s.biz} /><Fld l="Business email" name="email" type="email" defaultValue={s.email} /><Fld l="Phone" name="phone" defaultValue={s.phone} />
-      <label>Address<textarea name="addr" rows="2" defaultValue={s.addr} /></label><label>Payment instructions (shown on invoices)<textarea name="pay" rows="3" defaultValue={s.pay} /></label>
       <Sel l="Default currency" name="cur" o={['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY', 'CHF']} defaultValue={s.cur} />
-      <label>Logo (PNG or JPG, shown on invoices)<FileInput accept="image/png,image/jpeg" onChange={pick} /></label>
-      {s.logo && <div className="row"><img src={s.logo} alt="Current logo" style={{ maxHeight: 48, maxWidth: '60%' }} /><button type="button" className="ghost danger sm" onClick={() => mut((n) => { n.settings.logo = ''; })}>Remove logo</button></div>}
-      <button className="btn">Save settings</button>
-    </form></details>
-    <details className="settings-group" open={groups.includes('appearance')} onToggle={e=>toggleGroup('appearance',e.currentTarget.open)}><summary>Appearance</summary><DashboardOptions d={d} mut={mut}/><p className="mu">Use the sun/moon button in the header to switch themes.</p><section className="brand-downloads" aria-label="SoloDesk logo downloads"><h3>Throughline · SoloDesk logo</h3><BrandLogo/><p>Download the logo, desktop icon or complete set for your device.</p><div className="context-actions"><a className="btn" href="/brand/solodesk-throughline-brand-kit.zip" download>Download logo pack</a><a className="ghost sm" href="/brand/solodesk-logo.png" download="solodesk-throughline-logo.png">Logo · PNG</a><a className="ghost sm" href="/brand/solodesk-logo-dark.png" download="solodesk-throughline-logo-dark.png">Dark logo · PNG</a><a className="ghost sm" href="/brand/throughline-1024.png" download="solodesk-desktop-icon.png">App icon · PNG</a><a className="ghost sm" href="/brand/throughline-symbol.svg" download="solodesk-throughline.svg">Symbol · SVG</a></div></section></details>
-    <details className="settings-group" data-settings="getting-started" open={groups.includes('start')} onToggle={e=>toggleGroup('start',e.currentTarget.open)}><summary>Getting started</summary><ReplayIntroduction onOnboarding={startOnboarding} onTour={startTour}/><InstallApp/></details>
-    <details className="settings-group" open={groups.includes('data')} onToggle={e=>toggleGroup('data',e.currentTarget.open)}><summary>Data & connections</summary><p>Manage TaskFlow, export CSVs, and back up or restore your workspace in one place.</p><a className="btn" href="#/integrations">Open data & connections</a><h3>Offline access</h3><p>{offlineReady?'SoloDesk is ready to open offline on this device.':'Offline access becomes ready after the hosted app has loaded and finished preparing.'}</p><p>Keep this tab open for recovery after a reload or reconnect. Export a backup for longer-term storage. Signing out clears the current account’s recovery copy.</p></details>
-    <details className="settings-group account-settings" open={groups.includes('account')} onToggle={e=>toggleGroup('account',e.currentTarget.open)}><summary>Account</summary><p className="mu">Signing out returns to the login page. Workspace deletion keeps your shared TaskFlow account.</p>    <div className="end" style={{ justifyContent: 'flex-start' }}><button className="ghost danger" disabled={signingOut} onClick={logout}>{signingOut ? 'Signing out…' : 'Sign out'}</button><button className="ghost danger" disabled={signingOut || (!demo && saving === 'saving')} onClick={del}>Delete SoloDesk workspace</button></div>
-</details>
+      <label className="full">Address<textarea name="addr" rows="2" defaultValue={s.addr} /></label>
+      <label className="full">Logo (PNG or JPG, shown on invoices)<FileInput accept="image/png,image/jpeg" onChange={pick} /></label>
+      {s.logo && <div className="row full"><img src={s.logo} alt="Current logo" style={{ maxHeight: 48, maxWidth: '60%' }} /><button type="button" className="ghost danger sm" onClick={() => mut((n) => { n.settings.logo = ''; })}>Remove logo</button></div>}
+      <button className="btn" style={{justifySelf:'start'}}>Save settings</button>
+    </form>}
+    {tab==='invoices'&&<InvoiceDefaults d={d} mut={mut} toast={toast}/>}
+    {tab==='appearance'&&<><AppearanceSettings d={d} mut={mut} theme={theme} setTheme={setTheme}/><section className="card brand-downloads" aria-label="SoloDesk logo downloads" style={{marginTop:16}}><h3>Throughline · SoloDesk logo</h3><BrandLogo/><p>Download the logo, desktop icon or complete set for your device.</p><div className="context-actions"><a className="btn" href="/brand/solodesk-throughline-brand-kit.zip" download>Download logo pack</a><a className="ghost sm" href="/brand/solodesk-logo.png" download="solodesk-throughline-logo.png">Logo · PNG</a><a className="ghost sm" href="/brand/solodesk-logo-dark.png" download="solodesk-throughline-logo-dark.png">Dark logo · PNG</a><a className="ghost sm" href="/brand/throughline-1024.png" download="solodesk-desktop-icon.png">App icon · PNG</a><a className="ghost sm" href="/brand/throughline-symbol.svg" download="solodesk-throughline.svg">Symbol · SVG</a></div></section></>}
+    {tab==='data'&&<div className="card"><h2 style={{marginTop:0}}>Data & connections</h2><p>Manage TaskFlow, export CSVs, and back up or restore your workspace in one place. Link Excel workbooks from a client’s or project’s Files & docs.</p><div className="context-actions"><a className="btn" href="#/integrations">Open data & connections</a><a className="ghost" href="#/backups">Backup & restore</a><a className="ghost" href="#/trash">Trash</a></div><h3>Offline access</h3><p>{offlineReady?'SoloDesk is ready to open offline on this device.':'Offline access becomes ready after the hosted app has loaded and finished preparing.'}</p><p>Keep this tab open for recovery after a reload or reconnect. Export a backup for longer-term storage. Signing out clears the current account’s recovery copy.</p><h3>Getting started</h3><ReplayIntroduction onOnboarding={startOnboarding} onTour={startTour}/><InstallApp/></div>}
+    {tab==='whats-new'&&<WhatsNew/>}
+    {tab==='account'&&<div className="card account-settings"><h2 style={{marginTop:0}}>Account</h2><p className="mu">{demo ? 'You are exploring the demo with sample data.' : 'Signed in as ' + (user?.email || user?.displayName || 'your Google account') + '.'} Signing out returns to the login page. Workspace deletion keeps your shared TaskFlow account.</p><div className="end" style={{ justifyContent: 'flex-start' }}><button className="ghost" disabled={signingOut} onClick={logout}>{signingOut ? 'Signing out…' : 'Sign out'}</button><button className="ghost danger" disabled={signingOut || (!demo && saving === 'saving')} onClick={del}>Delete SoloDesk workspace</button></div></div>}
   </>);
 }
 
@@ -435,6 +435,9 @@ export default function App() {
   const [signingOut, setSigningOut] = useState(false), [experience,setExperience] = useState(null);
   const experienceOwner=demo?'demo':user?.uid, experienceReady=!!d && !!experienceOwner;
   useEffect(()=>{if(!experienceReady){setExperience(null);return;}if(!wasSeen(localStorage,onboardingKey(experienceOwner)))setExperience('onboarding');},[experienceOwner,experienceReady]);
+  useEffect(()=>{if(!experienceReady)return;let seen=null;try{seen=localStorage.getItem('sd_seen_version');}catch{}
+    if(shouldShowUpdate(seen,wasSeen(localStorage,onboardingKey(experienceOwner))))setUpdateNote(true);else{try{localStorage.setItem('sd_seen_version',currentVersion());}catch{}}},[experienceOwner,experienceReady]);
+  const closeUpdate=()=>{setUpdateNote(false);try{localStorage.setItem('sd_seen_version',currentVersion());}catch{}};
   const taskflow = useTaskflow(user?.uid, demo);
   const dataRef = useRef(null), toastTimer = useRef(), loadVersion = useRef(0), mainRef = useRef(null), saves = useRef(null), routeScrolls=useRef(new Map());
   if (!saves.current) saves.current=createWorkspaceSaves(async(owner,value,baseline)=>{
@@ -450,6 +453,8 @@ export default function App() {
     if (state==='error') {clearTimeout(toastTimer.current);setMsg(error?.code==='workspace-too-large'?error.message:'Changes are not saved. Use Retry in the top bar.');toastTimer.current=setTimeout(()=>setMsg(''),error?.code==='workspace-too-large'?15000:4500);}
   });
   const [theme, setTheme] = useState(() => localStorage.getItem('sd_theme') || 'light');
+  useEffect(() => { applyActionColour(d?.settings?.actionColour); }, [d?.settings?.actionColour]);
+  const [updateNote, setUpdateNote] = useState(false);
   useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem('sd_theme', theme); }, [theme]);
   useEffect(() => {
     const f = event => { const oldHash=new URL(event.oldURL).hash||'#/dash';routeScrolls.current.set(oldHash,window.scrollY);const next=parse();setRoute(next);setDlg(null);if(['privacy','cookies'].includes(next.page)){window.scrollTo({top:0,behavior:'instant'});requestAnimationFrame(()=>mainRef.current?.focus({preventScroll:true}));} };
@@ -462,7 +467,7 @@ export default function App() {
     window.addEventListener('beforeunload',warn);
     return () => window.removeEventListener('beforeunload',warn);
   }, [demo,saving]);
-  useEffect(() => { document.title = !demo && user === null && !['privacy','cookies'].includes(route.page) ? 'Sign in · SoloDesk' : `${NAV.find(([k]) => k === route.page)?.[1] || ({more: 'More', privacy: 'Privacy Policy', cookies: 'Cookies & storage',portal:'Client portal'})[route.page] || 'Dashboard'} · SoloDesk`; }, [route.page,user,demo]);
+  useEffect(() => { if (route.page === 'u') return; document.title = !demo && user === null && !['privacy','cookies'].includes(route.page) ? 'Sign in · SoloDesk' : `${NAV.find(([k]) => k === route.page)?.[1] || ({more: 'More', privacy: 'Privacy Policy', cookies: 'Cookies & storage',portal:'Client portal'})[route.page] || 'Dashboard'} · SoloDesk`; }, [route.page,user,demo]);
   const apply = (value) => { if(value===null){undoHistory.current=[];setUndoCount(0);routeScrolls.current.clear();} dataRef.current = value; setD(value); };
   const load = async (u) => {
     const request = ++loadVersion.current;
@@ -495,6 +500,7 @@ export default function App() {
     return onAuthStateChanged(auth, u => { saves.current.begin(u?.uid);setSaving('saved');loadVersion.current++; setUser(u); apply(null); setErr(''); if (u) load(u); });
   }, [demo]);
   const toast = m => { clearTimeout(toastTimer.current); setMsg(m); toastTimer.current = setTimeout(() => setMsg(''), 4500); };
+  useEffect(() => { const m = /[?&]microsoft=([a-z]+)/.exec(window.location.hash); if (!m) return; window.history.replaceState(null, '', window.location.pathname + window.location.hash.replace(/\?.*$/, '')); toast({ connected: 'Microsoft account connected. Link a workbook from a client’s or project’s Files & docs.', cancelled: 'Microsoft sign-in was cancelled.', expired: 'That sign-in link expired. Try connecting again.' }[m[1]] || 'Microsoft sign-in did not complete. Try again.'); }, []);
   const ask = (m, fn, options = {}) => setDlg({ k: 'ask', v: { m, fn, ...options } });
   const persist = n => { void saves.current.save(n); };
   useEffect(()=>{if(online&&!demo&&user?.uid&&dataRef.current&&saving==='error')persist(dataRef.current);},[online]);
@@ -502,12 +508,15 @@ export default function App() {
     const before=dataRef.current;if(!before)return;const n=structuredClone(before);fn(n);
     for(const task of n.tasks){const old=before.tasks.find(t=>t.id===task.id);if(old&&task.status==='Done'&&(old.status!=='Done'||JSON.stringify(old.dependencies)!==JSON.stringify(task.dependencies))&&blockers(n,task).length){toast('Finish the blocking tasks first. Open task details to manage dependencies.');return false;}}
     repeatCompletedTasks(before,n);
-    if(JSON.stringify(before)===JSON.stringify(n))return;
-    recordActivity(before,n);
+    if(JSON.stringify(before)===JSON.stringify(n))return true;
+    recordActivity(before,n);stampUpdated(before,n);
     undoHistory.current=[...undoHistory.current.slice(-19),structuredClone(before)];setUndoCount(undoHistory.current.length);apply(n);
-    if (demo) { try { localStorage.setItem('sd_demo', JSON.stringify(n)); } catch { toast('Browser storage is full. Export your data before leaving.'); } }
-    else persist(n);
+    if (demo) { try { localStorage.setItem('sd_demo', JSON.stringify(n)); } catch { toast('Browser storage is full. Export your data before leaving.'); } return true; }
+    // Resolves true once saved; the Excel sync inbox waits for this before clearing an applied change.
+    return saves.current.save(n);
   };
+  const mutRef=useRef(mut);mutRef.current=mut;
+  useEffect(()=>watchSyncInbox(demo||!d?null:user?.uid,(fn)=>mutRef.current(fn)),[user?.uid,demo,!!d]);
   const undo=()=>{const previous=undoHistory.current.pop();if(!previous)return;setUndoCount(undoHistory.current.length);apply(previous);if(demo){try{localStorage.setItem('sd_demo',JSON.stringify(previous));}catch{toast('Browser storage is full.');}}else persist(previous);toast('Last workspace change undone.');};
   const finishLogout = async () => {
     if (signingOut) return;
@@ -533,6 +542,7 @@ export default function App() {
   };
   const startDemo = () => { sessionStorage.setItem('sd_demo_active','1'); setDemo(true); };
   L.setCur(d?.settings.cur);
+  if(route.page==='u')return <ScreenBoundary key={'u-'+route.id}><PublicProfile username={route.id}/></ScreenBoundary>;
   if(route.page==='portal')return <ScreenBoundary key={'portal-'+route.id}><Suspense fallback={<ScreenLoading label="Opening client portal"/>}><ClientPortal owner={route.id}/></Suspense></ScreenBoundary>;
   if (['privacy', 'cookies'].includes(route.page)) return <LegalPage page={route.page} mainRef={mainRef} />;
   if (!demo && user === undefined) return <div className="mid"><div className="loading-mark" /><p>Opening your desk…</p></div>;
@@ -550,7 +560,7 @@ export default function App() {
   const startTour=()=>{rememberSeen(localStorage,onboardingKey(experienceOwner));setExperience('tour');};
   const startOnboarding=()=>setExperience('onboarding');
   const purgeTrash=id=>ask('Permanently remove this Trash entry and its deleted data? Export a backup first. Undo history will also be cleared.',()=>{mut(n=>{n.trash=n.trash.filter(e=>e.id!==id);});undoHistory.current=[];setUndoCount(0);toast('Trash entry permanently removed.');},{title:'Permanently delete?',label:'Permanently delete',danger:true});
-  const close = () => setDlg(null), P = { d, mut, open, ask, toast, user, logout, demo, saving, signingOut, taskflow, removeItem, startOnboarding, startTour, undo, undoCount, purgeTrash, offlineReady, id: route.id };
+  const close = () => setDlg(null), P = { d, mut, open, ask, toast, user, logout, demo, saving, signingOut, taskflow, removeItem, startOnboarding, startTour, undo, undoCount, purgeTrash, offlineReady, id: route.id, theme, setTheme };
   const v = dlg?.v || {};
   const save = (list, o) => {
     if (list === 'clients') {const result=prepareClient(o);if(result.error)return toast(result.error);o=result.client;}
@@ -575,12 +585,10 @@ export default function App() {
   return (<ViewStateProvider owner={experienceOwner}><>
     <InstallNotice/>
     <a className="skip-link" href="#workspace" onClick={e => { e.preventDefault(); mainRef.current?.focus(); }}>Skip to content</a>
-    <aside className="sidebar">
-      <a className="wordmark" href="#/dash"><BrandLogo /></a>
-      <div className="workspace-label"><span className="workspace-monogram">{(d.settings.biz || 'My workspace').slice(0,1)}</span><div><b>{d.settings.biz || 'My workspace'}</b><small>{demo ? 'Demo workspace' : 'Personal workspace'}</small></div></div>
-      <span className="nav-caption">WORKSPACE</span>
-      <nav aria-label="Main">{NAV.map(([k,t]) => <a key={k} href={'#/' + k} className={page === k ? 'on' : ''} aria-current={page === k ? 'page' : undefined}><Icon name={k} /><span>{t}</span>{k === 'tasks' && d.tasks.filter(x => x.status !== 'Done').length > 0 && <span className="nav-count">{d.tasks.filter(x => x.status !== 'Done').length}</span>}</a>)}</nav>
-      <div className="sidebar-bottom"><div className="sidebar-note"><span className="eyebrow">INDEPENDENT, TOGETHER.</span><p>A place for the business<br />behind your craft.</p></div><button className="profile-button" onClick={logout}><span className="avatar">{(user?.displayName || d.settings.biz || 'You').slice(0,1)}</span><span><b>{demo ? 'Demo explorer' : user?.displayName || 'Your account'}</b><small>{demo ? 'Exit demo' : 'Sign out'}</small></span><Icon name="logout" size={17} /></button></div>
+    <aside className="sidebar" aria-label="SoloDesk">
+      <a className="wordmark" href="#/dash">solodesk</a>
+      {GROUPS.map(([title,keys]) => <div key={title}><span className="nav-caption">{title}</span><nav aria-label={title}>{keys.map(k => { const t = NAV.find(([x]) => x === k)[1], on = page === k; return <a key={k} href={'#/' + k} className={on ? 'on' : ''} aria-current={on ? 'page' : undefined}><Icon name={NAV_ICON[k] || k} size={18} /><span>{t}</span>{k === 'tasks' && d.tasks.filter(x => x.status !== 'Done' && !x.arch).length > 0 && <span className="nav-count">{d.tasks.filter(x => x.status !== 'Done' && !x.arch).length}</span>}</a>; })}</nav></div>)}
+      <div className="sidebar-bottom"><button className="profile-button" onClick={logout}><span className="avatar">{(user?.displayName || d.settings.biz || 'You').slice(0,1)}</span><span><b>{demo ? 'Demo explorer' : user?.displayName || 'Your account'}</b><br /><small>{demo ? 'Exit demo' : 'Log out'}</small></span></button><a className="sidebar-version" href="#/settings/whats-new">SoloDesk {currentVersion()} · What’s new</a></div>
     </aside>
     <div className="app-body"><header className="topbar"><a className="header-brand" href="#/dash"><BrandLogo /></a><div className="breadcrumb">Workspace <span>/</span> <b>{NAV.find(([k]) => k === page)?.[1] || 'More'}</b>{route.id && <><span>/</span><span>Details</span></>}</div><div className="topbar-right">{demo ? <span className="demo-badge">LOCAL DEMO · SAMPLE DATA</span> : <span className={'save-state ' + saving} role="status">{saving === 'saving' ? 'Saving…' : ['error','conflict'].includes(saving) ? <button className="ghost sm" onClick={() => {if(saving!=='conflict')persist(dataRef.current);}}>Unsaved changes</button> : 'All changes saved'}</span>}<span className="topbar-date">{new Date().toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</span><div className="header-actions" role="group" aria-label="Workspace actions"><CommandMenu open={open} Modal={Modal} undo={undo} undoCount={undoCount}/><WorkspaceSearch d={d} taskflow={taskflow} Modal={Modal} openProject={p=>open('project',p)}/><a className="icon-button header-link" href="#/reports" aria-label="View reports"><Icon name="reports" /></a><a className="icon-button header-link" href="#/settings" aria-label="Open settings"><Icon name="settings" /></a><button className="icon-button" aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}><Icon name={theme === 'dark' ? 'sun' : 'moon'} /></button><button type="button" className="ghost danger sm signout-button" aria-label="Sign out of SoloDesk" disabled={signingOut} onClick={logout}><Icon name="logout" size={18} /><span>{signingOut ? 'Signing out…' : 'Sign out'}</span></button></div></div></header>
     <main ref={mainRef} id="workspace" tabIndex={-1}>
@@ -596,9 +604,11 @@ export default function App() {
       {page === 'recurring' && <RecurringInvoices {...P}/>}
       {page === 'focus' && <><h1>Focus on your work</h1><Focus {...P}/></>}
       {page === 'trash' && <Trash {...P}/>}
-      {page === 'dash' && <Dash {...P} />}
+      {page === 'dash' && <Home {...P} />}
+      {page === 'work' && <AllWork {...P} />}
+      {page === 'profile' && <ProfileEditor {...P} />}
       {page === 'clients' && (route.id ? <ClientPage {...P} /> : <Clients {...P} />)}
-      {page === 'projects' && <Projects {...P} />}
+      {page === 'projects' && (route.id ? <ProjectPage {...P} /> : <Projects {...P} />)}
       {page === 'tasks' && (route.id ? <TaskPage {...P} /> : <Tasks {...P} />)}
       {page === 'invoices' && (route.id ? <InvoicePage {...P} /> : <Invoices {...P} />)}
       {page === 'reports' && <Reports {...P} />}
@@ -610,6 +620,7 @@ export default function App() {
     </main></div>
     <nav className="bnav" aria-label="Primary">{MOB.slice(0,2).map(([k,t]) => <a key={k} href={'#/' + k} className={page === k ? 'on' : ''} aria-current={page === k ? 'page' : undefined}><span className="dock-icon"><Icon name={k} size={23} /></span>{t}</a>)}<button className="dock-add" aria-label="Create new" onClick={() => open('new')}><Icon name="plus" size={32} /></button>{MOB.slice(2).map(([k,t]) => <a key={k} href={'#/' + k} className={page === k || (k === 'more' && MORE.some(([m]) => m === page)) ? 'on' : ''} aria-current={page === k ? 'page' : undefined}><span className="dock-icon"><Icon name={k} size={23} /></span>{t}</a>)}</nav>
 
+    {updateNote && !experience && <UpdateNotice Modal={Modal} onClose={closeUpdate}/>}
     {experience && <Experience key={experience+'-'+experienceOwner} mode={experience} demo={demo} onClose={closeExperience} onTour={startTour}/>}
     {dlg?.k === 'new' && <Modal title="Create new" label="Close" onClose={close} onSubmit={close}>
       {[['client', 'Client'], ['project', 'Project'], ['task', 'Task'], ['invoice', 'Invoice']].map(([k, t]) => <button type="button" key={k} className="row" style={{ width: '100%', font: 'inherit', color: 'inherit', cursor: 'pointer' }} onClick={() => { close(); setTimeout(() => open(k), 0); }}><b>{t}</b></button>)}</Modal>}

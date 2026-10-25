@@ -4,6 +4,11 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { onRequest } from 'firebase-functions/v2/https';
 import { defineString } from 'firebase-functions/params';
 import { createApi } from './api.js';
+import * as excelFunctions from './excel-functions.js';
+
+// Live Excel sync, deployed separately with: firebase deploy --only functions:excel
+const { seal: _seal, unseal: _unseal, syncUser: _syncUser, disconnectUser: _disconnectUser, ...excelTriggers } = excelFunctions;
+export const excel = excelTriggers;
 
 initializeApp();
 const db = getFirestore(), auth = getAuth();
