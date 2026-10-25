@@ -699,3 +699,10 @@ input[type=radio]{border-radius:50%!important}
 .match-ok{color:#5E7A3E}.match-bad{color:#B4532F}
 :root[data-theme=dark] .match-ok{color:#A7B98B}:root[data-theme=dark] .match-bad{color:#F2A477}
 .link-row .icon-button{width:36px!important;height:36px!important;min-width:36px;background:transparent!important;color:var(--mu)!important;border:1px solid var(--ln)!important}.link-row .icon-button:hover{color:var(--tx)!important;background:var(--sf)!important}
+
+/* collapsed option group (completed projects) */
+.select-option.select-group{color:var(--mu);border-top:1px solid var(--ln);border-radius:0 0 12px 12px;margin-top:4px;font-size:.92em}
+.select-option.select-group small{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:99px;background:var(--sf);font-size:11px;margin-left:6px;padding:0 6px}
+.select-option.select-group[aria-expanded=true] svg{transform:rotate(180deg)}
+.select-option.in-group{color:var(--mu)}
+.select-option.in-group[aria-selected=true]{color:var(--tx)}

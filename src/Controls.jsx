@@ -57,14 +57,18 @@ function Panel({ anchor, close, children, className = '', focusId, ...props }) {
 
 export function Select({ children, value, defaultValue, onChange, id, name, required, disabled, ...props }) {
   const generated = useId(), controlId = id || generated, listId = generated + '-list';
-  const options = Children.toArray(children).filter(child => child?.type === 'option').map(child => ({ value: String(child.props.value ?? child.props.children), label: child.props.children, disabled: child.props.disabled }));
-  const [selected, change] = useValue(value, defaultValue ?? options[0]?.value ?? '', onChange);
+  const all = Children.toArray(children).filter(child => child?.type === 'option').map(child => ({ value: String(child.props.value ?? child.props.children), label: child.props.children, disabled: child.props.disabled, group: child.props['data-group'] }));
+  const [selected, change] = useValue(value, defaultValue ?? all[0]?.value ?? '', onChange);
   const [open, setOpen] = useState(false), [active, setActive] = useState(0), [invalid,setInvalid] = useState(false), trigger = useRef(null), typeahead = useRef({ text: '', time: 0 });
-  const index = options.findIndex(option => option.value === String(selected));
+  // Options marked data-group (e.g. completed projects) sit behind one row that expands them.
+  const grouped = all.filter(o => o.group), groupName = grouped[0]?.group;
+  const [expanded, setExpanded] = useState(() => grouped.some(o => o.value === String(value ?? defaultValue)));
+  const options = grouped.length ? [...all.filter(o => !o.group), { value: '\u0000group', label: groupName, toggle: true }, ...(expanded ? grouped : [])] : all;
+  const index = options.findIndex(option => !option.toggle && option.value === String(selected));
   useEffect(()=>{if(index >= 0 && selected !== '')setInvalid(false);},[index,selected]);
   const close = focus => { setOpen(false); if (focus) trigger.current?.focus(); };
   const show = () => { if(!options.length)return;setActive(index < 0 ? 0 : index); setOpen(true); };
-  const choose = i => { if (!options[i] || options[i].disabled) return; setInvalid(false);change(options[i].value); close(true); };
+  const choose = i => { if (!options[i] || options[i].disabled) return; if (options[i].toggle) { setExpanded(!expanded); return; } setInvalid(false);change(options[i].value); close(true); };
   const keys = e => {
     if (!options.length) return;
     if (['ArrowDown','ArrowUp','Home','End'].includes(e.key)) {
@@ -95,7 +99,9 @@ export function Select({ children, value, defaultValue, onChange, id, name, requ
     </button>
     {invalid && <span className="control-error" id={generated+'-error'} role="alert">{options.length ? 'Choose an option to continue.' : 'No options yet. Add a record first.'}</span>}
     {open && <Panel anchor={trigger} close={close} role="listbox" id={listId} aria-label={props['aria-label'] || 'Options'} tabIndex={-1} aria-activedescendant={listId + '-' + active} onKeyDown={keys}>
-      {options.map((option, i) => <button id={listId + '-' + i} key={option.value} type="button" role="option" aria-selected={option.value === String(selected)} disabled={option.disabled} tabIndex={active === i ? 0 : -1} className={'select-option' + (active === i ? ' is-active' : '')} onMouseMove={() => setActive(i)} onClick={() => choose(i)}><span>{option.label}</span>{option.value === String(selected) && <Icon name="check" size={17} />}</button>)}
+      {options.map((option, i) => option.toggle
+        ? <button id={listId + '-' + i} key={option.value} type="button" role="option" aria-selected={false} aria-expanded={expanded} tabIndex={active === i ? 0 : -1} className={'select-option select-group' + (active === i ? ' is-active' : '')} onMouseMove={() => setActive(i)} onClick={() => choose(i)}><span>{option.label} <small>{grouped.length}</small></span><Icon name="chevronDown" size={16} /></button>
+        : <button id={listId + '-' + i} key={option.value} type="button" role="option" aria-selected={option.value === String(selected)} disabled={option.disabled} tabIndex={active === i ? 0 : -1} className={'select-option' + (option.group ? ' in-group' : '') + (active === i ? ' is-active' : '')} onMouseMove={() => setActive(i)} onClick={() => choose(i)}><span>{option.label}</span>{option.value === String(selected) && <Icon name="check" size={17} />}</button>)}
     </Panel>}
   </span>;
 }

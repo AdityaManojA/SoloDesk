@@ -85,7 +85,9 @@ const Badge = ({ s }) => <span className={'b b-' + s.replace(' ', '')}>{L.ICON[s
 const Empty = ({ m, label, onClick }) => <div className="empty"><p>{m}</p>{label && <button className="btn" onClick={onClick}>{label}</button>}</div>;
 const Back = ({ to, label }) => <a className="back" href={'#/' + to}>‹ {label}</a>;
 const Fld = ({ l, ...p }) => <label>{l}{['date', 'datetime-local'].includes(p.type) ? <DateInput aria-label={l} {...p} /> : <input {...p} />}</label>;
-const Sel = ({ l, o, ...p }) => <label>{l}<Select aria-label={l} {...p}>{o.map((x) => { const [v, t] = Array.isArray(x) ? x : [x, x]; return <option key={v} value={v}>{t}</option>; })}</Select></label>;
+const Sel = ({ l, o, ...p }) => <label>{l}<Select aria-label={l} {...p}>{o.map((x) => { const [v, t, group] = Array.isArray(x) ? x : [x, x]; return <option key={v} value={v} data-group={group}>{t}</option>; })}</Select></label>;
+// Project choices for forms: completed projects are tucked into a collapsed group.
+const projectOptions = projects => [...projects.filter(p => p.status !== 'Complete').map(p => [p.id, p.name]), ...projects.filter(p => p.status === 'Complete').map(p => [p.id, p.name, 'Completed projects'])];
 function Modal({ title, onClose, onSubmit, onDelete, label = 'Save', danger = false, children }) {
   const ref = useRef(null), titleId = useId();
   useEffect(() => {
@@ -686,7 +688,7 @@ export default function App() {
       <Fld l="Title" name="title" required defaultValue={v.title} />
       <div className="grid2"><Sel l="Status" name="status" o={['Todo', 'In progress', 'Done']} defaultValue={v.status || 'Todo'} /><Sel l="Priority" name="priority" o={[['', 'None'], 'Low', 'Medium', 'High']} defaultValue={v.priority || ''} /></div>
       <Sel l="Repeat task after completion" name="repeat" o={frequencies} defaultValue={v.repeat||''}/><p className="form-help">Completing this task creates one next occurrence. Existing completed occurrences stay in history.</p><Fld l="Due date (optional)" name="due" type="date" defaultValue={v.due} /><Sel l="Client" name="client" o={cOpts} defaultValue={v.client || ''} />
-      <Sel l="Project" name="project" o={[['', '— none —'], ...d.projects.map((p) => [p.id, p.name])]} defaultValue={v.project || ''} /><h3>Put it on your calendar</h3><p className="mu form-help">Choose a time to reserve a work block. Otherwise, a due date appears as an all-day deadline. Times use your device’s timezone ({Intl.DateTimeFormat().resolvedOptions().timeZone}).</p><div className="grid2"><Fld l="Scheduled start (optional)" name="scheduledAt" type="datetime-local" defaultValue={localDateTime(v.scheduledAt)} /><Fld l="Duration (minutes)" name="durationMinutes" type="number" min="5" max="1440" step="5" defaultValue={v.durationMinutes || 60} /></div></Modal>}
+      <Sel l="Project" name="project" o={[['', '— none —'], ...projectOptions(d.projects)]} defaultValue={v.project || ''} /><h3>Put it on your calendar</h3><p className="mu form-help">Choose a time to reserve a work block. Otherwise, a due date appears as an all-day deadline. Times use your device’s timezone ({Intl.DateTimeFormat().resolvedOptions().timeZone}).</p><div className="grid2"><Fld l="Scheduled start (optional)" name="scheduledAt" type="datetime-local" defaultValue={localDateTime(v.scheduledAt)} /><Fld l="Duration (minutes)" name="durationMinutes" type="number" min="5" max="1440" step="5" defaultValue={v.durationMinutes || 60} /></div></Modal>}
     {dlg?.k === 'invoice' && <InvForm v={v} d={d} mut={mut} close={close} toast={toast} removeItem={removeItem} />}
     {dlg?.k === 'pay' && (() => { const b = calc(v).bal; return <Modal title="Record payment" onClose={close} onSubmit={(o) => {
       if (num(o.amt) <= 0 || num(o.amt) > b + 0.005) return toast('Enter an amount up to the remaining balance.');

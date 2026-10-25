@@ -11,7 +11,7 @@ const paths = {
   arrow: 'M5 12h14 M13 6l6 6-6 6', plus: 'M12 5v14 M5 12h14',
   sun: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M12 2v2 M12 20v2 M2 12h2 M20 12h2 M5 5l1 1 M18 18l1 1 M5 19l1-1 M18 6l1-1',
   moon: 'M20 15A9 9 0 0 1 9 4a9 9 0 1 0 11 11',
-  close: 'M6 6l12 12 M6 18L18 6', search: 'M21 21l-5-5 M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14',
+  close: 'M6 6l12 12 M6 18L18 6', chevronDown: 'M6 9l6 6 6-6', search: 'M21 21l-5-5 M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14',
   work: 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M17.5 14v7 M14 17.5h7',
   home: 'M3 10.5 12 3l9 7.5 M5 9.5V21h14V9.5',
   notes: 'M5 3h14v18H5z M9 7h6 M9 11h6 M9 15h4',

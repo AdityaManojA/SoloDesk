@@ -12,6 +12,7 @@ export const changelog=[
     ['More action colours','Eight new presets — coral, mustard, olive, sage, teal, sky, lavender and stone — plus a Custom colour picker for any shade you like.'],
     ['Links on clients','Add a client’s website, Instagram or any other link in the client form. Type just “acme.com” and SoloDesk fills in the rest; links show under the client’s name.'],
     ['Safer portal passwords','When you create a client portal login you type the password twice, and clients must enter their current password before setting a new one.'],
+    ['Completed projects out of the way','When you pick a project for a task, finished projects are tucked under a greyed-out “Completed projects” row at the bottom of the list. Click it to show them.'],
     ['A fresh welcome','Onboarding and the guided tour were redone in the new colours and now walk through Home, Notes, Calendar zoom and free days, your Profile and Settings.'],
   ],fixes:[
     'Calendar zoom buttons are easier to spot.',
