@@ -863,3 +863,6 @@ input[type=radio]{border-radius:50%!important}
 .portal-user-name small{font-size:12px;color:var(--mu)}
 .portal-user .avatar-xl{background:var(--hero);color:#141414;font-weight:700}
 @media(max-width:600px){.portal-user-name small{display:none}}
+
+/* Home: Needs attention on its own (revenue lives in Reports) */
+.overview-row.single{display:grid;grid-template-columns:1fr;margin-top:16px}

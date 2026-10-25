@@ -52,7 +52,8 @@ function EditTile({ d, entry, tone, shape, open, mut, onNote }) {
   const stop = e => e.stopPropagation();
   const deco = shape && <Shape kind={shape[0]} color={shape[1]} size={120} style={{ position: 'absolute', ...shape[2] }} />;
   const label = { note: 'Note', task: 'Task', project: 'Project', client: 'Client' }[kind];
-  const act = () => kind === 'note' ? onNote(row.id) : open(kind, row);
+  // Notes open in place under the cards; tasks, projects and clients open their own page.
+  const act = () => kind === 'note' ? onNote(row.id) : (window.location.hash = '#/' + { task: 'tasks', project: 'projects', client: 'clients' }[kind] + '/' + row.id);
   const top = <div className="tile-top"><span>{label}</span><span className="chip white">Edited {ago(at).toLowerCase()}</span></div>;
   let body;
   if (kind === 'note') {
@@ -67,12 +68,12 @@ function EditTile({ d, entry, tone, shape, open, mut, onNote }) {
       <span className="tile-meta">{[L.cname(d, row.client) !== '—' && L.cname(d, row.client), row.due && 'Due ' + new Date(row.due + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' }), row.priority && row.priority + ' priority'].filter(Boolean).join(' · ') || 'No client or date yet'}</span></>;
   } else if (kind === 'project') {
     const tasks = d.tasks.filter(t => t.project === row.id && !t.arch), done = tasks.filter(t => t.status === 'Done').length;
-    body = <><span className="tile-title">{row.name}</span><span className="tile-meta">{row.client ? L.cname(d, row.client) : 'No client'} · {done} of {tasks.length} tasks complete</span><MiniBars done={done} total={tasks.length} /><a className="tile-link" href={'#/projects/' + row.id} onClick={stop}>Open project →</a></>;
+    body = <><span className="tile-title">{row.name}</span><span className="tile-meta">{row.client ? L.cname(d, row.client) : 'No client'} · {done} of {tasks.length} tasks complete</span><MiniBars done={done} total={tasks.length} /></>;
   } else {
     const projects = d.projects.filter(p => p.client === row.id).length, todos = openTodos(d, row.id);
-    body = <><span className="tile-title">{row.name}</span><span className="tile-meta">{todos ? `${todos} open to-do${todos === 1 ? '' : 's'}` : 'No open to-dos'} · {projects} project{projects === 1 ? '' : 's'}</span><a className="tile-link" href={'#/clients/' + row.id} onClick={stop}>Open client →</a></>;
+    body = <><span className="tile-title">{row.name}</span><span className="tile-meta">{todos ? `${todos} open to-do${todos === 1 ? '' : 's'}` : 'No open to-dos'} · {projects} project{projects === 1 ? '' : 's'}</span></>;
   }
-  return <div className={'tile edit-tile ' + tone} role="button" tabIndex={0} aria-label={'Edit ' + label.toLowerCase() + ' ' + (row.title || row.name || '')} onClick={act} onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); act(); } }}>{deco}{top}{body}</div>;
+  return <div className={'tile edit-tile ' + tone} role="button" tabIndex={0} aria-label={'Open ' + label.toLowerCase() + ' ' + (row.title || row.name || '')} onClick={act} onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); act(); } }}>{deco}{top}{body}</div>;
 }
 
 // TaskFlow quests are a small pill on Home, opening a compact list. TaskFlow stays the place to edit them.
@@ -107,10 +108,6 @@ export function Home({ d, open, user, taskflow, mut, toast }) {
   const [noteId, setNoteId] = useState(null), note = (d.notes || []).find(n => n.id === noteId);
   const t = today(), hidden = d.settings.dashboardHidden || [];
   const recents = recentWork(d);
-  const pays = L.allPays(d), month = t.slice(0, 7), last = addDays(t.slice(0, 8) + '01', -1).slice(0, 7);
-  const sum = m => pays.filter(p => p.date.slice(0, 7) === m).reduce((s, p) => s + num(p.amt), 0);
-  const rev = sum(month), prev = sum(last), change = prev ? Math.round((rev - prev) / prev * 100) : null;
-  const months = L.months(addDays(t, -165), t).slice(-6), byMonth = L.revBy(months, pays), max = Math.max(...byMonth.map(x => x.v), 1);
   const overdue = d.invoices.filter(i => status(i) === 'Overdue');
   const dueSoon = d.invoices.filter(i => ['Sent', 'Partially paid'].includes(status(i)) && i.due >= t && i.due <= addDays(t, 3));
   const reminders = (d.notes || []).flatMap(n => (n.checklist || []).filter(c => !c.done && c.due && c.due <= t).map(c => ({ ...c, note: n })));
@@ -132,13 +129,7 @@ export function Home({ d, open, user, taskflow, mut, toast }) {
             : <div className="tile sand"><span className="tile-title">Your recent work shows up here</span><span className="tile-meta">Notes, tasks, projects and clients you edit show up here, newest first.</span><button className="btn sm" style={{ alignSelf: 'flex-start' }} onClick={() => open('client')}>Add a client</button></div>}
           {note && <div className="card home-note-editor"><NoteEditor key={note.id} note={note} autoFocus edit={fn => mut(w => { const n = (w.notes || []).find(x => x.id === note.id); if (n) fn(n); })} labels={<a className="keep-tool" href={'#/notes/' + note.id}>Open in Notes</a>} /><button type="button" className="ghost sm" style={{ alignSelf: 'flex-end' }} onClick={() => setNoteId(null)}>Done</button></div>}
         </div>}
-        {!hidden.includes('overview') && <div className="tile-row overview-row">
-          <a className="tile sage" href="#/reports" style={{ minHeight: 230 }}>
-            <Shape kind="triangle" color="var(--sage-deep)" size={150} style={{ position: 'absolute', right: -36, bottom: -34, transform: 'rotate(20deg)' }} />
-            <span className="tile-title">Revenue:</span>
-            <div className="stat-row"><span><b>{money(rev)}</b><small>This month</small></span>{change !== null && <span><b>{change >= 0 ? '+' : ''}{change}%</b><small>vs last month</small></span>}<span><b>{money(L.outstanding(d))}</b><small>Outstanding</small></span></div>
-            <div className="minibars" style={{ height: 96 }} role="img" aria-label="Revenue for the last six months">{byMonth.map((x, i) => <i key={x.k} title={`${x.l}: ${money(x.v)}`} style={{ height: Math.max(6, x.v / max * 92), width: 14 }} className={i === byMonth.length - 1 || x.v ? '' : 'open'} />)}</div>
-          </a>
+        {!hidden.includes('overview') && <div className="overview-row single">
           <div className="tile" style={{ cursor: 'default' }}>
             <div className="block-head" style={{ marginBottom: 4 }}><span className="tile-title">Needs attention:</span><a className="chip ink" href="#/invoices">Invoices</a></div>
             {attention.length ? attention.map(a => <a key={a.key} className="list-row" href={a.href}><span className={'dot-icon ' + a.tone}><Icon name={a.icon} size={18} /></span><span className="grow"><b>{a.title}</b><small>{a.meta}</small></span><span className={'chip ' + a.chipTone}>{a.chip}</span></a>) : <p className="empty-note">Nothing needs you right now. Overdue invoices and dated to-dos appear here.</p>}

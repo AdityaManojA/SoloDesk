@@ -34,7 +34,7 @@ export function AppearanceSettings({ d, mut, theme, setTheme }) {
     </div>
     <div className="card" style={{ display: 'grid', gap: 8 }}>
       <h3 style={{ margin: 0 }}>Home</h3><small className="empty-note">Choose what appears on Home.</small>
-      {[['metrics', 'Jump back in (your 3 most recent items)'], ['overview', 'Revenue and Needs attention'], ['work', 'Calendar and today’s timeline']].map(([key, label]) => <label key={key}><input type="checkbox" checked={!hidden.includes(key)} onChange={() => mut(n => { const h = n.settings.dashboardHidden || []; n.settings.dashboardHidden = h.includes(key) ? h.filter(k => k !== key) : [...h, key]; })} /> {label}</label>)}
+      {[['metrics', 'Jump back in (your 3 most recent items)'], ['overview', 'Needs attention'], ['work', 'Calendar and today’s timeline']].map(([key, label]) => <label key={key}><input type="checkbox" checked={!hidden.includes(key)} onChange={() => mut(n => { const h = n.settings.dashboardHidden || []; n.settings.dashboardHidden = h.includes(key) ? h.filter(k => k !== key) : [...h, key]; })} /> {label}</label>)}
     </div>
   </div>;
 }
