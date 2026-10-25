@@ -2,7 +2,7 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
-  {version:'1.05',released:false,date:'',title:'Client approvals, a new client portal and smart typing',highlights:[
+  {version:'1.05',released:true,date:'2026-10-25',title:'Client approvals, a new client portal and smart typing',highlights:[
     ['Send work for approval','Open a task and choose Send for approval. Your client approves it or asks for changes in their portal, and the answer comes back to the task. A new Approvals page shows what is waiting, approved or needs changes.'],
     ['A client portal that shows the work','Clients now see the project tasks you share, their links, the documents and PRDs you pick, and sent invoices, in a new colourful portal with their approvals at the top. Copy the portal link straight from Client access.'],
     ['Type it, and it fills in','Like TaskFlow: type “Send the draft to Ava tomorrow at 7pm” and the date, time, client and project fill themselves in. Suggestions appear as you type; press Tab to pick one. Works for tasks, projects (“from Nov 3 to Dec 20”), search and checklist reminders.'],

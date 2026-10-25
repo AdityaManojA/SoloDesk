@@ -14,7 +14,13 @@ Big shoutout to her for laying the foundation for this project!
 
 Original contributions by AdityaManojA are available under the [MIT License](LICENSE). The original MVP currently has no published license; inherited code and third-party dependencies are excluded from that grant. See [third-party notices and licensing scope](THIRD_PARTY_NOTICES.md) before reusing the combined application.
 
-A business workspace for independent professionals and studios: clients, projects, tasks, invoices, payments and reports. **Current version: 1.04** ([release notes](CHANGELOG.md), also in the app under Settings → What's new). The interface uses the 1.02 design: a black sidebar, the Terracotta palette (sage, sand, cream) with a per-workspace action colour, Bricolage Grotesque and Figtree type, and a floating dock on phones. The original React/Firebase data model and hash routes are retained. Calendar exports turn project timelines and dated tasks into scheduler events.
+A business workspace for independent professionals and studios: clients, projects, tasks, invoices, payments and reports. **Current version: 1.05** ([release notes](CHANGELOG.md), also in the app under Settings → What's new). The interface uses the 1.02 design: a black sidebar, the Terracotta palette (sage, sand, cream) with a per-workspace action colour, Bricolage Grotesque and Figtree type, and a floating dock on phones. The original React/Firebase data model and hash routes are retained. Calendar exports turn project timelines and dated tasks into scheduler events.
+
+## What's new in 1.05
+
+**Client approvals** — send a task for approval; the client approves or asks for changes in the portal, and answers sync back to the task ([`src/approvals.js`](src/approvals.js), [`src/Approvals.jsx`](src/Approvals.jsx), Approvals page at `#/approvals`). **Client portal** redesigned and extended with project tasks, client links, chosen documents/PRDs and invoices ([`src/ClientPortal.jsx`](src/ClientPortal.jsx); sample at `#/portal-preview`). **Smart typing** ported from TaskFlow's parser: dates, times, clients and projects fill in as you type in tasks, projects, search and checklist items ([`src/smart-parse.js`](src/smart-parse.js), [`src/SmartField.jsx`](src/SmartField.jsx)). Also: clickable breadcrumb, client links, more action colours plus custom, confirm-password fields, completed projects tucked away in pickers, new onboarding.
+
+Deploying 1.05 needs the updated `firestore.rules` (portal `docIds` and the `responses` subcollection for approvals). Copy it to TaskFlow's rules file first so both stay identical, then deploy rules before Hosting.
 
 ## What's new in 1.04
 
@@ -36,7 +42,7 @@ A rebuilt calendar with Year/Month/Week/Day zoom and a client-by-client project 
 
 Deploying 1.02 needs the updated `firestore.rules` (public profiles and Excel sync status). Copy it to TaskFlow's rules file first so both stay identical, then deploy rules before Hosting.
 
-**Status:** frontend deployed to https://taskflow-solodesk.web.app in `taskflow-dailytracker`, separately from TaskFlow’s Hosting site. Version 1.04 (25 October 2026) passes all **130 automated tests** and the production build. TaskFlow quests and its shared Google events are read-only in SoloDesk. Live sign-in/cloud-save round trips still need an account-level check. The standalone integration API and background server functions are not deployed on the Spark plan.
+**Status:** frontend deployed to https://taskflow-solodesk.web.app in `taskflow-dailytracker`, separately from TaskFlow’s Hosting site. Version 1.05 (25 October 2026) passes all **143 automated tests** and the production build. TaskFlow quests and its shared Google events are read-only in SoloDesk. Live sign-in/cloud-save round trips still need an account-level check. The standalone integration API and background server functions are not deployed on the Spark plan.
 
 ## Shared calendar markers
 

@@ -2,6 +2,30 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.05 — 25 October 2026 · Client approvals, a new client portal and smart typing
+
+- **Send work for approval.** Open a task and choose Send for approval. Your client approves it or asks for changes in their portal, and the answer comes back to the task. A new Approvals page shows what is waiting, approved or needs changes.
+- **A client portal that shows the work.** Clients now see the project tasks you share, their links, the documents and PRDs you pick, and sent invoices, in a new colourful portal with their approvals at the top. Copy the portal link straight from Client access.
+- **Type it, and it fills in.** Like TaskFlow: type “Send the draft to Ava tomorrow at 7pm” and the date, time, client and project fill themselves in. Suggestions appear as you type; press Tab to pick one. Works for tasks, projects (“from Nov 3 to Dec 20”), search and checklist reminders.
+- **Search by day.** Search for “tomorrow” or “next Friday” to see the work on that day.
+- **Clearer document buttons.** Link a file and New PRD are now two clear buttons with a short description each.
+- **Free and busy days.** Every day in the calendar is coloured by how full it is — free, light, busy or packed — with a count of items and clients. The year view becomes a heatmap of your free days.
+- **Projects across every day.** Project timelines now stretch across every day they cover in the month view, instead of showing only at the start of each week.
+- **Ongoing projects.** Leave a project’s end date empty and it runs on from its start date until you add one.
+- **Add a client while creating a project.** “Add a new client” sits right under the client list in the project form.
+- **Effort budget when you need it.** Budget hours and hourly rate only appear when you tick “Track an effort budget”.
+- **Clickable breadcrumb.** The path at the top left now links back: Workspace goes Home, the section opens its list, and the last part shows the client, project or note you are on.
+- **More action colours.** Eight new presets — coral, mustard, olive, sage, teal, sky, lavender and stone — plus a Custom colour picker for any shade you like.
+- **Links on clients.** Add a client’s website, Instagram or any other link in the client form. Type just “acme.com” and SoloDesk fills in the rest; links show under the client’s name.
+- **Safer portal passwords.** When you create a client portal login you type the password twice, and clients must enter their current password before setting a new one.
+- **Completed projects out of the way.** When you pick a project for a task, finished projects are tucked under a greyed-out “Completed projects” row at the bottom of the list. Click it to show them.
+- **A fresh welcome.** Onboarding and the guided tour were redone in the new colours and now walk through Home, Notes, Calendar zoom and free days, your Profile and Settings.
+
+Fixes
+- Calendar zoom buttons are easier to spot.
+- Radio buttons and checkboxes no longer stretch across the whole row (for example “Who can see it?” in profile setup).
+- Removed the logo download section from Settings → Appearance.
+
 ## 1.04 — 25 October 2026 · Edit what you were working on, right from Home
 
 - **Jump back in, editable.** Home shows the notes, tasks, projects and clients you edited most recently (never TaskFlow quests). Notes open in place under the cards; tick checklist items and tasks straight from a card; project and client cards open their editors.
