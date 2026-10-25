@@ -156,11 +156,11 @@ function ClientPage({ d, mut, open, id, removeItem, user, demo, toast }) {
   return (<>
     <Back to="clients" label="Clients" />
     <div className="page-head"><span className="avatar-xl">{(c.name || '?').split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase()}</span>
-      <div className="grow"><h1>{c.name}</h1><div className="tag-row">{c.arch ? <span className="chip white">Archived</span> : <span className={'chip ' + (active ? 'sage' : 'white')}>{active ? 'Active' : 'No active projects'}</span>}{c.email && <span>{c.email}</span>}{c.phone && <span>· {c.phone}</span>}</div></div>
+      <div className="grow"><h1>{c.name}</h1><div className="tag-row">{c.arch ? <span className="chip white">Archived</span> : <span className={'chip ' + (active ? 'sage' : 'white')}>{active ? 'Active' : 'No active projects'}</span>}{c.email && <span>{c.email}</span>}{c.phone && <span>· {c.phone}</span>}</div><ClientLinks links={c.links} /></div>
       <button className="ghost" onClick={() => open('client', c)}>Edit</button><button className="btn" onClick={() => open('invoice', { client: id })}>+ Invoice</button>
     </div>
     <div className="section-tabs" role="group" aria-label="Client sections">{[['overview','Overview'],['work','Work'],['notes','Notes & checklists'],['files','Files & docs'],['invoices','Invoices'],['access','Client access']].map(([key,title])=><button type="button" key={key} aria-pressed={section===key} onClick={()=>setSection(key)}>{title}</button>)}</div>
-    {section==='overview'&&<section aria-label="Client overview" style={{display:'grid',gap:16}}><div className="card">{info.length ? info.map(([k, v]) => <p key={k} style={{ margin: '4px 0', whiteSpace: 'pre-line' }}><small>{k}</small><br />{v}</p>) : <p className="mu">No contact details yet.</p>}</div>
+    {section==='overview'&&<section aria-label="Client overview" style={{display:'grid',gap:16}}><div className="card">{info.length ? info.map(([k, v]) => <p key={k} style={{ margin: '4px 0', whiteSpace: 'pre-line' }}><small>{k}</small><br />{v}</p>) : !c.links?.length && <p className="mu">No contact details yet.</p>}{c.links?.length > 0 && <div style={{ margin: '8px 0 4px' }}><small>Links</small><ul className="client-link-list">{c.links.map((l, i) => <li key={i}><a href={l.url} target="_blank" rel="noopener noreferrer"><b>{linkName(l)}</b><span>{l.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span></a></li>)}</ul></div>}</div>
 <div className="client-summary-grid">{[['Projects',d.projects.filter(p=>p.client===id).length,'work'],['Open tasks',d.tasks.filter(t=>t.client===id&&t.status!=='Done'&&!t.arch).length,'work'],['Invoices',d.invoices.filter(i=>i.client===id).length,'invoices']].map(([label,count,target])=><button className="card client-summary" key={label} onClick={()=>setSection(target)}><strong>{count}</strong><span>{label}</span></button>)}</div><details className="card"><summary>Activity timeline</summary><Timeline d={d} client={id}/></details>
       <div className="end" style={{ justifyContent: 'flex-start', margin: 0 }}><button className="ghost sm" onClick={() => mut((n) => { const x = n.clients.find((y) => y.id === id); x.arch = !x.arch; })}>{c.arch ? 'Restore client' : 'Archive client'}</button><button className="ghost danger sm" onClick={() => removeItem('clients',id)}>Delete client</button></div></section>}
     {section==='work'&&<section aria-label="Client work">    <div className="hd" style={{ marginTop: 16 }}><h3 style={{ margin: 0 }}>Projects</h3><button className="ghost sm" onClick={() => open('project', { client: id })}>+ Project</button></div>
@@ -372,6 +372,24 @@ function Settings({ d, mut, toast, ask, user, logout, demo, saving, signingOut, 
     <section id="settings-whats-new" className="settings-section"><WhatsNew/></section>
     <section id="settings-account" className="settings-section"><div className="card account-settings"><h2 style={{marginTop:0}}>Account</h2><p className="mu">{demo ? 'You are exploring the demo with sample data.' : 'Signed in as ' + (user?.email || user?.displayName || 'your Google account') + '.'} Signing out returns to the login page. Workspace deletion keeps your shared TaskFlow account.</p><div className="end" style={{ justifyContent: 'flex-start' }}><button className="ghost" disabled={signingOut} onClick={logout}>{signingOut ? 'Signing out…' : 'Sign out'}</button><button className="ghost danger" disabled={signingOut || (!demo && saving === 'saving')} onClick={del}>Delete SoloDesk workspace</button></div></div></section>
   </>);
+}
+
+/* ---------- client form ---------- */
+const linkName = l => l.label || (() => { try { return new URL(l.url).hostname.replace(/^www\./, ''); } catch { return l.url; } })();
+function ClientLinks({ links }) {
+  return links?.length ? <div className="client-links">{links.map((l, i) => <a key={i} className="chip white" href={l.url} target="_blank" rel="noopener noreferrer"><Icon name="link" size={14} />{linkName(l)}</a>)}</div> : null;
+}
+function ClientForm({ v, close, save, removeItem }) {
+  const [links, setLinks] = useState(() => v.links?.length ? v.links.map(l => ({ ...l })) : [{ label: '', url: '' }]);
+  const set = (i, k, x) => setLinks(links.map((l, j) => j === i ? { ...l, [k]: x } : l));
+  return <Modal title={v.id ? 'Edit client' : 'New client'} onDelete={v.id ? () => removeItem('clients',v.id) : undefined} onClose={close} onSubmit={(o) => save('clients', { ...o, links })}>
+    <Fld l="Name" name="name" required defaultValue={v.name} /><Fld l="Email" name="email" type="email" defaultValue={v.email} /><Fld l="Phone" name="phone" type="tel" defaultValue={v.phone} />
+    <fieldset className="link-rows"><legend>Website & links</legend>
+      {links.map((l, i) => <div className="link-row" key={i}><input aria-label={'Link ' + (i + 1) + ' name'} placeholder="Name (optional)" maxLength={40} value={l.label} onChange={e => set(i, 'label', e.target.value)} /><input aria-label={'Link ' + (i + 1) + ' address'} placeholder="acme.com" inputMode="url" value={l.url} onChange={e => set(i, 'url', e.target.value)} /><button type="button" className="icon-button" aria-label={'Remove link ' + (i + 1)} onClick={() => setLinks(links.length > 1 ? links.filter((_, j) => j !== i) : [{ label: '', url: '' }])}><Icon name="close" size={16} /></button></div>)}
+      {links.length < 10 && <button type="button" className="add-inline-link" onClick={() => setLinks([...links, { label: '', url: '' }])}><Icon name="plus" size={16} />Add a link</button>}
+    </fieldset>
+    <label>Address<textarea name="address" rows="2" defaultValue={v.address} /></label><label>Notes<textarea name="notes" rows="2" defaultValue={v.notes} /></label>
+  </Modal>;
 }
 
 /* ---------- project form ---------- */
@@ -662,9 +680,7 @@ export default function App() {
     {experience && <Experience key={experience+'-'+experienceOwner} mode={experience} demo={demo} onClose={closeExperience} onTour={startTour}/>}
     {dlg?.k === 'new' && <Modal title="Create new" label="Close" onClose={close} onSubmit={close}>
       {[['client', 'Client'], ['project', 'Project'], ['task', 'Task'], ['invoice', 'Invoice']].map(([k, t]) => <button type="button" key={k} className="row" style={{ width: '100%', font: 'inherit', color: 'inherit', cursor: 'pointer' }} onClick={() => { close(); setTimeout(() => open(k), 0); }}><b>{t}</b></button>)}</Modal>}
-    {dlg?.k === 'client' && <Modal title={v.id ? 'Edit client' : 'New client'} onDelete={v.id ? () => removeItem('clients',v.id) : undefined} onClose={close} onSubmit={(o) => save('clients', o)}>
-      <Fld l="Name" name="name" required defaultValue={v.name} /><Fld l="Email" name="email" type="email" defaultValue={v.email} /><Fld l="Phone" name="phone" type="tel" defaultValue={v.phone} />
-      <label>Address<textarea name="address" rows="2" defaultValue={v.address} /></label><label>Notes<textarea name="notes" rows="2" defaultValue={v.notes} /></label></Modal>}
+    {dlg?.k === 'client' && <ClientForm v={v} close={close} save={save} removeItem={removeItem} />}
     {dlg?.k === 'project' && <ProjectForm v={v} d={d} mut={mut} toast={toast} close={close} save={save} removeItem={removeItem} />}
     {dlg?.k === 'task' && <Modal title={v.id ? 'Edit task' : 'New task'} onDelete={v.id ? () => removeItem('tasks',v.id) : undefined} onClose={close} onSubmit={(o) => save('tasks', o)}>
       <Fld l="Title" name="title" required defaultValue={v.title} />

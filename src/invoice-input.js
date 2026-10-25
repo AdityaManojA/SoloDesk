@@ -1,9 +1,26 @@
 const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value || '') && Number.isFinite(Date.parse(value + 'T00:00:00Z')) && new Date(value + 'T00:00:00Z').toISOString().slice(0,10) === value;
 
+// Accepts "acme.com" as well as full addresses; only http(s) links are kept.
+export function clientLinkUrl(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  try { const url = new URL(/^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : 'https://' + raw); return ['https:','http:'].includes(url.protocol) && !url.username && !url.password && url.hostname.includes('.') && url.href.length <= 300 ? url.href : null; } catch { return null; }
+}
+export const MAX_CLIENT_LINKS = 10;
+
 export function prepareClient(values) {
   const client = Object.fromEntries(['name','email','phone','address','notes'].map(key=>[key,String(values[key] || '').trim()]));
   if (!client.name) return {error:'Enter a client name.'};
   if (client.email && !/^[^\s@]+@[^\s@]+$/.test(client.email)) return {error:'Enter a valid client email address, or leave it blank.'};
+  const links = [];
+  for (const link of Array.isArray(values.links) ? values.links : []) {
+    const url = clientLinkUrl(link?.url), label = String(link?.label || '').trim().slice(0,40);
+    if (url === '') { if (label) return {error:`Add a web address for “${label}”, or remove it.`}; continue; }
+    if (!url) return {error:`“${String(link.url).trim()}” isn’t a web address. Try something like acme.com.`};
+    links.push({label,url});
+  }
+  if (links.length > MAX_CLIENT_LINKS) return {error:`Add up to ${MAX_CLIENT_LINKS} links per client.`};
+  client.links = links;
   return {client};
 }
 

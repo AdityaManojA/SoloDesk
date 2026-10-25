@@ -10,6 +10,8 @@ export const changelog=[
     ['Effort budget when you need it','Budget hours and hourly rate only appear when you tick “Track an effort budget”.'],
     ['Clickable breadcrumb','The path at the top left now links back: Workspace goes Home, the section opens its list, and the last part shows the client, project or note you are on.'],
     ['More action colours','Eight new presets — coral, mustard, olive, sage, teal, sky, lavender and stone — plus a Custom colour picker for any shade you like.'],
+    ['Links on clients','Add a client’s website, Instagram or any other link in the client form. Type just “acme.com” and SoloDesk fills in the rest; links show under the client’s name.'],
+    ['Safer portal passwords','When you create a client portal login you type the password twice, and clients must enter their current password before setting a new one.'],
     ['A fresh welcome','Onboarding and the guided tour were redone in the new colours and now walk through Home, Notes, Calendar zoom and free days, your Profile and Settings.'],
   ],fixes:[
     'Calendar zoom buttons are easier to spot.',

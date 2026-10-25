@@ -31,7 +31,7 @@ export function validateWorkspace(input){
   for(const list of ['projectTemplates','invoiceSchedules','focusSessions','activity','trash','notes','docs'])if(w[list]!=null&&!Array.isArray(w[list]))throw new Error('Invalid '+list+' in backup.');
   const strings=(row,fields)=>fields.every(key=>row[key]==null||typeof row[key]==='string');
   const checklist=items=>items==null||Array.isArray(items)&&items.every(c=>object(c)&&typeof c.title==='string'&&(c.id==null||typeof c.id==='string')&&(c.done==null||typeof c.done==='boolean'));
-  if(!w.clients.every(c=>strings(c,['email','phone','address','notes']))||!w.projects.every(p=>strings(p,['client','status']))||!w.tasks.every(t=>strings(t,['client','project','status','priority','notes','scheduledAt','repeat'])&&checklist(t.checklist)))throw new Error('Invalid text or checklist fields.');
+  if(!w.clients.every(c=>strings(c,['email','phone','address','notes'])&&(c.links==null||Array.isArray(c.links)&&c.links.length<=10&&c.links.every(l=>l&&typeof l.label==='string'&&typeof l.url==='string'&&/^https?:\/\//i.test(l.url))))||!w.projects.every(p=>strings(p,['client','status']))||!w.tasks.every(t=>strings(t,['client','project','status','priority','notes','scheduledAt','repeat'])&&checklist(t.checklist)))throw new Error('Invalid text or checklist fields.');
   for(const list of ['projectTemplates','invoiceSchedules','focusSessions','activity','trash','notes','docs']){
     const ids=new Set();for(const row of w[list]||[]){if(!object(row)||typeof row.id!=='string'||!row.id||ids.has(row.id))throw new Error('Invalid '+list+' IDs.');ids.add(row.id);}
   }
