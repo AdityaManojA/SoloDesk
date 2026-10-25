@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from './Icon';
+import { parseWhen } from './smart-parse';
 import { rid, today } from './lib';
 import { trashReusable } from './productivity';
 import { shiftLevel, toggleItem, insertAfter, removeItem, linesToItems, itemsToLines } from './checklist';
@@ -27,6 +28,15 @@ function useDebounced(fn, ms = 1200) {
   }), [ms]);
 }
 
+// "Call Ava tomorrow" → item "Call Ava" with a reminder for tomorrow (same wording as TaskFlow and task titles).
+function withReminder(item) {
+  if (item.due || !item.title) return item;
+  const w = parseWhen(item.title), date = w.chips.find(c => c.kind === 'date');
+  if (!date || !w.due) return item;
+  const title = w.chips.filter(c => c.kind === 'date' || c.kind === 'time').reduce((x, c) => x.replace(c.text, ' '), item.title).replace(/\s+(due|by|on)\s*$/i, '').replace(/\s+/g, ' ').trim();
+  return title ? { ...item, title, due: w.due } : item;
+}
+
 // Apple Notes-style checklist: type, Enter for the next item, Tab / Shift+Tab to nest, all in place.
 function Checklist({ note, save }) {
   const [items, setItems] = useState(note.checklist || []), refs = useRef({}), focus = useRef(null);
@@ -43,7 +53,7 @@ function Checklist({ note, save }) {
       // Split at the caret, like a text editor: text after the caret moves to the new item.
       const id = rid(), before = c.title.slice(0, el.selectionStart), after = c.title.slice(el.selectionEnd);
       focus.current = { id, at: 'start' };
-      commit(insertAfter(items.map(x => x.id === c.id ? { ...x, title: before } : x), c.id, { id, title: after }), true);
+      commit(insertAfter(items.map(x => x.id === c.id ? (after ? { ...x, title: before } : withReminder({ ...x, title: before })) : x), c.id, { id, title: after }), true);
     } else if (e.key === 'Tab') {
       e.preventDefault(); focus.current = { id: c.id, at: el.selectionStart === 0 ? 'start' : 'end' };
       commit(shiftLevel(items, c.id, e.shiftKey ? -1 : 1), true);
@@ -57,7 +67,7 @@ function Checklist({ note, save }) {
     {items.map((c, i) => <div key={c.id} className={'keep-item' + (c.done ? ' done' : '')} style={{ paddingLeft: 4 + (c.level || 0) * 30 }}>
       <button type="button" className="check-box" role="checkbox" aria-checked={!!c.done} aria-label={(c.done ? 'Untick ' : 'Tick ') + (c.title || 'item')} onClick={() => commit(toggleItem(items, c.id), true)}>{c.done && <Icon name="check" size={13} />}</button>
       <input ref={el => { refs.current[c.id] = el; }} aria-label={(c.level ? 'Sub-item' : 'List item') + (c.level ? ', level ' + (c.level + 1) : '')} value={c.title} placeholder={i === 0 ? 'List item' : ''}
-        onChange={e => commit(items.map(x => x.id === c.id ? { ...x, title: e.target.value } : x))} onBlur={() => debounced.flush(items)} onKeyDown={e => key(e, c, i)} />
+        onChange={e => commit(items.map(x => x.id === c.id ? { ...x, title: e.target.value } : x))} onBlur={() => { const next = items.map(x => x.id === c.id ? withReminder(x) : x); if (next.some((x, j) => x !== items[j])) commit(next, true); else debounced.flush(items); }} onKeyDown={e => key(e, c, i)} />
       <label className={'keep-due' + (c.due ? ' set' + (c.due < t && !c.done ? ' late' : '') : '')} title="Reminder date">
         {c.due ? shortDay(c.due) : <Icon name="bell" size={14} />}
         <input type="date" aria-label={'Reminder for ' + (c.title || 'item')} value={c.due || ''} onChange={e => commit(items.map(x => x.id === c.id ? { ...x, due: e.target.value || undefined } : x), true)} />

@@ -198,3 +198,19 @@ export const applySuggestion = (text, s) => { const after = text.slice(s.end).re
 const fmtDay = (iso, now = new Date()) => { const t = toStr(now), n = diffDays(t, iso); return n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : n > 1 && n < 7 ? fromStr(iso).toLocaleDateString(undefined, { weekday: 'long' }) : fromStr(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: iso.slice(0, 4) === t.slice(0, 4) ? undefined : 'numeric' }); };
 const fmtTime = hm => { const [h, m] = hm.split(':').map(Number); return new Date(2000, 0, 1, h, m).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); };
 export { fmtDay, fmtTime, toStr as dateKeyOf };
+
+// Work on one day, for search: "tomorrow", "next friday", "due 3 nov".
+export function workOnDay(workspace, iso) {
+  const local = s => { if (!s || !Number.isFinite(Date.parse(s))) return ''; const d = new Date(s); return toStr(d); };
+  const rows = [];
+  for (const t of workspace.tasks || []) if (!t.arch && (t.due === iso || local(t.scheduledAt) === iso)) rows.push({ kind: 'tasks', id: t.id, title: t.title, detail: (t.scheduledAt && local(t.scheduledAt) === iso ? 'Scheduled ' + fmtTime(new Date(t.scheduledAt).toTimeString().slice(0, 5)) : 'Due') + ' · ' + t.status, path: '#/tasks/' + t.id });
+  for (const i of workspace.invoices || []) if (i.due === iso && i.state !== 'draft') rows.push({ kind: 'invoices', id: i.id, title: i.no, detail: 'Invoice due', path: '#/invoices/' + i.id });
+  for (const p of workspace.projects || []) if (p.start === iso || p.end === iso) rows.push({ kind: 'projects', id: p.id, title: p.name, detail: p.start === iso ? 'Starts' : 'Ends', path: '#/projects/' + p.id });
+  return rows;
+}
+// A search box query split into a day (if one is named) and the remaining words.
+export function searchQuery(query, now = new Date()) {
+  const when = parseWhen(query, now), dateChip = when.chips.find(c => c.kind === 'date');
+  if (!dateChip || !when.due) return { day: '', text: query };
+  return { day: when.due, text: when.chips.reduce((q, c) => q.replace(c.text, ' '), query).replace(/\b(due|on|by)\b/gi, ' ').replace(/\s+/g, ' ').trim() };
+}

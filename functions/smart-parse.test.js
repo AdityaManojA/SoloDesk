@@ -59,3 +59,12 @@ test('suggestions complete names and date words as you type', () => {
   assert.ok(!suggest('see old', undefined, W).some(x => x.label === 'Old site'));
   assert.deepEqual(suggest('call tomorrow ', undefined, W), []);
 });
+
+test('search understands days', async () => {
+  const { workOnDay, searchQuery } = await import('../src/smart-parse.js');
+  assert.deepEqual(searchQuery('tomorrow', NOW), { day: '2026-10-22', text: '' });
+  assert.deepEqual(searchQuery('ava due friday', NOW), { day: '2026-10-23', text: 'ava' });
+  assert.deepEqual(searchQuery('website', NOW), { day: '', text: 'website' });
+  const w = { tasks: [{ id: 't', title: 'Call', status: 'Todo', due: '2026-10-22' }, { id: 'x', title: 'Old', status: 'Todo', due: '2026-10-22', arch: true }], invoices: [{ id: 'i', no: 'INV-1', due: '2026-10-22', state: 'sent' }], projects: [{ id: 'p', name: 'Site', start: '2026-10-22' }] };
+  assert.deepEqual(workOnDay(w, '2026-10-22').map(r => r.id), ['t', 'i', 'p']);
+});

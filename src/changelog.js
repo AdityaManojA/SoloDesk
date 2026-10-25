@@ -2,7 +2,12 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
-  {version:'1.05',released:false,date:'',title:'See your free days at a glance',highlights:[
+  {version:'1.05',released:false,date:'',title:'Client approvals, a new client portal and smart typing',highlights:[
+    ['Send work for approval','Open a task and choose Send for approval. Your client approves it or asks for changes in their portal, and the answer comes back to the task. A new Approvals page shows what is waiting, approved or needs changes.'],
+    ['A client portal that shows the work','Clients now see the project tasks you share, their links, the documents and PRDs you pick, and sent invoices, in a new colourful portal with their approvals at the top. Copy the portal link straight from Client access.'],
+    ['Type it, and it fills in','Like TaskFlow: type “Send the draft to Ava tomorrow at 7pm” and the date, time, client and project fill themselves in. Suggestions appear as you type; press Tab to pick one. Works for tasks, projects (“from Nov 3 to Dec 20”), search and checklist reminders.'],
+    ['Search by day','Search for “tomorrow” or “next Friday” to see the work on that day.'],
+    ['Clearer document buttons','Link a file and New PRD are now two clear buttons with a short description each.'],
     ['Free and busy days','Every day in the calendar is coloured by how full it is — free, light, busy or packed — with a count of items and clients. The year view becomes a heatmap of your free days.'],
     ['Projects across every day','Project timelines now stretch across every day they cover in the month view, instead of showing only at the start of each week.'],
     ['Ongoing projects','Leave a project’s end date empty and it runs on from its start date until you add one.'],
