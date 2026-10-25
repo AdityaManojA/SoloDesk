@@ -1,6 +1,6 @@
 import Icon from './Icon';
 import Shape from './Shapes.jsx';
-import { ACTION_COLOURS, DEFAULT_ACTION, actionColour } from './appearance';
+import { ACTION_COLOURS, DEFAULT_ACTION, actionColour, isCustomColour, readableWithBlack } from './appearance';
 import { changelog, currentVersion } from './changelog';
 import { PARTY_FIELDS } from './invoice-input';
 
@@ -16,7 +16,9 @@ export function AppearanceSettings({ d, mut, theme, setTheme }) {
         <div className="block-head" style={{ margin: 0 }}><h2 id="action-colour">Action colour</h2><button className="chip dashed" style={{ cursor: 'pointer' }} onClick={() => pick(DEFAULT_ACTION)}>Reset to Terracotta</button></div>
         <p style={{ margin: 0, color: 'var(--mu)' }}>Used for highlights: the active menu item, today in the calendar, featured cards and selected tags. Buttons stay black.</p>
         <div className="swatches" role="radiogroup" aria-labelledby="action-colour">{ACTION_COLOURS.map((c, i) => <button key={c.id} id={'swatch-' + c.id} type="button" role="radio" className="swatch" aria-checked={current === c.id} tabIndex={current === c.id ? 0 : -1} onKeyDown={e => move(e, i)} onClick={() => pick(c.id)}><i style={{ background: c.hex }}>{current === c.id && <Icon name="check" size={18} />}</i><span><b>{c.name}</b><small>{c.hex}</small></span></button>)}</div>
-        <p className="notice soft" style={{ margin: 0 }}>Every option keeps black text readable. Your choice is saved to this workspace and shows on every device.</p>
+        <div className="custom-colour"><label className={'swatch' + (isCustomColour(current) ? ' on' : '')} aria-checked={isCustomColour(current)}><i style={{ background: isCustomColour(current) ? current : 'conic-gradient(#E8957A,#E5B94E,#A7B98B,#86B8B1,#9DC3E0,#B8A9DC,#E8957A)' }} /><span><b>Custom</b><small>{isCustomColour(current) ? current.toUpperCase() : 'Pick any colour'}</small></span><input type="color" aria-label="Pick a custom action colour" value={isCustomColour(current) ? current : '#E8957A'} onChange={e => pick(e.target.value.toUpperCase())} /></label>
+          {isCustomColour(current) && !readableWithBlack(current) && <p className="notice hero" style={{ margin: 0 }}>This colour is quite dark, so black text on it may be hard to read. A lighter shade works best.</p>}</div>
+        <p className="notice soft" style={{ margin: 0 }}>Every preset keeps black text readable. Your choice is saved to this workspace and shows on every device.</p>
       </div>
       <aside className="card" style={{ background: 'var(--sf)', display: 'grid', gap: 12, alignContent: 'start' }} aria-label="Preview">
         <div className="block-head" style={{ margin: 0 }}><h3>Preview</h3><span className="chip hero">Live</span></div>

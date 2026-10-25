@@ -4,12 +4,13 @@ export function wasSeen(storage,key){try{return storage.getItem(key)==='1';}catc
 export function rememberSeen(storage,key){try{storage.setItem(key,'1');return true;}catch{return false;}}
 
 export const tourSteps=[
-  {page:'dash',target:'.page-dash .tile-row .tile',title:'Jump back in',text:'Your **three most recently edited** clients, projects and quests stay here. **View all work** shows everything.'},
-  {page:'dash',target:'.page-dash .side-col .wide-btn',title:'Plan your day',text:'**Add task** and see **today’s timeline** here. On a phone, tap **+** to create anything.'},
-  {page:'clients',target:'.page-clients .hd > .btn',title:'Keep your clients together',text:'Use **Add client** to get started. Open a client to see their **projects**, **tasks** and **invoices**.'},
-  {page:'projects',target:'.page-projects .hd > .btn',title:'Plan the whole project',text:'Add **start & end dates** to put a **project timeline** on your calendar.'},
-  {page:'tasks',target:'.page-tasks .hd > .btn',title:'Give each task a next step',text:'Set a **priority** and **deadline**. Shared **TaskFlow quests** stay **read-only**.'},
-  {page:'calendar',target:'.page-calendar .view-switch',title:'Make room for your work',text:'Use **Month** or **Agenda**. **Drag** SoloDesk work, or open it → **Move to date**. Edit shared events in their **source app**.'},
-  {page:'invoices',target:'.page-invoices .hd > .btn',title:'From draft to paid',text:'Create a **draft** → mark it **sent** → **record payment**. Reports use recorded payments.'},
-  {page:'settings',target:'.page-settings .tabs-pill',title:'Make this desk yours',text:'Pick your **action colour** in **Appearance**, set **bank details** for invoices, and read **What’s new**. Replay this tour from **Data & connections**.'},
+  {page:'dash',target:'.page-dash .tile-row .tile',preview:'home',title:'Jump back in',text:'Your **three latest edits** live here. Click one to **edit it right on Home**. **View all work** shows everything.'},
+  {page:'dash',target:'.page-dash .home-note',preview:'notes',title:'Take a note',text:'Start typing to capture a thought. Switch it to a **checklist** whenever you like.'},
+  {page:'notes',target:'.page-notes .notes-index-head',preview:'notes',title:'All your notes',text:'Notes open beside the list. **Enter** adds a line, **Tab** nests a **subtask**, and items can have **reminders**.'},
+  {page:'clients',target:'.page-clients .hd > .btn',preview:'clients',title:'Keep your clients together',text:'Open a client to see their **projects**, **notes**, **files** and **invoices** in one place.'},
+  {page:'projects',target:'.page-projects .hd > .btn',preview:'projects',title:'Plan the whole project',text:'Add a client **inline**, set a **start date**, and leave the end empty for **ongoing** work.'},
+  {page:'calendar',target:'.page-calendar .cal-zoom',preview:'calendar',title:'Zoom through your time',text:'Use **zoom in / out** (or **Ctrl + scroll**) to move between **year, month, week and day**. Colours show **free** and **packed** days.'},
+  {page:'invoices',target:'.page-invoices .hd > .btn',preview:'invoices',title:'From draft to paid',text:'Every part of an invoice is **editable**: number, title, parties and **bank details**.'},
+  {page:'profile',target:'.page-profile .page-head',preview:'profile',title:'Your public profile',text:'Share **solodesk/your-name** with clients. It stays **private** until you turn it on.'},
+  {page:'settings',target:'.page-settings .settings-tabs',preview:'colours',title:'Make this desk yours',text:'Pick an **action colour** in **Appearance**, set **bank details**, and read **What’s new** after each update.'},
 ];

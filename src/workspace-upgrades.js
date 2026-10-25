@@ -1,5 +1,6 @@
 import {fresh,calc} from './lib.js';
 import {assertWorkspaceSize} from './workspace-size.js';
+import {ACTION_COLOURS,isCustomColour} from './appearance.js';
 
 export function assertUnchanged(actual,expected){
   if(actual!==expected)throw Object.assign(new Error('This workspace changed in another tab or device. Export your pending changes before loading the latest version.'),{code:'workspace-conflict'});
@@ -42,7 +43,7 @@ export function validateWorkspace(input){
   for(const list of ['clients','projects','tasks','invoices'])for(const row of w[list])if(row.updatedAt!=null&&typeof row.updatedAt!=='string')throw new Error('Invalid '+list+' timestamp.');
   const textGroup=(value,keys)=>value==null||object(value)&&keys.every(key=>value[key]==null||typeof value[key]==='string');
   for(const i of w.invoices)if(!strings(i,['title','reference','taxLabel','pay'])||!textGroup(i.from,['name','email','phone','address','taxId'])||!textGroup(i.billTo,['name','email','address'])||!textGroup(i.bank,['accountName','bankName','accountNumber','ifsc','swift','iban','upi']))throw new Error('Invalid invoice details.');
-  if(w.settings.actionColour!=null&&!['terracotta','clay','rust','apricot','sienna','brick','peach','dusty-blue'].includes(w.settings.actionColour))throw new Error('Invalid appearance settings.');
+  if(w.settings.actionColour!=null&&!ACTION_COLOURS.some(c=>c.id===w.settings.actionColour)&&!isCustomColour(w.settings.actionColour))throw new Error('Invalid appearance settings.');
   if(w.docs!=null&&(!Array.isArray(w.docs)||w.docs.some(d=>!object(d)||typeof d.id!=='string'||typeof d.title!=='string'||!strings(d,['kind','url','status','client','project','problem','goals','outOfScope','updatedAt'])||d.requirements!=null&&!checklist(d.requirements))))throw new Error('Invalid documents.');
   if(w.settings.taxId!=null&&typeof w.settings.taxId!=='string'||!textGroup(w.settings.bank,['accountName','bankName','accountNumber','ifsc','swift','iban','upi']))throw new Error('Invalid business settings.');
   if(w.profile!=null&&(!object(w.profile)||!strings(w.profile,['username','name','headline','bio','location'])||['public','available'].some(k=>w.profile[k]!=null&&typeof w.profile[k]!=='boolean')||w.profile.links!=null&&(!Array.isArray(w.profile.links)||w.profile.links.some(l=>!object(l)||typeof l.label!=='string'||typeof l.url!=='string'))||w.profile.clients!=null&&(!Array.isArray(w.profile.clients)||w.profile.clients.some(id=>typeof id!=='string'))))throw new Error('Invalid profile.');

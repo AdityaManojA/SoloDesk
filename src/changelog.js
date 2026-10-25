@@ -8,8 +8,13 @@ export const changelog=[
     ['Ongoing projects','Leave a project’s end date empty and it runs on from its start date until you add one.'],
     ['Add a client while creating a project','“Add a new client” sits right under the client list in the project form.'],
     ['Effort budget when you need it','Budget hours and hourly rate only appear when you tick “Track an effort budget”.'],
+    ['Clickable breadcrumb','The path at the top left now links back: Workspace goes Home, the section opens its list, and the last part shows the client, project or note you are on.'],
+    ['More action colours','Eight new presets — coral, mustard, olive, sage, teal, sky, lavender and stone — plus a Custom colour picker for any shade you like.'],
+    ['A fresh welcome','Onboarding and the guided tour were redone in the new colours and now walk through Home, Notes, Calendar zoom and free days, your Profile and Settings.'],
   ],fixes:[
     'Calendar zoom buttons are easier to spot.',
+    'Radio buttons and checkboxes no longer stretch across the whole row (for example “Who can see it?” in profile setup).',
+    'Removed the logo download section from Settings → Appearance.',
   ]},
   {version:'1.04',released:true,date:'2026-10-25',title:'Edit what you were working on, right from Home',highlights:[
     ['Jump back in, editable','Home now shows the notes, tasks, projects and clients you edited most recently. Open a note, tick a checklist item or a task, or edit a project or client without leaving Home.'],

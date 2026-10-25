@@ -77,3 +77,10 @@ test('invoice number, title, parties and bank details are editable and fall back
   assert.throws(()=>validateWorkspace({...w,profile:{public:'yes'}}),/profile/);
   assert.throws(()=>validateWorkspace({...w,notes:[{id:'n',title:'N',checklist:[{title:'x',due:'soon'}]}]}),/note/);
 });
+
+test('action colour accepts presets and custom hex colours only', async () => {
+  const { validateWorkspace } = await import('../src/workspace-upgrades.js');
+  const base = { ...fresh(), settings: { ...fresh().settings } };
+  for (const ok of ['terracotta', 'teal', '#A1B2C3']) assert.ok(validateWorkspace({ ...base, settings: { ...base.settings, actionColour: ok } }));
+  for (const bad of ['pink-ish', '#12345', 'red']) assert.throws(() => validateWorkspace({ ...base, settings: { ...base.settings, actionColour: bad } }), /appearance/);
+});
