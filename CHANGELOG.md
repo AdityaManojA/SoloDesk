@@ -2,6 +2,18 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.04 — 25 October 2026 · Edit what you were working on, right from Home
+
+- **Jump back in, editable.** Home shows the notes, tasks, projects and clients you edited most recently (never TaskFlow quests). Notes open in place under the cards; tick checklist items and tasks straight from a card; project and client cards open their editors.
+- **TaskFlow, tucked away.** Quests sit in a small pill next to the greeting with a quick list.
+- **Checklists like Apple Notes.** Enter for the next item, Tab / Shift+Tab to nest and un-nest, Enter on an empty sub-item steps out, Backspace at the start outdents or joins with the item above. Ticking an item ticks its sub-items; items keep their place.
+- **Notes, side by side.** The Notes page lists notes on the left and opens the selected one on the right, ready to type — no pop-up windows.
+- **Calendar zoom buttons.** Labelled Zoom in / Zoom out, plus Ctrl/⌘ + scroll or a trackpad pinch over the calendar.
+
+Fixes
+- Note fields no longer show a form-style box while typing.
+- Text typed just before closing a note is saved; notes save less often while you type.
+
 ## 1.03 — 25 October 2026 · A clearer calendar, Keep-style notes and a tidier workspace
 
 - **Calendar, rebuilt.** One zoom control from Year → Month → Week → Day (also keys Y, M, W, D and T for today). A "What you're working on" timeline above every zoom level shows each client's projects as bars across the period. Month view packs multi-day projects into bars like Google Calendar; Week and Day are hourly timelines with a now line; the Day view adds a plan of what is due, scheduled and running, plus the free-time tools. Drag-to-reschedule, Move to date and ICS export remain.
