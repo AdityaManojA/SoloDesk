@@ -100,7 +100,7 @@ export function useInvoiceEdit(i, d, mut, toast) {
     panel: draft && <aside className="card" style={{ display: 'grid', gap: 12, alignSelf: 'start' }} aria-label="Invoice settings">
       <h3 style={{ margin: 0 }}>Invoice settings</h3>
       <label>Client<Select aria-label="Client" value={draft.client} onChange={e => set('client', e.target.value)}>{d.clients.filter(c => !c.arch || c.id === i.client).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</Select></label>
-      <p className="empty-note" style={{ margin: 0 }}>Currency: {d.settings.cur || 'USD'} (change it in Settings → Business).</p>
+      <p className="empty-note" style={{ margin: 0 }}>Currency: {d.settings.cur || 'USD'} (change it in Settings → General).</p>
       <label><input type="checkbox" checked={saveBank} onChange={e => setSaveBank(e.target.checked)} /> Save these bank details as my default</label>
       <p className="notice soft" style={{ margin: 0 }}>Empty fields use your defaults from Settings and the client record. Sent invoices are locked: void and reissue to change one.</p>
       {error && <p className="inline-error" role="alert">{error}</p>}

@@ -24,6 +24,7 @@ const paths = {
   bell: 'M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z M10 21h4',
   left: 'M19 12H5 M11 6l-6 6 6 6',
   sync: 'M21 12a9 9 0 1 1-3-6.7L21 8 M21 3v5h-5',
+  bolt: 'M13 2 4 14h7l-1 8 9-12h-7z',
   check: 'M5 12l4 4L19 6', logout: 'M9 3H4v18h5 M9 12h12 M16 7l5 5-5 5', more: 'M5 5h14 M5 12h14 M5 19h14',
 };
 export default function Icon({ name, size = 20, ...props }) {

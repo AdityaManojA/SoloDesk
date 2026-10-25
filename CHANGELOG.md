@@ -2,6 +2,20 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.03 — 25 October 2026 · A clearer calendar, Keep-style notes and a tidier workspace
+
+- **Calendar, rebuilt.** One zoom control from Year → Month → Week → Day (also keys Y, M, W, D and T for today). A "What you're working on" timeline above every zoom level shows each client's projects as bars across the period. Month view packs multi-day projects into bars like Google Calendar; Week and Day are hourly timelines with a now line; the Day view adds a plan of what is due, scheduled and running, plus the free-time tools. Drag-to-reschedule, Move to date and ICS export remain.
+- **Notes like Google Keep.** Title plus "Take a note…", or switch on the checklist: Enter adds the next item, Backspace on an empty item removes it, ticked items collect at the bottom, and any item can carry a reminder date. The Notes page shows every note, including client and project notes, with filters and search.
+- **Take a note from Home** — a shortcut under Add task.
+- **Profile setup walkthrough** — address (availability checked as you type), about you, links, clients to show, and visibility (private by default).
+- **Settings on one page** — General, Invoices & bank, Appearance, Data & connections, What's new and Account in one scroll; the sticky tabs follow the section you're reading.
+- **Cleaner toolbar and sidebar account area** — quick actions, search (⌘K), reports, settings and light/dark in one pill; your initials, name, email and log-out button at the bottom of the sidebar.
+- **Uniform project cards** with Archive and Delete side by side.
+- **Palette colours** in Reports and for TaskFlow items.
+
+Fixes
+- Removed the "All changes saved" label; the top bar only shows saving progress or a save problem.
+
 ## 1.02 — 25 October 2026 · A new look, and your whole client business in one place
 
 - **New design.** A calmer, business-ready look: a black sidebar, warm Terracotta colours (sage, sand, cream) and clearer type (Bricolage Grotesque and Figtree, served with the app) across every page, in light and dark.

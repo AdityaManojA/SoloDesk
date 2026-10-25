@@ -62,3 +62,30 @@ test('month source markers include every connected source on crowded dates',()=>
   assert.deepEqual(calendarSourceCounts(items),[{key:'taskflow',label:'TaskFlow',count:1},{key:'google',label:'Google Calendar',count:2},{key:'projects',label:'Projects',count:6},{key:'tasks',label:'SoloDesk tasks',count:1}]);
   assert.deepEqual(calendarSourceCounts([]),[]);
 });
+
+test('zoom ranges and stepping behave like a desktop calendar', async () => {
+  const { zoomRange, shiftZoom, weekStartKey } = await import('../src/calendar-view.js');
+  assert.deepEqual(zoomRange('year', '2026-10-25'), { start: '2026-01-01', end: '2027-01-01' });
+  assert.deepEqual(zoomRange('month', '2026-10-25'), { start: '2026-10-01', end: '2026-11-01' });
+  assert.deepEqual(zoomRange('week', '2026-10-25'), { start: '2026-10-19', end: '2026-10-26' });
+  assert.equal(weekStartKey('2026-10-26'), '2026-10-26');
+  assert.equal(shiftZoom('month', '2026-01-31', 1), '2026-02-28');
+  assert.equal(shiftZoom('year', '2028-02-29', 1), '2029-02-28');
+  assert.equal(shiftZoom('week', '2026-10-25', -1), '2026-10-18');
+});
+
+test('spanning items pack into lanes and timed items share columns only when they overlap', async () => {
+  const { spanLanes, layoutTimed, rangeFraction } = await import('../src/calendar-view.js');
+  const days = ['2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25'];
+  const lanes = spanLanes([{ id: 'a', start: '2026-10-10', end: '2026-10-22' }, { id: 'b', start: '2026-10-22', end: '2026-11-02' }, { id: 'c', start: '2026-10-20', end: '2026-10-21' }], days);
+  const byId = Object.fromEntries(lanes.map(l => [l.event.id, l]));
+  assert.deepEqual([byId.a.col, byId.a.span, byId.a.before], [0, 3, true]);
+  assert.deepEqual([byId.b.col, byId.b.span, byId.b.after], [3, 4, true]);
+  assert.equal(byId.b.lane, 0, 'b reuses the lane a has finished with');
+  assert.equal(byId.c.lane, 1);
+  const t = (id, h, m) => ({ id, allDay: false, start: new Date(`2026-10-25T${h}:00`).toISOString(), end: new Date(new Date(`2026-10-25T${h}:00`).getTime() + m * 60000).toISOString() });
+  const timed = Object.fromEntries(layoutTimed([t('x', '09:00', 60), t('y', '09:30', 60), t('z', '13:00', 30)], '2026-10-25').map(r => [r.event.id, r]));
+  assert.deepEqual([timed.x.top, timed.x.cols, timed.y.col, timed.z.cols], [540, 2, 1, 1]);
+  assert.deepEqual(rangeFraction('2026-10-15', '2026-11-10', { start: '2026-10-01', end: '2026-11-01' }), { left: 14 / 31, width: 17 / 31, before: false, after: true });
+  assert.equal(rangeFraction('2026-12-01', '2026-12-05', { start: '2026-10-01', end: '2026-11-01' }), null);
+});

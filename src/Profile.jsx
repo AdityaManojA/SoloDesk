@@ -3,7 +3,7 @@ import { doc, getDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import Icon from './Icon';
 import Shape from './Shapes.jsx';
 import { db, configured } from './firebase';
-import { PROFILE_COLLECTION, emptyProfile, prepareProfile, publicProfileDoc, safeUrl } from './profile';
+import { PROFILE_COLLECTION, emptyProfile, prepareProfile, publicProfileDoc, safeUrl, validUsername } from './profile';
 
 const initials = name => (name || '?').split(/\s+/).map(x => x[0]).join('').slice(0, 2).toUpperCase();
 
@@ -23,11 +23,21 @@ function ProfileCard({ p, clients }) {
 export function ProfileEditor({ d, mut, toast, user, demo }) {
   const saved = d.profile || { ...emptyProfile(), name: user?.displayName || d.settings.biz || '' };
   const [p, setP] = useState(() => ({ ...emptyProfile(), ...saved, links: saved.links?.length ? saved.links : [{ label: '', url: '' }] }));
-  const [busy, setBusy] = useState(false), [error, setError] = useState('');
+  const [busy, setBusy] = useState(false), [error, setError] = useState(''), [step, setStep] = useState(d.profile ? -1 : 0), [handle, setHandle] = useState({ name: '', status: '' });
   const set = (k, v) => setP(x => ({ ...x, [k]: v }));
   const url = `${location.origin}/${p.username || 'your-name'}`;
+  // Live username check against the published profiles (signed-in workspaces only).
+  useEffect(() => {
+    const name = p.username.trim().toLowerCase();
+    if (!name) { setHandle({ name, status: '' }); return; }
+    if (!validUsername(name)) { setHandle({ name, status: 'invalid' }); return; }
+    if (demo || !configured || !db || !user) { setHandle({ name, status: 'ok' }); return; }
+    setHandle({ name, status: 'checking' });
+    const timer = setTimeout(() => getDoc(doc(db, PROFILE_COLLECTION, name)).then(x => setHandle({ name, status: x.exists() && x.data().uid !== user.uid ? 'taken' : 'ok' }), () => setHandle({ name, status: 'ok' })), 400);
+    return () => clearTimeout(timer);
+  }, [p.username]);
   const save = async e => {
-    e.preventDefault(); setError('');
+    e?.preventDefault(); setError('');
     const result = prepareProfile(p, d);
     if (result.error) return setError(result.error);
     const next = result.profile, previous = d.profile?.username;
@@ -43,10 +53,11 @@ export function ProfileEditor({ d, mut, toast, user, demo }) {
       } catch { setBusy(false); return setError('Your profile could not be published. Check your connection and try again.'); }
       setBusy(false);
     }
-    mut(n => { n.profile = next; });
+    mut(n => { n.profile = next; }); setStep(-1);
     toast(demo ? 'Profile saved in the demo. Publishing works in your signed-in workspace.' : next.public ? 'Profile saved and public at ' + url.replace(/^https?:\/\//, '') : 'Profile saved. It stays private: visitors see only your name.');
   };
   const chosen = p.clients.map(id => d.clients.find(c => c.id === id)?.name).filter(Boolean);
+  if (step >= 0) return <ProfileSetup {...{ p, set, step, setStep, handle, url, d, chosen, busy, error, save }} />;
   return <form onSubmit={save}>
     <div className="page-head"><div className="grow"><h1>Profile</h1><p className="empty-note" style={{ margin: '6px 0 0' }}>A mini portfolio for clients and partners. Private until you choose to make it public.</p></div><a className="ghost" href={'/' + (d.profile?.username || '')} target="_blank" rel="noopener noreferrer" aria-disabled={!d.profile?.username}>View public page ↗</a><button className="btn" disabled={busy}>{busy ? 'Saving…' : 'Save profile'}</button></div>
     {error && <p className="inline-error" role="alert">{error}</p>}
@@ -85,6 +96,43 @@ export function ProfileEditor({ d, mut, toast, user, demo }) {
       </aside>
     </div>
   </form>;
+}
+
+const STEPS = ['Your address', 'About you', 'Links', 'Clients', 'Who can see it'];
+const HANDLE = { invalid: 'Use 3–30 lowercase letters, numbers, - or _, starting with a letter or number.', taken: 'That address is taken. Try another.', checking: 'Checking…', ok: 'Available' };
+
+// First-time profile setup, one question at a time. Everything can be changed later in the editor.
+function ProfileSetup({ p, set, step, setStep, handle, url, d, chosen, busy, error, save }) {
+  const canNext = step !== 0 || (handle.status === 'ok' && p.username) ;
+  const next = () => step < STEPS.length - 1 ? setStep(step + 1) : save();
+  return <section className="profile-setup">
+    <div className="page-head"><div className="grow"><h1>Set up your profile</h1><p className="empty-note" style={{ margin: '6px 0 0' }}>A mini portfolio you can share with clients: who you are, your links and who you have worked with. It stays private until you choose otherwise.</p></div></div>
+    <ol className="setup-steps" aria-label="Setup progress">{STEPS.map((x, i) => <li key={x} aria-current={i === step ? 'step' : undefined} className={i < step ? 'done' : ''}><span>{i < step ? '✓' : i + 1}</span>{x}</li>)}</ol>
+    <div className="two-col">
+      <div className="card setup-card">
+        {step === 0 && <><h2>Choose your address</h2><p>This is the link you share. You can change it later.</p>
+          <label>Username<div className="handle-field"><span>{location.host}/</span><input autoFocus value={p.username} onChange={e => set('username', e.target.value.toLowerCase().replace(/\s+/g, '-'))} placeholder="your-name" aria-describedby="handle-status" /></div></label>
+          <small id="handle-status" className={'handle-status ' + handle.status}>{HANDLE[handle.status] || ' '}</small></>}
+        {step === 1 && <><h2>Introduce yourself</h2><p>Your name and a one-line headline are what visitors see first.</p>
+          <label>Display name<input autoFocus value={p.name} maxLength={60} onChange={e => set('name', e.target.value)} /></label>
+          <label>Headline<input value={p.headline} maxLength={120} onChange={e => set('headline', e.target.value)} placeholder="Product designer for early-stage teams" /></label>
+          <div className="form-grid"><label>Location<input value={p.location} maxLength={60} onChange={e => set('location', e.target.value)} placeholder="Kochi, India" /></label><label style={{ alignSelf: 'end' }}><input type="checkbox" checked={p.available} onChange={e => set('available', e.target.checked)} /> Available for projects</label></div>
+          <label>Bio (optional)<textarea rows="3" value={p.bio} maxLength={600} onChange={e => set('bio', e.target.value)} /></label></>}
+        {step === 2 && <><h2>Add your links</h2><p>Portfolio, LinkedIn, your product, Dribbble — up to 10. Leave empty to skip.</p>
+          {p.links.map((l, i) => <div key={i} style={{ display: 'grid', gridTemplateColumns: '150px minmax(0,1fr)', gap: 8 }}><input aria-label={'Link ' + (i + 1) + ' label'} value={l.label} maxLength={40} placeholder="Portfolio" onChange={e => set('links', p.links.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} /><input type="url" aria-label={'Link ' + (i + 1) + ' address'} value={l.url} placeholder="https://" onChange={e => set('links', p.links.map((x, j) => j === i ? { ...x, url: e.target.value } : x))} /></div>)}
+          <button type="button" className="ghost sm" style={{ justifySelf: 'start' }} disabled={p.links.length >= 10} onClick={() => set('links', [...p.links, { label: '', url: '' }])}>+ Another link</button></>}
+        {step === 3 && <><h2>Show who you have worked with</h2><p>Only the names you tick appear. Nothing else about your clients is shared.</p>
+          {d.clients.filter(c => !c.arch).map(c => <label key={c.id}><input type="checkbox" checked={p.clients.includes(c.id)} onChange={e => set('clients', e.target.checked ? [...p.clients, c.id] : p.clients.filter(x => x !== c.id))} /> {c.name}</label>)}
+          {!d.clients.length && <p className="empty-note">No clients yet — you can add them to your profile later.</p>}</>}
+        {step === 4 && <><h2>Who can see it?</h2>
+          <label className="choice"><input type="radio" name="vis" checked={!p.public} onChange={() => set('public', false)} /><span><b>Private (recommended to start)</b><small>Visitors to {url.replace(/^https?:\/\//, '')} see only your name and that the profile is private.</small></span></label>
+          <label className="choice"><input type="radio" name="vis" checked={p.public} onChange={() => set('public', true)} /><span><b>Public</b><small>Anyone with the link sees your profile.</small></span></label></>}
+        {error && <p className="inline-error" role="alert">{error}</p>}
+        <div className="setup-nav">{step > 0 && <button type="button" className="ghost" onClick={() => setStep(step - 1)}>Back</button>}<span style={{ flex: 1 }} />{step > 0 && step < STEPS.length - 1 && <button type="button" className="ghost" onClick={() => setStep(step + 1)}>Skip</button>}<button type="button" className="btn" disabled={!canNext || busy} onClick={next}>{step === STEPS.length - 1 ? (busy ? 'Saving…' : 'Finish setup') : 'Next'}</button></div>
+      </div>
+      <aside className="card" style={{ background: 'var(--sf)' }} aria-label="Preview"><span className="eyebrow">PREVIEW</span><div style={{ marginTop: 14 }}><ProfileCard p={{ ...p, name: p.name || 'Your name', links: p.links.filter(l => l.label && safeUrl(l.url)) }} clients={chosen} /></div></aside>
+    </div>
+  </section>;
 }
 
 export function PublicProfile({ username }) {

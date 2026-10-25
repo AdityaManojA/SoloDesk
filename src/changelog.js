@@ -2,6 +2,18 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
+  {version:'1.03',released:true,date:'2026-10-25',title:'A clearer calendar, Keep-style notes and a tidier workspace',highlights:[
+    ['Calendar, rebuilt','Zoom from the whole year down to a single day, like Google or Apple Calendar. A “What you’re working on” timeline shows every client’s projects across the period, and the day view explains what is due, scheduled and running.'],
+    ['Notes like Google Keep','Take a note, or switch on the checklist and press Enter for each new item. Ticked items move to the bottom, any item can have a reminder date, and every note — including client and project notes — is on the Notes page.'],
+    ['Take a note from Home','A “Take a note…” shortcut sits under Add task on Home.'],
+    ['Set up your profile','A short walkthrough helps you pick your address (checked as you type), introduce yourself, add links and choose who can see it.'],
+    ['Settings on one page','Scroll through General, Invoices & bank, Appearance, Data & connections, What’s new and Account. The tabs follow along as you scroll.'],
+    ['Cleaner toolbar and account area','Quick actions, search (⌘K), reports, settings and light/dark mode sit together in one bar; your name and log out sit neatly at the bottom of the sidebar.'],
+    ['Even project cards','Every project card is the same size, with Archive and Delete side by side.'],
+    ['Your colours everywhere','Reports and TaskFlow items now use the SoloDesk palette.'],
+  ],fixes:[
+    'The “All changes saved” label is gone; SoloDesk only speaks up while saving or if something did not save.',
+  ]},
   {version:'1.02',released:true,date:'2026-10-25',title:'A new look, and your whole client business in one place',highlights:[
     ['New design','A calmer, business-ready look: a black sidebar, warm Terracotta colours and clearer type across every page.'],
     ['Choose your action colour','Pick the highlight colour for your workspace in Settings → Appearance. Terracotta is the default.'],

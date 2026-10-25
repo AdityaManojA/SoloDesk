@@ -103,6 +103,7 @@ export function Home({ d, open, user, taskflow }) {
       {!hidden.includes('work') && <aside className="side-col" aria-label="Calendar and today">
         <MiniCalendar d={d} />
         <div style={{ display: 'flex', gap: 8 }}><button className="btn wide-btn" onClick={() => open('task')}>Add task</button><button className="ghost" aria-label="New invoice" onClick={() => open('invoice')}><Icon name="invoices" size={18} /></button></div>
+        <a className="keep-composer-bar home-note" href="#/notes/new"><Icon name="notes" size={18} /><span>Take a note…</span></a>
         <div className="block-head" style={{ margin: 0 }}><h3>Today</h3><span className="chip ink">{dueToday.length}</span></div>
         <div className="timeline">{timeline.length ? timeline.map(k => <div className="timeline-item" key={k.id}><time>{k.scheduledAt ? new Date(k.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'All day'}</time><a className="list-row" href={'#/tasks/' + k.id}><span className={'dot-icon ' + (k.priority === 'High' ? 'hero' : k.priority === 'Medium' ? 'sand' : 'sage')}><Icon name="tasks" size={16} /></span><span className="grow"><b>{k.title}</b><small>{L.cname(d, k.client) || 'No client'}{k.durationMinutes && k.scheduledAt ? ' · ' + k.durationMinutes + ' min' : ''}</small></span></a></div>) : <p className="empty-note">A clear day. Scheduled and due tasks show up here.</p>}</div>
         <a className="btn wide-btn" href="#/calendar">View full calendar</a>
