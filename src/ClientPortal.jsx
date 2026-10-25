@@ -139,6 +139,13 @@ function PortalShare({share,owner,user,onMessage}){
   </section>;
 }
 
+// Top right: the client's name as you set it in SoloDesk, with the login email under it.
+const initials=name=>name.split(/\s+/).filter(Boolean).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+function PortalUser({name,email,onSignOut}){
+  const shown=name||email||'';
+  return <span className="portal-user"><span className="avatar-xl">{initials(shown)||'?'}</span><span className="portal-user-name"><b>{shown}</b>{name&&email&&<small>{email}</small>}</span><button className="ghost sm" onClick={onSignOut}>Sign out</button></span>;
+}
+
 export function ClientPortal({owner}){
   const [user,setUser]=useState(auth?.currentUser),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[nextPassword,setNextPassword]=useState(''),[confirmNext,setConfirmNext]=useState(''),[currentPassword,setCurrentPassword]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[shares,setShares]=useState([]),[loaded,setLoaded]=useState(false);
   useEffect(()=>{if(auth)return onAuthStateChanged(auth,setUser);},[]);
@@ -154,7 +161,7 @@ export function ClientPortal({owner}){
   if(!auth)return <div className="mid">Client sign-in is not configured.</div>;
   const hasPassword=user?.providerData.some(x=>x.providerId==='password');
   return <main className="portal-shell portal-v2">
-    <header className="portal-top"><BrandLogo/>{user&&<span className="portal-user"><span className="avatar-xl">{(user.email||'?')[0].toUpperCase()}</span><span>{user.email}</span><button className="ghost sm" onClick={()=>action(()=>signOut(auth))}>Sign out</button></span>}</header>
+    <header className="portal-top"><BrandLogo/>{user&&<PortalUser name={shares[0]?.data?.clientName} email={user.email} onSignOut={()=>action(()=>signOut(auth))}/>}</header>
     {message&&<p role="status" className="notice soft portal-message">{message}</p>}
     {!user?<section className="portal-signin"><span className="eyebrow">CLIENT PORTAL</span><h1>Welcome back</h1><p>Sign in to see your projects, approve work and open shared documents.</p><form onSubmit={e=>{e.preventDefault();action(()=>signInWithEmailAndPassword(auth,email.trim(),password));}}><label>Email<input required type="email" autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)}/></label><label>Password<input required type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label><button className="btn" disabled={busy}>Sign in</button></form><div className="portal-signin-alt"><button className="ghost" disabled={busy} onClick={()=>action(()=>signInWithPopup(auth,provider))}>Continue with Google</button><button className="ghost" disabled={busy||!email.trim()} onClick={()=>action(async()=>{await sendPasswordResetEmail(auth,email.trim());setMessage('If this email has an eligible account, password reset instructions have been sent.');})}>Forgot password</button></div></section>
     :<>{!loaded?<p className="portal-empty">Loading your shared work…</p>:!shares.length?<p className="portal-empty">No work has been shared with this account at this portal link yet.</p>:shares.map(share=><PortalShare key={share.id} share={share} owner={owner} user={user} onMessage={setMessage}/>)}
@@ -178,5 +185,5 @@ export function PortalPreview(){
     tasks:[{id:'a',projectId:'p',title:'Homepage design',status:'In progress',due:'2026-10-30',checklist:[{title:'Hero section',done:true},{title:'Footer',done:false}],approval:{state:'pending',note:'Here is the homepage. Happy for it to go live?',requestedAt:today}},{id:'b',projectId:'p',title:'Brand colours',status:'Done',due:'',checklist:[],approval:{state:'approved',note:'',requestedAt:'2026-10-20T10:00:00.000Z',decidedAt:'2026-10-21T10:00:00.000Z',comment:'Love it'}},{id:'c',projectId:'p',title:'Content inventory',status:'Todo',due:'2026-11-04',checklist:[]}],
     docs:[{id:'d',kind:'prd',title:'Website PRD',status:'In review',problem:'The current site is slow and hard to update.',goals:'Loads in under 2 seconds on 4G.',outOfScope:'',requirements:[{title:'Editors can publish pages',done:true},{title:'Homepage loads under 2s',done:false}]},{id:'e',kind:'link',title:'Content inventory',url:'https://drive.google.com/'}],
     invoices:[{id:'i',no:'INV-0007',issue:'2026-10-20',due:'2026-11-03',items:[{desc:'Website design',qty:1,price:12000}],total:12000,paid:0,balance:12000}]}};
-  return <main className="portal-shell portal-v2"><header className="portal-top"><BrandLogo/><span className="chip sand">Preview · sample data</span></header><PortalShare share={share} owner="" user={{email:''}} onMessage={()=>{}}/></main>;
+  return <main className="portal-shell portal-v2"><header className="portal-top"><BrandLogo/><span className="chip sand">Preview · sample data</span><PortalUser name={share.data.clientName} email="studio@example.com" onSignOut={()=>{}}/></header><PortalShare share={share} owner="" user={{email:''}} onMessage={()=>{}}/></main>;
 }
