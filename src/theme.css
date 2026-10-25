@@ -1072,3 +1072,9 @@ input[type=radio]{border-radius:50%!important}
 .keep-editor .keep-title:focus,.keep-editor .keep-body:focus{background:transparent!important;box-shadow:none!important}
 .keep-editor{gap:6px}
 .keep-editor .keep-toolbar{border-top-color:color-mix(in srgb,currentColor 18%,transparent)}
+
+/* search: settings and pages */
+.search-places{display:grid;gap:4px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--ln)}
+.search-place{background:color-mix(in srgb,var(--hero) 12%,var(--card))}
+@keyframes search-flash{0%,60%{box-shadow:0 0 0 3px var(--hero)}100%{box-shadow:0 0 0 0 transparent}}
+.search-flash{animation:search-flash 2.2s ease-out;border-radius:12px}

@@ -19,11 +19,9 @@ export const ACTION_COLOURS = [
   { id: 'stone', name: 'Stone', hex: '#C9BBA6', deep: '#ADA18F' },
 ];
 export const isCustomColour = id => /^#[0-9a-f]{6}$/i.test(id || '');
-const darken = hex => '#' + [1, 3, 5].map(i => Math.round(parseInt(hex.slice(i, i + 2), 16) * 0.86).toString(16).padStart(2, '0')).join('');
-// Rough readability check for black text on a custom colour (relative luminance).
-export function readableWithBlack(hex) { const l = [1, 3, 5].map(i => { const c = parseInt(hex.slice(i, i + 2), 16) / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }); return 0.2126 * l[0] + 0.7152 * l[1] + 0.0722 * l[2] > 0.18; }
 export const DEFAULT_ACTION = 'terracotta';
-export const actionColour = id => isCustomColour(id) ? { id, name: 'Custom', hex: id, deep: darken(id) } : ACTION_COLOURS.find(c => c.id === id) || ACTION_COLOURS[0];
+// Only the presets are offered. A custom colour chosen in 1.05–1.09 is still accepted when loading, but shows as Terracotta.
+export const actionColour = id => ACTION_COLOURS.find(c => c.id === id) || ACTION_COLOURS[0];
 
 export function applyActionColour(id, root = typeof document !== 'undefined' ? document.documentElement : null) {
   if (!root) return;
