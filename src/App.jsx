@@ -35,6 +35,7 @@ import {ViewStateProvider,useViewState,PageFrame,DataNav} from './ViewState.jsx'
 import {CommandMenu} from './CommandMenu.jsx';
 import {SmartField,taskChips} from './SmartField.jsx';
 import {ApprovalsPage,ApprovalBox,useApprovalSync} from './Approvals.jsx';
+import {usePortalSync} from './portal-sync';
 import {parseTask,parseProject,fmtDay} from './smart-parse';
 const Calendar=lazy(()=>import('./Calendar.jsx'));
 const Integrations=lazy(()=>import('./Integrations.jsx'));
@@ -640,6 +641,7 @@ export default function App() {
   };
   const startDemo = () => { sessionStorage.setItem('sd_demo_active','1'); setDemo(true); };
   useApprovalSync({ d, mut, user, demo, toast });
+  usePortalSync({ d, user, demo });
   L.setCur(d?.settings.cur);
   if(route.page==='portal-preview')return <ScreenBoundary key="portal-preview"><Suspense fallback={<ScreenLoading label="Opening preview"/>}><PortalPreview/></Suspense></ScreenBoundary>;
   if(route.page==='u')return <ScreenBoundary key={'u-'+route.id}><PublicProfile username={route.id}/></ScreenBoundary>;

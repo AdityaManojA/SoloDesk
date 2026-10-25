@@ -26,7 +26,9 @@ export function PortalManager({d,user,demo,client,toast}){
   const projectsOf=d.projects.filter(p=>p.client===client.id),docsOf=(d.docs||[]).filter(x=>x.client===client.id||projectsOf.some(p=>p.id===x.project));
   const [projects,setProjects]=useState([]),[invoices,setInvoices]=useState([]),[docs,setDocs]=useState([]);
   useEffect(()=>{if(demo||!user)return;return onSnapshot(doc(db,'solodeskPortals',user.uid,'shares',client.id),snap=>{const v=snap.exists()?snap.data():null;setGrant(v);if(v){setEmail(v.recipientEmail);setProjects(v.projectIds||[]);setInvoices(v.invoiceIds||[]);setDocs(v.docIds||[]);}},()=>setError('Could not load portal sharing. Retry after checking your connection.'));},[user?.uid,client.id,demo]);
-  const toggle=(id,items,set)=>set(items.includes(id)?items.filter(x=>x!==id):[...items,id]);
+  // Once a portal is live, ticking or unticking something publishes it straight away.
+  const toggle=(id,items,set,key)=>{const next=items.includes(id)?items.filter(x=>x!==id):[...items,id];set(next);if(!grant||demo)return;const ids={projectIds:projects,invoiceIds:invoices,docIds:docs,[key]:next};
+    setDoc(doc(db,'solodeskPortals',user.uid,'shares',client.id),{ownerUid:grant.ownerUid,clientId:client.id,recipientUid:grant.recipientUid,recipientEmail:grant.recipientEmail,...ids,data:publishablePortal(d,client.id,ids.projectIds,ids.invoiceIds,ids.docIds)}).then(()=>toast(items.includes(id)?'Removed from the portal.':'Added to the portal.')).catch(e=>setError(authMessage(e)));};
   const publish=async e=>{
     e.preventDefault();if(demo){setError('Sign in to create real client accounts. Demo data is never published.');return;}setBusy(true);setError('');let secondary;
     try{
@@ -45,11 +47,11 @@ export function PortalManager({d,user,demo,client,toast}){
       toast(grant?'Client portal updated.':'Client portal published. Share the portal link and initial password privately.');
     }catch(err){setError(authMessage(err));}finally{setPassword('');setConfirm('');setBusy(false);if(secondary)await deleteApp(secondary);}
   };
-  const pick=(title,items,chosen,set,label,empty)=><fieldset className="share-picks"><legend>{title}</legend>{items.length?items.map(x=><label key={x.id} className={'share-pick'+(chosen.includes(x.id)?' on':'')}><input type="checkbox" checked={chosen.includes(x.id)} onChange={()=>toggle(x.id,chosen,set)}/><span>{label(x)}</span></label>):<p className="empty-note">{empty}</p>}</fieldset>;
+  const pick=(title,items,chosen,set,label,empty,key)=><fieldset className="share-picks"><legend>{title}</legend>{items.length?items.map(x=><label key={x.id} className={'share-pick'+(chosen.includes(x.id)?' on':'')}><input type="checkbox" checked={chosen.includes(x.id)} onChange={()=>toggle(x.id,chosen,set,key)}/><span>{label(x)}</span></label>):<p className="empty-note">{empty}</p>}</fieldset>;
   const approvals=d.tasks.filter(t=>t.approval&&(t.client===client.id||projectsOf.some(p=>p.id===t.project)));
   return <section className="card portal-manager">
     <div className="block-head" style={{margin:0}}><h3>Client portal</h3>{grant?<span className="chip sage">Live</span>:<span className="chip white">Not shared yet</span>}</div>
-    <p style={{marginTop:0}}>Your client signs in to see what you pick below, plus their links and any task you send them for approval. Internal notes, other clients and payment instructions stay private. Approvals publish straight away; for other changes, press <b>Update portal</b>.</p>
+    <p style={{marginTop:0}}>Your client signs in to see what you pick below, plus their links and any task you send them for approval. Internal notes, other clients and payment instructions stay private. The portal updates by itself a moment after you change shared work.</p>
     {error&&<p role="alert" className="inline-error">{error}</p>}
     {grant&&<div className="portal-link-box"><Icon name="link" size={18}/><input readOnly aria-label="Portal link" value={portalUrl(user.uid)} onFocus={e=>e.target.select()}/><button type="button" className="btn sm" onClick={async()=>{try{await navigator.clipboard.writeText(portalUrl(user.uid));toast('Portal link copied.');}catch{toast('Select the link and copy it.');}}}>Copy link</button><a className="ghost sm" href={'#/portal/'+user.uid} target="_blank" rel="noopener noreferrer">Preview ↗</a></div>}
     {approvals.length>0&&<p className="notice soft" style={{margin:0}}>{approvals.filter(t=>t.approval.state==='pending').length} waiting for {client.name} · {approvals.filter(t=>t.approval.state==='approved').length} approved · <a href="#/approvals">Open approvals</a></p>}
@@ -58,10 +60,10 @@ export function PortalManager({d,user,demo,client,toast}){
       {!grant&&<><label className="check-row"><input type="checkbox" checked={existing} onChange={e=>{setExisting(e.target.checked);setPassword('');setConfirm('');}}/> Link existing account (keeps its current password; verified email required)</label>
         {!existing&&!provisioned&&<div className="grid2"><label>Initial password<input type="password" aria-label="Portal initial password" minLength={12} autoComplete="new-password" required value={password} onChange={e=>setPassword(e.target.value)}/></label><label>Re-enter password<input type="password" aria-label="Re-enter portal initial password" minLength={12} autoComplete="new-password" required value={confirm} aria-invalid={!!confirm&&confirm!==password} onChange={e=>setConfirm(e.target.value)}/>{confirm&&<small className={confirm===password?'match-ok':'match-bad'}>{confirm===password?'Passwords match':'Passwords don’t match yet'}</small>}</label></div>}
         <p className="mu" style={{margin:0}}>Passwords go straight to Firebase Auth and are never saved in your workspace. Clients can change their password or reset it from the portal.</p></>}
-      {pick('Projects and their tasks',projectsOf,projects,setProjects,p=><>{p.name}<small>{d.tasks.filter(t=>t.project===p.id).length} tasks · {p.status}</small></>,'No projects for this client yet.')}
-      {pick('Documents and PRDs',docsOf,docs,setDocs,x=><>{x.title}<small>{x.kind==='prd'?'PRD · '+(x.status||'Draft'):'Linked file'}</small></>,'No documents yet. Add them under Files & docs.')}
-      {pick('Sent invoices',d.invoices.filter(i=>i.client===client.id&&i.state==='sent'),invoices,setInvoices,i=><>{i.no}<small>Due {i.due}</small></>,'No sent invoices.')}
-      <button className="btn" disabled={busy||demo}>{busy?'Working…':grant?'Update portal':'Set up client access'}</button>
+      {pick('Projects and their tasks',projectsOf,projects,setProjects,p=><>{p.name}<small>{d.tasks.filter(t=>t.project===p.id).length} tasks · {p.status}</small></>,'No projects for this client yet.','projectIds')}
+      {pick('Documents and PRDs',docsOf,docs,setDocs,x=><>{x.title}<small>{x.kind==='prd'?'PRD · '+(x.status||'Draft'):'Linked file'}</small></>,'No documents yet. Add them under Files & docs.','docIds')}
+      {pick('Sent invoices',d.invoices.filter(i=>i.client===client.id&&i.state==='sent'),invoices,setInvoices,i=><>{i.no}<small>Due {i.due}</small></>,'No sent invoices.','invoiceIds')}
+      {grant?<p className="portal-live-note"><span className="live-dot"/>Live · updates automatically{grant.data?.updatedAt?' · last published '+new Date(grant.data.updatedAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}):''}</p>:<button className="btn" disabled={busy||demo}>{busy?'Working…':'Set up client access'}</button>}
     </form>
     {demo&&<p className="mu">Sign in to publish a portal. Account creation is disabled in the demo.</p>}
     {grant&&<button className="ghost danger sm" style={{justifySelf:'start'}} disabled={busy} onClick={async()=>{setBusy(true);try{await deleteDoc(doc(db,'solodeskPortals',user.uid,'shares',client.id));toast('Portal access revoked. The client’s Firebase account is kept.');}catch(e){setError(authMessage(e));}finally{setBusy(false);}}}>Revoke portal access</button>}

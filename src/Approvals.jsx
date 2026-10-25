@@ -6,7 +6,7 @@ import { APPROVAL_LABEL, approvalClient, approvalTasks, applyResponses, requestA
 
 const CHIP = { pending: 'hero', approved: 'sage', changes: 'sand' };
 const when = iso => iso ? new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '';
-const republish = (d, user, clientId, toast) => import('./ClientPortal.jsx').then(m => m.republishShare(d, user.uid, clientId)).catch(() => toast('Saved. The client portal could not be updated just now; press Update portal under Client access.'));
+const republish = (d, user, clientId, toast) => import('./ClientPortal.jsx').then(m => m.republishShare(d, user.uid, clientId)).catch(() => toast('Saved. The client portal will catch up in a moment.'));
 
 // While SoloDesk is open, copy client answers from the portal onto their tasks, then refresh that portal.
 export function useApprovalSync({ d, mut, user, demo, toast }) {

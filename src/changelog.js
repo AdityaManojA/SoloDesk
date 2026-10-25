@@ -2,6 +2,10 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
+  {version:'1.06',released:false,date:'',title:'Client portals that keep themselves up to date',highlights:[
+    ['No more “Update portal”','A client’s portal now updates by itself a moment after you change anything you share with them: task progress, project dates, documents, PRDs, links or invoices.'],
+    ['Pick what to share, instantly','Under Client access, ticking or unticking a project, document or invoice changes the portal straight away. A live dot shows when it last published.'],
+  ],fixes:[]},
   {version:'1.05',released:true,date:'2026-10-25',title:'Client approvals, a new client portal and smart typing',highlights:[
     ['Send work for approval','Open a task and choose Send for approval. Your client approves it or asks for changes in their portal, and the answer comes back to the task. A new Approvals page shows what is waiting, approved or needs changes.'],
     ['A client portal that shows the work','Clients now see the project tasks you share, their links, the documents and PRDs you pick, and sent invoices, in a new colourful portal with their approvals at the top. Copy the portal link straight from Client access.'],

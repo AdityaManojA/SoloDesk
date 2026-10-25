@@ -102,3 +102,13 @@ export function publishablePortal(workspace,clientId,projectIds,invoiceIds,docId
   const docs=(workspace.docs||[]).filter(x=>docIds.includes(x.id)&&(x.client===clientId||projects.some(p=>p.id===x.project))).map(x=>x.kind==='prd'?{id:x.id,kind:'prd',title:x.title,status:x.status||'Draft',projectId:x.project||'',problem:x.problem||'',goals:x.goals||'',outOfScope:x.outOfScope||'',requirements:(x.requirements||[]).map(r=>{const task=r.taskId&&workspace.tasks.find(t=>t.id===r.taskId);return {title:r.title,done:task?task.status==='Done':!!r.done};})}:{id:x.id,kind:'link',title:x.title,url:x.url,projectId:x.project||''});
   return {business:workspace.settings.biz||'SoloDesk',clientName:client.name,currency:workspace.settings.cur,accent:actionColour(workspace.settings.actionColour).hex,links:(client.links||[]).map(l=>({label:l.label||'',url:l.url})),projects,tasks,docs,invoices,approvalIds:tasks.filter(t=>t.approval?.state==='pending').map(t=>t.id),updatedAt:new Date().toISOString()};
 }
+
+const comparable = data => JSON.stringify({ ...data, updatedAt: '' });
+
+// The data a share should hold now, or null when it is already up to date (or the client is gone).
+export function portalUpdate(workspace, share) {
+  let next;
+  try { next = publishablePortal(workspace, share.clientId, share.projectIds || [], share.invoiceIds || [], share.docIds || []); } catch { return null; }
+  return share.data && comparable(share.data) === comparable(next) ? null : next;
+}
+

@@ -854,3 +854,7 @@ input[type=radio]{border-radius:50%!important}
 .doc-action-icon.link{background:var(--sage,#A7B98B)}
 .doc-action-icon.prd{background:var(--hero)}
 @media(max-width:420px){.doc-actions{grid-template-columns:1fr}}
+.portal-live-note{display:flex;align-items:center;gap:8px;margin:0;font-size:13px;font-weight:600;color:var(--mu)}
+.live-dot{width:9px;height:9px;border-radius:50%;background:#5E8C3A;box-shadow:0 0 0 4px #5E8C3A2e;animation:live-pulse 2s ease-in-out infinite}
+@keyframes live-pulse{50%{box-shadow:0 0 0 7px #5E8C3A10}}
+@media(prefers-reduced-motion:reduce){.live-dot{animation:none}}

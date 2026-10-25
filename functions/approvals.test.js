@@ -41,3 +41,17 @@ test('the portal shares chosen docs, client links, project tasks and approvals o
   assert.ok(!JSON.stringify(s).includes('SECRET'));
   assert.deepEqual(publishablePortal(w, 'c', ['p'], []).docs, []);
 });
+
+test('a portal is republished only when what it shares has changed', async () => {
+  const { portalUpdate } = await import('../src/workspace-upgrades.js');
+  const w = ws(), share = { clientId: 'c', projectIds: ['p'], invoiceIds: [], docIds: ['d2'] };
+  const first = portalUpdate(w, share);
+  assert.ok(first);
+  assert.equal(portalUpdate(w, { ...share, data: { ...first, updatedAt: 'later' } }), null);
+  w.tasks[0].status = 'Done';
+  assert.equal(portalUpdate(w, { ...share, data: first }).tasks[0].status, 'Done');
+  w.tasks[0].notes = 'still private';
+  const again = portalUpdate(w, { ...share, data: first });
+  assert.equal(portalUpdate(w, { ...share, data: again }), null, 'private fields do not trigger a publish');
+  assert.equal(portalUpdate(w, { ...share, clientId: 'gone' }), null);
+});
