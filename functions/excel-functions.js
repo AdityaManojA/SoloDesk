@@ -120,7 +120,7 @@ export async function syncUser(uid, { source = 'app', linkId, resolve = {} } = {
     const links = (await db().collection(`solodeskSync/${uid}/links`).get()).docs.filter(d => !linkId || d.id === linkId);
     const snap = await db().doc(`solodeskWorkspaces/${uid}`).get();
     if (!links.length || !snap.exists) return;
-    const workspace = JSON.parse(snap.get('json'));
+    const workspace = JSON.parse(snap.get('core') ?? snap.get('json'));
     const inbox = await db().collection(`solodeskSync/${uid}/inbox`).get();
     const work = links.map(doc => {
       const link = { id: doc.id, ...doc.data() };
@@ -187,7 +187,7 @@ export const link = onCall(withSecrets, async request => {
   const scope = { kind: data.scope?.kind, id: text(data.scope?.id, 100) };
   if (!['project', 'client'].includes(scope.kind) || !scope.id) throw new HttpsError('invalid-argument', 'Choose a project or client to sync.');
   const snap = await db().doc(`solodeskWorkspaces/${uid}`).get();
-  const workspace = snap.exists ? JSON.parse(snap.get('json')) : null;
+  const workspace = snap.exists ? JSON.parse(snap.get('core') ?? snap.get('json')) : null;
   if (!workspace?.[scope.kind === 'project' ? 'projects' : 'clients'].some(r => r.id === scope.id)) throw new HttpsError('not-found', 'That project or client was not found. Save your workspace and try again.');
   let mapping;
   try { mapping = validateMapping(data.mapping || DEFAULT_MAPPING); } catch (error) { throw new HttpsError('invalid-argument', error.message); }

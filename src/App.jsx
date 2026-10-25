@@ -30,6 +30,7 @@ import {applyActionColour} from './appearance';
 import {profileRoute,PROFILE_COLLECTION} from './profile';
 import {currentVersion,shouldShowUpdate} from './changelog';
 import {assertWorkspaceSize} from './workspace-size';
+import {splitWorkspace,joinWorkspace,baselineOf,writeWorkspace} from './workspace-store';
 import {assertUnchanged,validateWorkspace,blockers,validateDependencies,projectBudget} from './workspace-upgrades';
 import {ViewStateProvider,useViewState,PageFrame,DataNav} from './ViewState.jsx';
 import {CommandMenu} from './CommandMenu.jsx';
@@ -362,6 +363,8 @@ function Settings({ d, mut, toast, ask, user, logout, demo, saving, signingOut, 
       const shares=await getDocs(collection(fdb,'solodeskPortals',user.uid,'shares'));
       for(let i=0;i<shares.docs.length;i+=400){const batch=writeBatch(fdb);shares.docs.slice(i,i+400).forEach(s=>batch.delete(s.ref));await batch.commit();}
       if(d.profile?.username)await deleteDoc(doc(fdb,PROFILE_COLLECTION,d.profile.username)).catch(()=>{});
+      const parts=await getDocs(collection(fdb,workspaceCollection,user.uid,'parts'));
+      for(let i=0;i<parts.docs.length;i+=400){const batch=writeBatch(fdb);parts.docs.slice(i,i+400).forEach(s=>batch.delete(s.ref));await batch.commit();}
       await deleteDoc(doc(fdb, workspaceCollection, user.uid));
       await logout({force:true});
     } catch { toast('Workspace deletion did not complete. Check your connection and try again.'); }
@@ -551,11 +554,13 @@ export default function App() {
   const taskflow = useTaskflow(user?.uid, demo);
   const dataRef = useRef(null), toastTimer = useRef(), loadVersion = useRef(0), mainRef = useRef(null), saves = useRef(null), routeScrolls=useRef(new Map());
   if (!saves.current) saves.current=createWorkspaceSaves(async(owner,value,baseline)=>{
-    assertWorkspaceSize(value);const json=JSON.stringify(value),ref=doc(fdb,workspaceCollection,owner),key='sd_pending_'+owner;
+    assertWorkspaceSize(value);splitWorkspace(value);const json=baselineOf(value),ref=doc(fdb,workspaceCollection,owner),key='sd_pending_'+owner;
+    const partRef=id=>doc(fdb,workspaceCollection,owner,'parts',id);
     try{if(auth.currentUser?.uid===owner)sessionStorage.setItem(key,JSON.stringify({baseline,data:dataRef.current||value}));}catch{/* The current tab still retains unsaved data. */}
-    await runTransaction(fdb,async tx=>{const snap=await tx.get(ref);assertUnchanged(snap.exists()?snap.data().json:null,baseline);tx.set(ref,{json});});
+    // Check nobody else changed the stored workspace, then write only the parts that changed.
+    await runTransaction(fdb,tx=>writeWorkspace(tx,id=>id?partRef(id):ref,value,baseline,assertUnchanged));
     if(auth.currentUser?.uid===owner){try{sessionStorage.setItem('sd_cached_'+owner,JSON.stringify({baseline:json,data:value}));}catch{}}
-    if(auth.currentUser?.uid===owner){try{if(JSON.stringify(dataRef.current)===json)sessionStorage.removeItem(key);else sessionStorage.setItem(key,JSON.stringify({baseline:json,data:dataRef.current}));}catch{}}
+    if(auth.currentUser?.uid===owner){try{if(baselineOf(dataRef.current)===json)sessionStorage.removeItem(key);else sessionStorage.setItem(key,JSON.stringify({baseline:json,data:dataRef.current}));}catch{}}
     return json;
   },(state,error)=>{
     setSaving(state);
@@ -585,7 +590,12 @@ export default function App() {
     let pending;try{pending=JSON.parse(sessionStorage.getItem('sd_pending_'+u.uid));}catch{}
     try {
       const snap = await getDoc(doc(fdb, workspaceCollection, u.uid));if(request!==loadVersion.current||auth.currentUser?.uid!==u.uid)return;
-      const baseline=snap.exists()?snap.data().json:null;const value=validateWorkspace(baseline?JSON.parse(baseline):fresh());
+      const data=snap.exists()?snap.data():null,partSnaps=await Promise.all((data?.parts||[]).map(id=>getDoc(doc(fdb,workspaceCollection,u.uid,'parts',id))));
+      if(request!==loadVersion.current||auth.currentUser?.uid!==u.uid)return;
+      const stored=joinWorkspace(data,Object.fromEntries(partSnaps.filter(s=>s.exists()).map(s=>[s.id,s.data().json])));
+      const baseline=baselineOf(stored);const value=validateWorkspace(stored||fresh());
+      // Copies kept in this tab before the storage change used the old baseline format.
+      if(pending?.baseline){try{pending.baseline=baselineOf(JSON.parse(pending.baseline));}catch{}}
       saves.current.begin(u.uid,baseline);
       if(pending){apply(validateWorkspace(pending.data));if(pending.baseline!==baseline){setSaving('conflict');setSaveError('Recovered pending changes conflict with another saved version. Export them before loading the latest.');}else persist(pending.data);}
       else{apply(value);try{sessionStorage.setItem('sd_cached_'+u.uid,JSON.stringify({baseline,data:value}));}catch{}}
@@ -593,7 +603,7 @@ export default function App() {
       if(request!==loadVersion.current||auth.currentUser?.uid!==u.uid)return;
       let cached;try{cached=JSON.parse(sessionStorage.getItem('sd_cached_'+u.uid));}catch{}
       const recover=pending||cached;
-      if(recover){try{const recovered=validateWorkspace(recover.data);saves.current.begin(u.uid,recover.baseline);apply(recovered);setSaving('error');setSaveError('Offline copy recovered in this tab. Reconnect to save.');return;}catch{}}
+      if(recover){try{const recovered=validateWorkspace(recover.data);let base=recover.baseline;try{if(base)base=baselineOf(JSON.parse(base));}catch{}saves.current.begin(u.uid,base);apply(recovered);setSaving('error');setSaveError('Offline copy recovered in this tab. Reconnect to save.');return;}catch{}}
       setErr('We could not load your data. Check your connection or backup format and try again.');
     }
   };
