@@ -5,6 +5,7 @@ import { rid, today } from './lib';
 import { trashReusable } from './productivity';
 import { shiftLevel, toggleItem, insertAfter, removeItem, linesToItems, itemsToLines } from './checklist';
 import { ago } from './Home.jsx';
+import { Select } from './Controls';
 
 // Notes work like Google Keep: a title and free text, or a checklist where Enter adds the next item.
 const time = v => { const t = Date.parse(v || ''); return Number.isFinite(t) ? t : 0; };
@@ -78,6 +79,19 @@ function Checklist({ note, save }) {
   </div>;
 }
 
+// Which client or project a note belongs to. Uses the app's own dropdown so it matches the theme.
+function LinkPicker({ note, d, edit }) {
+  const value = note.project ? 'project:' + note.project : note.client ? 'client:' + note.client : '';
+  const pick = e => { const [k, r] = String(e.target.value).split(':'); const p = k === 'project' ? d.projects.find(x => x.id === r) : null; edit(n => { n.client = k === 'client' ? r : p?.client || ''; n.project = p?.id || ''; }); };
+  return <span className="keep-link"><Select aria-label="Linked to" value={value} onChange={pick}>
+    <option value="">Not linked</option>
+    {d.clients.length > 0 && <option value="h:clients" disabled>Clients</option>}
+    {d.clients.filter(c => !c.arch).map(c => <option key={c.id} value={'client:' + c.id}>{c.name}</option>)}
+    {d.projects.length > 0 && <option value="h:projects" disabled>Projects</option>}
+    {d.projects.filter(p => !p.arch).map(p => <option key={p.id} value={'project:' + p.id}>{p.name}</option>)}
+  </Select></span>;
+}
+
 // One note, edited in place. `edit(fn)` changes the stored note; `onTrash` moves it to Trash.
 export function NoteEditor({ note, edit, onTrash, labels, autoFocus }) {
   const mode = noteMode(note), [body, setBody] = useState(note.body || ''), area = useRef(null), title = useRef(null);
@@ -93,7 +107,7 @@ export function NoteEditor({ note, edit, onTrash, labels, autoFocus }) {
       <button type="button" className="keep-tool" aria-pressed={mode === 'checklist'} onClick={() => { saveBody.flush(body); edit(n => Object.assign(n, toggleMode({ ...n, body }))); }} title={mode === 'checklist' ? 'Hide checkboxes' : 'Show checkboxes'}><Icon name="tasks" size={18} /><span>{mode === 'checklist' ? 'Hide checkboxes' : 'Checklist'}</span></button>
       {labels}
       <span className="keep-meta">{note.updatedAt || note.createdAt ? 'Edited ' + ago(time(note.updatedAt || note.createdAt)).toLowerCase() : ''}</span>
-      {onTrash && <button type="button" className="keep-tool" onClick={onTrash} aria-label="Move note to Trash" title="Move to Trash"><Icon name="close" size={16} /></button>}
+      {onTrash && <button type="button" className="ghost sm danger keep-delete" onClick={onTrash} title="Move this note to Trash (you can restore it)">Delete</button>}
     </div>
   </div>;
 }
@@ -142,7 +156,7 @@ export function NotesPage({ d, mut, toast, id }) {
       {open ? <div className="notes-paper">
         <button type="button" className="ghost sm notes-back" onClick={() => select(null)}>‹ All notes</button>
         <NoteEditor key={open.id} note={open} edit={edit} autoFocus={open.id === fresh} onTrash={() => { mut(w => trashReusable(w, 'notes', open.id)); select(null); toast('Note moved to Trash.'); }}
-          labels={<select aria-label="Linked to" className="keep-link" value={open.project ? 'project:' + open.project : open.client ? 'client:' + open.client : ''} onChange={e => { const [k, r] = e.target.value.split(':'); const p = k === 'project' ? d.projects.find(x => x.id === r) : null; edit(n => { n.client = k === 'client' ? r : p?.client || ''; n.project = p?.id || ''; }); }}><option value="">Not linked</option><optgroup label="Clients">{d.clients.map(c => <option key={c.id} value={'client:' + c.id}>{c.name}</option>)}</optgroup><optgroup label="Projects">{d.projects.map(p => <option key={p.id} value={'project:' + p.id}>{p.name}</option>)}</optgroup></select>} />
+          labels={<LinkPicker note={open} d={d} edit={edit} />} />
       </div> : <div className="notes-empty"><p>Pick a note on the left, or start a new one.</p><button type="button" className="btn" onClick={() => create('text')}>New note</button></div>}
     </div>
   </section>;
@@ -157,7 +171,7 @@ export function NoteDialog({ note, d, mut, toast, onClose }) {
   useEffect(() => { const k = e => { if (e.key === 'Escape') close(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); });
   return <div className="ov" onClick={close}><div ref={box} className="dlg keep-dialog" role="dialog" aria-modal="true" aria-label="Edit note" onClick={e => e.stopPropagation()}>
     <NoteEditor note={note} edit={edit} autoFocus onTrash={() => { mut(w => trashReusable(w, 'notes', note.id)); onClose(); toast('Note moved to Trash.'); }}
-      labels={<select aria-label="Linked to" className="keep-link" value={note.project ? 'project:' + note.project : note.client ? 'client:' + note.client : ''} onChange={e => { const [k, r] = e.target.value.split(':'); const p = k === 'project' ? d.projects.find(x => x.id === r) : null; edit(n => { n.client = k === 'client' ? r : p?.client || ''; n.project = p?.id || ''; }); }}><option value="">Not linked</option><optgroup label="Clients">{d.clients.map(c => <option key={c.id} value={'client:' + c.id}>{c.name}</option>)}</optgroup><optgroup label="Projects">{d.projects.map(p => <option key={p.id} value={'project:' + p.id}>{p.name}</option>)}</optgroup></select>} />
+      labels={<LinkPicker note={note} d={d} edit={edit} />} />
     <div className="end" style={{ margin: 0, padding: '12px 0 0', border: 0, background: 'none' }}><button type="button" className="btn sm" onClick={close}>Done</button></div>
   </div></div>;
 }

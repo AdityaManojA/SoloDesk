@@ -2,6 +2,13 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.20 — 27 October 2026 · Projects in sections, invoices in Reports
+
+- **Projects in sections.** “Recently edited” (two) first, then one section per client (or Ongoing / Completed via a switch, `projects.group`). Cards say “No tasks yet” instead of “0 of 0”.
+- **Invoices in Reports.** The sidebar item is “Reports & invoices”: charts, then the invoice list (`Invoices embedded`). `#/invoices` opens Reports scrolled to the list; invoice pages are unchanged.
+- **Calendar.** Timeline header dates open that day (drags don’t count as clicks); “0/0 tasks” hidden; client tones palette-only.
+- **Fixes.** No blur on the live site: Lightning CSS drops `backdrop-filter:none` when a rule also has `-webkit-backdrop-filter`, so the blur values were removed at source (verify with `grep blur dist/assets/*.css`). Settings tab scroll-spy pauses after a click. Notes: themed link picker (app Select with heading rows), Delete button, wrapping tags. Task tick centred.
+
 ## 1.19 — 27 October 2026 · Clients as cards
 
 - **Clients as cards.** The Clients page defaults to cards (active projects, open tasks, amount owed, next due task, overdue flag) with a Cards | List switch remembered per workspace view (`clients.layout`).

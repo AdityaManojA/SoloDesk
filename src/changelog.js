@@ -2,6 +2,16 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
+  {version:'1.20',released:true,date:'2026-10-27',title:'Projects in sections, invoices in Reports',highlights:[
+    ['Projects in sections','Projects show your two most recently edited first, then section by section: by client, or switch to Ongoing / Completed.'],
+    ['Invoices live in Reports','Reports is now Reports & invoices: your revenue charts first, then all your invoices underneath.'],
+    ['Calendar','Click any date in the “What you’re working on” timeline to open that day. Projects without tasks no longer say “0/0 tasks”, and every client colour comes from the Terracotta palette.'],
+  ],fixes:[
+    'The guided tour and dialogs no longer blur the page on the live site (a build step was quietly putting the blur back).',
+    'Settings tabs stay on the one you clicked instead of jumping to a neighbour.',
+    'Notes: the “linked to” menu matches the theme, notes have a clear Delete button, and long client/project tags wrap instead of scrolling sideways.',
+    'The tick on finished tasks is centred.',
+  ]},
   {version:'1.19',released:true,date:'2026-10-27',title:'Clients as cards',highlights:[
     ['Clients as cards','Clients show as cards with what matters at a glance: active projects, open tasks, what they still owe and the next thing due, plus an overdue flag. Prefer the old view? Switch to List; Terracove remembers your choice.'],
   ],fixes:['In the install guide, the device you pick (iPhone / iPad, Android, Desktop) is now highlighted.','Installed desktop apps pick up the new transparent icon.','“1 projects” now reads “1 project”, and initials skip symbols (Form & Field → FF).']},
