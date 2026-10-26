@@ -1,10 +1,8 @@
-SoloDesk - Throughline logo kit
-Selected by the project owner, 21 October 2026.
+Terracove - sun logo (selected 26 October 2026, used from 1.14)
 
-The connected ribbon represents work moving from first brief to final invoice.
-SVG masters are scalable. PNG wordmarks have transparent backgrounds.
-Use the light wordmark on cream/light surfaces and the dark wordmark on ink/dark surfaces.
-throughline-1024.png is the standard app icon. throughline-dark-1024.png is the dark alternative.
-The maskable icon includes extra padding for Android/Chrome icon masks.
-Use the app's Add to Home Screen flow to install SoloDesk; these images alone do not install the app.
-The SVG wordmark uses Segoe UI/Arial system fonts; the symbol is entirely vector paths.
+A terracotta block with a sun in the top half and the sea below: terracotta + cove.
+Light surfaces: black sun and sea (terracove-mark.svg). Dark surfaces: cream sun and sea (terracove-mark-dark.svg).
+terracove-favicon.svg follows the browser's light/dark setting.
+App icons: terracove-1024/512/192/180.png on cream; terracove-dark-1024.png on ink; terracove-maskable-512.png has extra padding for Android masks.
+terracove-share.png is the 1200x630 link preview. Sources live in design/logo/.
+The throughline-* and solodesk-* files are the previous logos, kept for old links.

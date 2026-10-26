@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Terracove logo motion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Palette copied from src/theme.css (Terracotta direction) */
+:root{--bg:#F8F2E6;--sf:#FFFDF8;--card:#EFE7D8;--ink:#141414;--mu:#6E675C;--ln:#DED4C3;
+  --hero:#E8957A;--deep:#D27556;--sand:#EFCB8A;--sage:#A7B98B;--cream:#FFFDF8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Figtree,system-ui,sans-serif}
+main{max-width:1240px;margin:0 auto;padding:48px 16px 80px}
+h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(32px,5vw,52px);letter-spacing:-.03em;margin:0 0 6px}
+.lead{color:var(--mu);max-width:720px;margin:0 0 28px;line-height:1.5}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
+button{font:600 14px Figtree,sans-serif;border:2px solid var(--ink);background:var(--sf);color:var(--ink);border-radius:999px;padding:8px 16px;cursor:pointer}
+button.on{background:var(--ink);color:var(--cream)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.stage{border-radius:18px;background:var(--bg);aspect-ratio:4/3;display:grid;place-items:center;overflow:hidden}
+.dark .stage{background:var(--ink)}
+.stage svg{width:46%;height:auto;overflow:visible}
+.name{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:22px;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+.tag{font:600 12px Figtree;background:var(--hero);border-radius:999px;padding:3px 10px}
+.motion{color:var(--mu);font-size:14px;line-height:1.45;margin:0}
+.lock{display:flex;align-items:center;gap:10px}
+.lock svg{width:34px;height:34px}
+.lock b{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:28px;letter-spacing:-.03em}
+.icons{display:flex;gap:10px;align-items:center}
+.icons i{display:grid;place-items:center;border-radius:22%;background:var(--hero)}
+.icons i svg{width:62%;height:62%}
+.dark{--sf:#221F1B;--ln:#3A342D;--mu:#B9AE9E;color:#F8F2E6}
+body.darkbody{background:#161412}
+body.darkbody h1,body.darkbody .lock b{color:#F8F2E6}
+
+/* ---------- motions (each loops every 3.2s) ---------- */
+.play *{animation-duration:3.2s;animation-iteration-count:infinite;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
+/* A Alcove: arch rises, dot drops in and settles */
+.play .a-arch{transform-origin:128px 224px;animation-name:rise}
+.play .a-dot{animation-name:drop}
+@keyframes rise{0%{transform:scaleY(0)}25%,100%{transform:scaleY(1)}}
+@keyframes drop{0%,25%{transform:translateY(-150px);opacity:0}30%{opacity:1}45%{transform:translateY(0)}52%{transform:translateY(-14px)}60%,100%{transform:translateY(0)}}
+/* B Tile cove: tile pops, sun swings over the bite */
+.play .b-tile{transform-origin:128px 128px;animation-name:pop}
+.play .b-sun{transform-origin:128px 128px;animation-name:swing}
+@keyframes pop{0%{transform:scale(.3);opacity:0}22%{transform:scale(1.06);opacity:1}32%,100%{transform:scale(1)}}
+@keyframes swing{0%,22%{transform:rotate(-120deg);opacity:0}28%{opacity:1}55%,100%{transform:rotate(0)}}
+/* C Arch-o: ring draws itself */
+.play .c-ring{stroke-dasharray:560;animation-name:draw}
+@keyframes draw{0%{stroke-dashoffset:560}45%,100%{stroke-dashoffset:0}}
+/* D Harbour: arms close round the water, dot floats */
+.play .d-arc{stroke-dasharray:520;animation-name:draw2}
+.play .d-dot{animation-name:float}
+@keyframes draw2{0%{stroke-dashoffset:520}40%,100%{stroke-dashoffset:0}}
+@keyframes float{0%,35%{transform:translateY(30px);opacity:0}55%{transform:translateY(-6px);opacity:1}70%,100%{transform:translateY(0)}}
+/* E Roof tiles: rows land one after another */
+.play .e-r1{animation-name:land1}.play .e-r2{animation-name:land2}
+@keyframes land1{0%{transform:translateY(-60px);opacity:0}22%,100%{transform:translateY(0);opacity:1}}
+@keyframes land2{0%,18%{transform:translateY(-60px);opacity:0}42%,100%{transform:translateY(0);opacity:1}}
+/* F Shoreline: the wave rolls in under the block */
+.play .f-top{animation-name:fade}.play .f-wave{animation-name:roll}
+@keyframes fade{0%{opacity:0}18%,100%{opacity:1}}
+@keyframes roll{0%,10%{transform:translateY(70px);opacity:0}36%{transform:translateY(-6px);opacity:1}46%,100%{transform:none;opacity:1}}
+/* G Sun cove: sun rises from behind the wave */
+.play .g-sun{animation-name:sunrise}
+@keyframes sunrise{0%{transform:translateY(90px)}45%,100%{transform:translateY(0)}}
+/* H Hill door: the door opens from the threshold */
+.play .h-door{transform-origin:128px 200px;animation-name:open}
+@keyframes open{0%,15%{transform:scale(0)}45%{transform:scale(1.12)}55%,100%{transform:scale(1)}}
+.play .g-sun,.play .e-r1,.play .e-r2,.play .a-dot,.play .d-dot,.play .f-wave{transform-box:view-box}
+.fin-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.fin{border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:18px;border:1px solid var(--ln)}
+.fin.light{background:#FFFDF8}.fin.dark{background:#161412;color:#F8F2E6;border-color:#3A342D}
+.fin-stage{border-radius:18px;aspect-ratio:16/10;display:grid;place-items:center}
+.fin.light .fin-stage{background:#F8F2E6}.fin.dark .fin-stage{background:#221F1B}
+.fin-stage svg{width:40%;overflow:visible}
+.fin-lock{display:flex;align-items:center;gap:12px}.fin-lock svg{width:48px}
+.fin-lock span{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:40px;letter-spacing:-.03em}
+.fin-icons{display:flex;gap:12px;align-items:center}
+.fin-icons i{display:grid;place-items:center;border-radius:22%}
+.fin.light .fin-icons i{background:#F8F2E6;box-shadow:inset 0 0 0 1px #DED4C3}.fin.dark .fin-icons i{background:#141414;box-shadow:inset 0 0 0 1px #3A342D}
+.fin-icons i svg{width:72%}
+/* horizon sun: vertical motions */
+.play .r-sun{animation-name:rsun;transform-box:view-box}
+@keyframes rsun{0%,40%{transform:translateY(64px)}62%{transform:translateY(-8px)}72%,100%{transform:none}}
+.lab .stage svg{width:52%}
+.lab .r-sun,.lab .f-top,.lab .f-wave,.lab .whole{transform-box:view-box;animation-duration:3.2s;animation-iteration-count:infinite;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
+.m1 .r-sun{animation-name:m1sun}
+@keyframes m1sun{0%,12%{transform:translateY(64px)}42%{transform:translateY(-8px)}52%,100%{transform:none}}
+.m2 .f-wave{animation-name:m2a}.m2 .f-top{animation-name:m2b}.m2 .r-sun{animation-name:m2c}
+@keyframes m2a{0%{transform:translateY(90px);opacity:0}20%{transform:translateY(-6px);opacity:1}28%,100%{transform:none;opacity:1}}
+@keyframes m2b{0%,12%{transform:translateY(90px);opacity:0}34%{transform:translateY(-6px);opacity:1}42%,100%{transform:none;opacity:1}}
+@keyframes m2c{0%,40%{transform:translateY(64px)}60%{transform:translateY(-8px)}68%,100%{transform:none}}
+.m3 .whole{transform-origin:128px 230px;animation-name:m3a}.m3 .r-sun{animation-name:m3b}
+@keyframes m3a{0%{transform:translateY(60px) scale(.6,.4);opacity:0}18%{transform:translateY(-10px) scale(.95,1.08);opacity:1}28%{transform:scale(1.04,.96)}36%,100%{transform:none;opacity:1}}
+@keyframes m3b{0%,36%{transform:translateY(64px)}54%{transform:translateY(-10px)}62%{transform:translateY(3px)}70%,100%{transform:none}}
+.m4 .f-wave{animation-name:m4a}.m4 .r-sun{animation-name:m4b}
+@keyframes m4a{0%{transform:translateY(-40px)}30%{transform:translateY(4px)}40%,100%{transform:none}}
+@keyframes m4b{0%,30%{transform:translateY(64px)}46%{transform:translateY(20px)}58%{transform:translateY(-6px)}68%,100%{transform:none}}
+/* shore + sun */
+.play .q-sun{animation-name:qsun;transform-box:view-box}
+@keyframes qsun{0%,18%{transform:translateY(46px);opacity:0}48%{transform:translateY(-6px);opacity:1}62%,100%{transform:none;opacity:1}}
+/* round 3 */
+.play .i-t{animation-name:drop}
+.play .i-c{stroke-dasharray:600;animation-name:drawc}
+@keyframes drawc{0%,20%{stroke-dashoffset:600}55%,100%{stroke-dashoffset:0}}
+.play .j-bowl{animation-name:land1}.play .j-1{animation-name:dj1}.play .j-2{animation-name:dj2}.play .j-3{animation-name:dj3}
+@keyframes dj1{0%,18%{transform:translateY(-120px);opacity:0}34%,100%{transform:none;opacity:1}}
+@keyframes dj2{0%,28%{transform:translateY(-120px);opacity:0}44%,100%{transform:none;opacity:1}}
+@keyframes dj3{0%,38%{transform:translateY(-120px);opacity:0}54%,100%{transform:none;opacity:1}}
+.play .k-arch{stroke-dasharray:420;animation-name:karch}
+.play .k-key{animation-name:dj3;transform-box:view-box}
+@keyframes karch{0%{stroke-dashoffset:420}40%,100%{stroke-dashoffset:0}}
+.play .l-bars{transform-origin:128px 140px;animation-name:bars}
+@keyframes bars{0%,22%{transform:scale(0);opacity:0}48%,100%{transform:scale(1);opacity:1}}
+.play .m-1{animation-name:land1}.play .m-2{animation-name:land2}.play .m-3{animation-name:dj3}
+.play .n-wave{stroke-dasharray:120;animation-name:wave}
+@keyframes wave{0%,35%{stroke-dashoffset:120}60%,100%{stroke-dashoffset:0}}
+.play .o-flame{transform-origin:128px 202px;animation:flick 1.1s ease-in-out infinite alternate}
+@keyframes flick{0%{transform:scale(.92,1)}50%{transform:scale(1.04,.94)}100%{transform:scale(.97,1.08)}}
+.play .p-1,.play .p-2,.play .p-3{animation:type 1.2s ease-in-out infinite}
+.play .p-2{animation-delay:.15s}.play .p-3{animation-delay:.3s}
+@keyframes type{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-10px)}}
+.play .j-1,.play .j-2,.play .j-3,.play .p-1,.play .p-2,.play .p-3,.play .m-1,.play .m-2,.play .m-3,.play .i-t{transform-box:view-box}
+/* loader: the alcove dot hops */
+.loader .a-dot{animation:hop .9s cubic-bezier(.3,0,.3,1) infinite alternate}
+@keyframes hop{to{transform:translateY(-38px)}}
+.loader svg{width:72px}
+@media (prefers-reduced-motion:reduce){.play *,.loader *{animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <h1>terracove · logo motion</h1>
+  <p class="lead">Every mark in the app's real palette: cream <code>#F8F2E6</code>, terracotta <code>#E8957A</code> / deep <code>#D27556</code>, ink <code>#141414</code>. Each card loops its intro motion (about 1.5 s, then holds). Q–W (top) are Shoreline + dark sun options; then A–C round 1, D–H round 2, I–P round 3.</p>
+  <div class="bar">
+    <button id="bLight" class="on">Cream</button><button id="bDark">Dark</button>
+    <button id="bReplay">Replay all</button>
+  </div>
+  <section id="final" class="play" style="margin-bottom:40px">
+    <h2 style="font-family:'Bricolage Grotesque';margin:0 0 6px">Final · Terracove sun</h2>
+    <p class="lead" style="margin-bottom:16px">W's layout with R3's motion: the block fades in, the sun floats up from behind the horizon, the sea rises. Light mode gets the black sun, dark mode the cream sun.</p>
+    <div class="fin-row">
+      <div class="fin light"><div class="fin-stage" data-mode="light"></div><div class="fin-lock" data-mode="light"></div><div class="fin-icons" data-mode="light"></div><b>Light mode</b></div>
+      <div class="fin dark"><div class="fin-stage" data-mode="dark"></div><div class="fin-lock" data-mode="dark"></div><div class="fin-icons" data-mode="dark"></div><b>Dark mode</b></div>
+    </div>
+    <button id="bFin" style="margin-top:14px">Replay</button>
+  </section>
+  <h2 style="font-family:'Bricolage Grotesque';margin:0 0 6px">Horizon sun · pop-up motions</h2>
+  <p class="lead" style="margin-bottom:16px">Everything moves bottom to top. The sun is hidden behind the horizon and pops up through it.</p>
+  <div class="grid lab" id="lab"></div>
+  <h2 style="font-family:'Bricolage Grotesque';margin:40px 0 12px">All logos</h2>
+  <div class="grid play" id="grid"></div>
+  <h2 style="font-family:'Bricolage Grotesque';margin:40px 0 12px">Loading state (Alcove)</h2>
+  <div class="card loader" style="max-width:280px"><div class="stage" id="loader"></div><p class="motion">The dot hops inside the arch while something saves or loads.</p></div>
+</main>
+<script>
+const C={hero:'#E8957A',deep:'#D27556',ink:'#141414',cream:'#FFFDF8',sand:'#EFCB8A'};
+// mark(k, dark) -> inner svg markup; classes drive the motion
+const MARKS={
+ Q:{name:'Q · Shoreline sun',tag:'Shore + sun',motion:'The block appears, the dark sun rises in the top half, then the wave rolls in.',
+   svg:d=>`<path class="f-top" fill="${C.hero}" d="M40 76a36 36 0 0 1 36-36h104a36 36 0 0 1 36 36v64c-30 0-44 24-88 24s-58-24-88-24z"/><circle class="q-sun" fill="${d?C.cream:C.ink}" cx="128" cy="100" r="30"/><path class="f-wave" fill="${d?C.cream:C.ink}" d="M40 168c30 0 44 24 88 24s58-24 88-24v12a36 36 0 0 1-36 36H76a36 36 0 0 1-36-36z"/>`},
+ R:{name:'R · Horizon sun',tag:'Your pick',motion:'The wave rises from below, then the half sun pops up from behind the horizon.',
+   svg:d=>`<path class="f-top" fill="${C.hero}" d="M40 76a36 36 0 0 1 36-36h104a36 36 0 0 1 36 36v64c-30 0-44 24-88 24s-58-24-88-24z"/><defs><clipPath id="hz${d?1:0}"><rect width="256" height="156"/></clipPath></defs><g clip-path="url(#hz${d?1:0})"><path class="r-sun" fill="${d?C.cream:C.ink}" d="M84 156a44 44 0 0 1 88 0z"/></g><path class="f-wave" fill="${d?C.cream:C.ink}" d="M40 168c30 0 44 24 88 24s58-24 88-24v12a36 36 0 0 1-36 36H76a36 36 0 0 1-36-36z"/>`},
+ R2:{name:'R2 · Big horizon sun',tag:'Like R',motion:'A larger half sun pops up from behind the horizon.',
+   svg:d=>`<path class="f-top" fill="${C.hero}" d="M40 76a36 36 0 0 1 36-36h104a36 36 0 0 1 36 36v64c-30 0-44 24-88 24s-58-24-88-24z"/><defs><clipPath id="hz2${d?1:0}"><rect width="256" height="156"/></clipPath></defs><g clip-path="url(#hz2${d?1:0})"><path class="r-sun" fill="${d?C.cream:C.ink}" d="M68 156a60 60 0 0 1 120 0z"/></g><path class="f-wave" fill="${d?C.cream:C.ink}" d="M40 168c30 0 44 24 88 24s58-24 88-24v12a36 36 0 0 1-36 36H76a36 36 0 0 1-36-36z"/>`},
+ R3:{name:'R3 · Floating sun',tag:'Like R',motion:'The sun pops up and floats just above the horizon.',
+   svg:d=>`<path class="f-top" fill="${C.hero}" d="M40 76a36 36 0 0 1 36-36h104a36 36 0 0 1 36 36v64c-30 0-44 24-88 24s-58-24-88-24z"/><circle class="q-sun" fill="${d?C.cream:C.ink}" cx="128" cy="116" r="28"/><path class="f-wave" fill="${d?C.cream:C.ink}" d="M40 168c30 0 44 24 88 24s58-24 88-24v12a36 36 0 0 1-36 36H76a36 36 0 0 1-36-36z"/>`},
+ R4:{name:'R4 · Arch horizon',tag:'Like R',motion:'Inside the arch: the sea rises, then the half sun comes up.',
+   svg:d=>`<path class="f-top" fill="${C.hero}" d="M48 160V120a80 80 0 0 1 160 0v40c-28 0-40 20-80 20s-52-20-80-20z"/><defs><clipPath id="hz4${d?1:0}"><rect width="256" height="160"/></clipPath></defs><g clip-path="url(#hz4${d?1:0})"><path class="r-sun" fill="${d?C.cream:C.ink}" d="M92 160a36 36 0 0 1 72 0z"/></g><path class="f-wave" fill="${d?C.cream:C.ink}" d="M48 184c28 0 40 20 80 20s52-20 80-20v32H48z"/>`},
+ S:{name:'S · Corner sun',tag:'Shore + sun',motion:'The sun pops into the top corner, like a small status dot.',
+   svg:d=>`<path class="f-top" fill="${C.hero}" d="M40 76a36 36 0 0 1 36-36h104a36 36 0 0 1 36 36v64c-30 0-44 24-88 24s-58-24-88-24z"/><circle class="q-sun" fill="${d?C.cream:C.ink}" cx="174" cy="86" r="22"/><path class="f-wave" fill="${d?C.cream:C.ink}" d="M40 168c30 0 44 24 88 24s58-24 88-24v12a36 36 0 0 1-36 36H76a36 36 0 0 1-36-36z"/>`},
+ T:{name:'T · Round shore',tag:'Shore + sun',motion:'A round badge: sun rises, the wave fills the bottom of the circle.',
+   svg:d=>`<path class="f-top" fill="${C.hero}" d="M32 136a96 96 0 0 1 192 0c-30 0-44 24-92 24s-70-24-100-24z"/><circle class="q-sun" fill="${d?C.cream:C.ink}" cx="128" cy="94" r="26"/><path class="f-wave" fill="${d?C.cream:C.ink}" d="M36 164c30 0 44 22 92 22s62-22 92-22A96 96 0 0 1 36 164z"/>`},
+ U:{name:'U · Arch shore',tag:'Shore + sun',motion:'The alcove arch with the sun inside and the sea at its feet.',
+   svg:d=>`<path class="f-top" fill="${C.hero}" d="M48 160V120a80 80 0 0 1 160 0v40c-28 0-40 20-80 20s-52-20-80-20z"/><circle class="q-sun" fill="${d?C.cream:C.ink}" cx="128" cy="112" r="26"/><path class="f-wave" fill="${d?C.cream:C.ink}" d="M48 184c28 0 40 20 80 20s52-20 80-20v32H48z"/>`},
+ V:{name:'V · Sun ring',tag:'Shore + sun',motion:'A lighter take: the sun is a ring, so the block shows through.',
+   svg:d=>`<path class="f-top" fill="${C.hero}" d="M40 76a36 36 0 0 1 36-36h104a36 36 0 0 1 36 36v64c-30 0-44 24-88 24s-58-24-88-24z"/><circle class="q-sun" fill="none" stroke="${d?C.cream:C.ink}" stroke-width="14" cx="128" cy="100" r="28"/><path class="f-wave" fill="${d?C.cream:C.ink}" d="M40 168c30 0 44 24 88 24s58-24 88-24v12a36 36 0 0 1-36 36H76a36 36 0 0 1-36-36z"/>`},
+ W:{name:'W · Cream sun',tag:'Shore + sun',motion:'Same layout with a cream sun cut out of the block (negative space).',
+   svg:d=>`<path class="f-top" fill="${C.hero}" d="M40 76a36 36 0 0 1 36-36h104a36 36 0 0 1 36 36v64c-30 0-44 24-88 24s-58-24-88-24z"/><circle class="q-sun" fill="${d?C.ink:C.cream}" cx="128" cy="100" r="30"/><path class="f-wave" fill="${d?C.cream:C.ink}" d="M40 168c30 0 44 24 88 24s58-24 88-24v12a36 36 0 0 1-36 36H76a36 36 0 0 1-36-36z"/>`},
+ A:{name:'A · Alcove',tag:'Recommended',motion:'Step inside: the arch rises from the floor, then the dot drops in and settles.',
+   svg:d=>`<path class="a-arch" fill="${C.hero}" fill-rule="evenodd" d="M48 224V112a80 80 0 0 1 160 0v112h-48v-64a32 32 0 0 0-64 0v64z"/><circle class="a-dot" fill="${d?C.cream:C.ink}" cx="128" cy="196" r="16"/>`},
+ B:{name:'B · Tile cove',motion:'Sunrise: the tile pops in, the small sun swings over the bite.',
+   svg:d=>`<path class="b-tile" fill="${C.hero}" d="M76 40H120A96 96 0 0 0 216 136V180A36 36 0 0 1 180 216H76A36 36 0 0 1 40 180V76A36 36 0 0 1 76 40Z"/><circle class="b-sun" fill="${d?C.cream:C.ink}" cx="194" cy="62" r="18"/>`},
+ C:{name:'C · Arch-o',motion:'Draw: the arch ring draws itself in one stroke, like the o being written.',
+   svg:d=>`<path class="c-ring" fill="none" stroke="${C.hero}" stroke-width="34" stroke-linejoin="round" d="M81 199V128a47 47 0 0 1 94 0v71z"/>`},
+ D:{name:'D · Harbour',tag:'New',motion:'Tide in: two arms close round the water, then the dot floats up.',
+   svg:d=>`<path class="d-arc" fill="none" stroke="${C.hero}" stroke-width="36" stroke-linecap="round" d="M84 60A96 96 0 1 0 172 60"/><circle class="d-dot" fill="${d?C.cream:C.ink}" cx="128" cy="146" r="22"/>`},
+ E:{name:'E · Roof tiles',tag:'New',motion:'Stack: terracotta tile rows land one after another, like work piling up neatly.',
+   svg:d=>`<path class="e-r2" fill="${C.hero}" d="M64 112V80a32 32 0 0 1 64 0a32 32 0 0 1 64 0V112z"/><path class="e-r1" fill="${C.deep}" d="M32 200V152a32 32 0 0 1 64 0a32 32 0 0 1 64 0a32 32 0 0 1 64 0V200z"/>`},
+ F:{name:'F · Shoreline',tag:'New',motion:'Wave: the block appears, then the terracotta shoreline rolls in under it.',
+   svg:d=>`<path class="f-top" fill="${C.hero}" d="M40 76a36 36 0 0 1 36-36h104a36 36 0 0 1 36 36v64c-30 0-44 24-88 24s-58-24-88-24z"/><path class="f-wave" fill="${d?C.cream:C.ink}" d="M40 168c30 0 44 24 88 24s58-24 88-24v12a36 36 0 0 1-36 36H76a36 36 0 0 1-36-36z"/>`},
+ G:{name:'G · Sun cove',tag:'New',motion:'Sunrise: a terracotta sun rises from behind the water line.',
+   svg:d=>`<defs><clipPath id="gc${d?1:0}"><rect x="0" y="0" width="256" height="168"/></clipPath></defs><g clip-path="url(#gc${d?1:0})"><path class="g-sun" fill="${C.hero}" d="M60 168a68 68 0 0 1 136 0z"/></g><path fill="${d?C.cream:C.ink}" d="M32 176c32 0 32 20 64 20s32-20 64-20 32 20 64 20v24H32z"/>`},
+ H:{name:'H · Hill door',tag:'New',motion:'Open: a round hill, and its little arched door opens from the threshold.',
+   svg:d=>`<circle fill="${C.hero}" cx="128" cy="128" r="96"/><path class="h-door" fill="${d?C.ink:C.cream}" d="M100 200v-48a28 28 0 0 1 56 0v48z"/>`},
+ I:{name:'I · tc monogram',tag:'Round 3',motion:'Write: the t drops in, then the c curls round beside it.',
+   svg:d=>`<rect class="i-t" fill="${d?C.cream:C.ink}" x="58" y="48" width="36" height="160" rx="18"/><rect class="i-t" fill="${d?C.cream:C.ink}" x="36" y="92" width="80" height="32" rx="16"/><path class="i-c" fill="none" stroke="${C.hero}" stroke-width="34" stroke-linecap="round" d="M204 122A46 46 0 1 0 204 182"/>`},
+ J:{name:'J · Bowl',tag:'Round 3',motion:'Gather: the bowl rises, three tasks drop in one by one.',
+   svg:d=>`<path class="j-bowl" fill="${C.hero}" d="M36 132h184a92 92 0 0 1-184 0z"/><circle class="j-1" fill="${d?C.cream:C.ink}" cx="88" cy="108" r="20"/><circle class="j-2" fill="${C.deep}" cx="128" cy="92" r="20"/><circle class="j-3" fill="${C.sand}" cx="168" cy="108" r="20"/>`},
+ K:{name:'K · Keystone',tag:'Round 3',motion:'Lock in: the arch draws up from both sides, the keystone drops in to hold it.',
+   svg:d=>`<path class="k-arch" fill="none" stroke="${C.hero}" stroke-width="34" d="M60 224V140a68 68 0 0 1 136 0v84"/><path class="k-key" fill="${d?C.cream:C.ink}" d="M106 40h44l-8 52h-28z"/>`},
+ L:{name:'L · Arch window',tag:'Round 3',motion:'Light on: the arch rises, the window bars slide into place.',
+   svg:d=>`<path class="a-arch" fill="${C.hero}" d="M56 216V120a72 72 0 0 1 144 0v96z"/><g class="l-bars" fill="${d?C.ink:C.cream}"><rect x="121" y="44" width="14" height="172"/><rect x="56" y="134" width="144" height="14"/></g>`},
+ M:{name:'M · Pebbles',tag:'Round 3',motion:'Settle: three pebbles stack, one after another.',
+   svg:d=>`<ellipse class="m-1" fill="${C.deep}" cx="128" cy="190" rx="86" ry="30"/><ellipse class="m-2" fill="${C.hero}" cx="128" cy="134" rx="62" ry="24"/><ellipse class="m-3" fill="${d?C.cream:C.ink}" cx="128" cy="90" rx="36" ry="18"/>`},
+ N:{name:'N · Wave C',tag:'Round 3',motion:'Tide: the C draws round, a wave runs through its mouth.',
+   svg:d=>`<path class="i-c" fill="none" stroke="${C.hero}" stroke-width="40" stroke-linecap="round" d="M196 70A90 90 0 1 0 196 186"/><path class="n-wave" fill="none" stroke="${d?C.cream:C.ink}" stroke-width="18" stroke-linecap="round" d="M96 128c16-16 32-16 48 0s32 16 48 0"/>`},
+ O:{name:'O · Hearth',tag:'Round 3',motion:'Glow: a small flame flickers inside the arch (can loop as a loader).',
+   svg:d=>`<path fill="none" stroke="${d?C.cream:C.ink}" stroke-width="22" stroke-linejoin="round" d="M64 216V128a64 64 0 0 1 128 0v88z"/><path class="o-flame" fill="${C.hero}" d="M128 112c24 28 30 44 30 60a30 30 0 0 1-60 0c0-16 6-32 30-60z"/>`},
+ P:{name:'P · Arch bubble',tag:'Round 3',motion:'Chat: the bubble pops up, the three dots type (client messages).',
+   svg:d=>`<path class="b-tile" fill="${C.hero}" d="M48 124a80 80 0 0 1 160 0v40a36 36 0 0 1-36 36H108l-52 32v-32a8 8 0 0 1-8-8z"/><circle class="p-1" fill="${d?C.ink:C.cream}" cx="96" cy="142" r="13"/><circle class="p-2" fill="${d?C.ink:C.cream}" cx="128" cy="142" r="13"/><circle class="p-3" fill="${d?C.ink:C.cream}" cx="160" cy="142" r="13"/>`},
+};
+const svg=(k,d,size)=>`<svg viewBox="0 0 256 256" ${size?`width="${size}" height="${size}"`:''} xmlns="http://www.w3.org/2000/svg">${MARKS[k].svg(d)}</svg>`;
+// app icon: cream mark on terracotta (ink accents)
+const icon=k=>svg(k,false).replaceAll(C.cream,'#SWAP').replaceAll(C.hero,C.cream).replaceAll(C.deep,C.cream).replaceAll('#SWAP',C.hero);
+let dark=false;
+var render=function(){
+  const g=document.getElementById('grid');
+  g.className='grid play'+(dark?' dark':'');
+  g.innerHTML=Object.keys(MARKS).map(k=>{const m=MARKS[k];return `<div class="card">
+    <div class="stage">${svg(k,dark)}</div>
+    <div class="name">${m.name}${m.tag?`<span class="tag">${m.tag}</span>`:''}</div>
+    <div class="lock">${svg(k,dark)}<b>terracove</b></div>
+    <div class="icons"><i style="width:56px;height:56px">${icon(k)}</i><i style="width:32px;height:32px">${icon(k)}</i><i style="width:16px;height:16px;border-radius:4px">${icon(k)}</i></div>
+    <p class="motion">${m.motion}</p></div>`}).join('');
+  document.getElementById('loader').innerHTML=svg('A',dark);
+  document.querySelector('.loader').classList.toggle('dark',dark);
+  document.body.classList.toggle('darkbody',dark);
+}
+bLight.onclick=()=>{dark=false;bLight.classList.add('on');bDark.classList.remove('on');render()};
+bDark.onclick=()=>{dark=true;bDark.classList.add('on');bLight.classList.remove('on');render()};
+bReplay.onclick=()=>render();
+
+const LAB=[['m1','1 · Sunrise','Block and sea sit still; only the sun rises up through the horizon, overshoots a touch and settles.'],
+ ['m2','2 · Build up','The sea pops up first, then the block, then the sun peeks up behind the horizon.'],
+ ['m3','3 · Bounce','The whole tile springs up from below with a little squash, then the sun pops up.'],
+ ['m4','4 · Tide','The sea settles into place, then the sun climbs up in two beats.']];
+function renderLab(){
+  const raw=MARKS.R.svg(dark).replace(/class="(f-top|f-wave)"/g,'class="$1"');
+  document.getElementById('lab').className='grid lab'+(dark?' dark':'');
+  document.getElementById('lab').innerHTML=LAB.map(([c,n,t])=>`<div class="card ${c}"><div class="stage"><svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><g class="whole">${raw}</g></svg></div><div class="name">${n}</div><p class="motion">${t}</p></div>`).join('');
+}
+// Final mark: light = black sun + black sea, dark = cream sun + cream sea
+const FINAL=d=>`<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path class="f-top" fill="#E8957A" d="M40 76a36 36 0 0 1 36-36h104a36 36 0 0 1 36 36v64c-30 0-44 24-88 24s-58-24-88-24z"/><circle class="q-sun" fill="${d?'#FFFDF8':'#141414'}" cx="128" cy="100" r="30"/><path class="f-wave" fill="${d?'#FFFDF8':'#141414'}" d="M40 168c30 0 44 24 88 24s58-24 88-24v12a36 36 0 0 1-36 36H76a36 36 0 0 1-36-36z"/></svg>`;
+function renderFinal(){
+  document.querySelectorAll('.fin-stage').forEach(e=>e.innerHTML=FINAL(e.dataset.mode==='dark'));
+  document.querySelectorAll('.fin-lock').forEach(e=>e.innerHTML=FINAL(e.dataset.mode==='dark')+'<span>terracove</span>');
+  document.querySelectorAll('.fin-icons').forEach(e=>{const d=e.dataset.mode==='dark';e.innerHTML=[72,40,20].map(z=>`<i style="width:${z}px;height:${z}px">${FINAL(d)}</i>`).join('')});
+}
+bFin.onclick=renderFinal; renderFinal();
+const _render=render; render=function(){_render();renderLab();};
+render();
+</script>
+</body>
+</html>

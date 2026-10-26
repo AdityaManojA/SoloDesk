@@ -2,6 +2,12 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.14 — 26 October 2026 · A new logo
+
+- **The Terracove sun.** A new logo: a terracotta tile with a sun rising over the sea. It plays a short float-up when it appears (still for people who ask for less motion) and switches to a cream sun in dark mode. It is on the sidebar, sign-in, top bar, client portal, legal pages, browser tab (follows the browser's light/dark setting), installed-app icons and link previews. Sources are in `design/logo/`; the old Throughline files stay in `public/brand/` for old links.
+- **A fluid tab bar.** On phones, one terracotta highlight flows between tabs: it stretches across like a drop of liquid and settles on the tab you tap.
+- **Fix:** the welcome tour still said "SoloDesk"; it now says Terracove.
+
 ## 1.13 — 26 October 2026 · SoloDesk is now Terracove
 
 - **A new name.** SoloDesk is now Terracove. Data and links are unchanged: Firestore collections keep their `solodesk*` names, browser storage keeps its `sd_*` keys, and the app stays at taskflow-solodesk.web.app until a new domain is set up.

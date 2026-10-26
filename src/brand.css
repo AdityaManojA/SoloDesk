@@ -1,4 +1,16 @@
-.brand-lockup{display:inline-flex;align-items:center;gap:11px;white-space:nowrap;font-weight:inherit;line-height:1;vertical-align:middle}.brand-lockup>.brand-mark{display:block;width:44px;height:44px;flex-shrink:0}.brand-lockup>span{display:block;letter-spacing:-.8px}.login-story .brand-lockup>.brand-mark{width:48px;height:48px}.legal-header .wordmark{line-height:1}.header-brand .brand-lockup{font-weight:800}@media(max-width:768px){.header-brand .brand-lockup>.brand-mark{width:37px;height:37px}.header-brand .brand-lockup{gap:9px}.login-story .brand-lockup>.brand-mark{width:40px;height:40px}.legal-header .brand-lockup>.brand-mark{width:36px;height:36px}}
+.brand-lockup{display:inline-flex;align-items:center;gap:11px;white-space:nowrap;font-weight:inherit;line-height:1;vertical-align:middle}.brand-lockup>.brand-mark{display:block;width:44px;height:44px;flex-shrink:0}.brand-lockup>span{display:block}.login-story .brand-lockup>.brand-mark{width:48px;height:48px}.legal-header .wordmark{line-height:1}.header-brand .brand-lockup{font-weight:800}@media(max-width:768px){.header-brand .brand-lockup>.brand-mark{width:37px;height:37px}.header-brand .brand-lockup{gap:9px}.login-story .brand-lockup>.brand-mark{width:40px;height:40px}.legal-header .brand-lockup>.brand-mark{width:36px;height:36px}}
 
-.brand-mark{width:var(--brand-size,44px);height:var(--brand-size,44px);display:inline-flex;position:relative;flex-shrink:0;vertical-align:middle}.brand-mark>img{display:block;width:100%;height:100%;object-fit:contain}.brand-mark>.brand-mark-dark{display:none}:root[data-theme=dark] .brand-mark>.brand-mark-light{display:none}:root[data-theme=dark] .brand-mark>.brand-mark-dark{display:block}.brand-downloads{margin-top:24px}.brand-downloads>h3{margin:0 0 12px}.brand-downloads .context-actions{gap:8px}.brand-downloads .ghost{min-height:44px}.brand-downloads p{font-size:12px;color:var(--mu)}
+.brand-mark{--brand-ink:#141414;width:var(--brand-size,44px);height:var(--brand-size,44px);display:inline-flex;position:relative;flex-shrink:0;vertical-align:middle}.brand-mark>svg{display:block;width:100%;height:100%}.brand-mark .bm-sun,.brand-mark .bm-sea{fill:var(--brand-ink)}
+:root[data-theme=dark] .brand-mark,.sidebar .brand-mark,.login-story .brand-mark{--brand-ink:#FFFDF8}
+/* float-up on load: block fades in, sea rises, sun floats up from behind the horizon */
+.brand-anim .bm-block{animation:bm-fade .5s ease-out both}
+.brand-anim .bm-sea{transform-box:view-box;animation:bm-sea .8s .3s cubic-bezier(.2,.8,.2,1) both}
+.brand-anim .bm-sun{transform-box:view-box;animation:bm-sun .9s .6s cubic-bezier(.2,.8,.2,1) both}
+@keyframes bm-fade{from{opacity:0}to{opacity:1}}
+@keyframes bm-sea{from{transform:translateY(70px);opacity:0}70%{transform:translateY(-6px);opacity:1}to{transform:none;opacity:1}}
+@keyframes bm-sun{from{transform:translateY(46px);opacity:0}65%{transform:translateY(-6px);opacity:1}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.brand-anim .bm-block,.brand-anim .bm-sea,.brand-anim .bm-sun{animation:none}}
+.brand-lockup>span{font-family:var(--font-display);font-weight:700;letter-spacing:-.03em}
+.sidebar .brand-lockup{gap:10px}.sidebar .brand-lockup>.brand-mark{width:36px;height:36px}
+.brand-downloads{margin-top:24px}.brand-downloads>h3{margin:0 0 12px}.brand-downloads .context-actions{gap:8px}.brand-downloads .ghost{min-height:44px}.brand-downloads p{font-size:12px;color:var(--mu)}
 .brand-downloads .brand-lockup{font-size:24px;font-weight:800;margin:6px 0 12px}

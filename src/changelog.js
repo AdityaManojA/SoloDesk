@@ -2,6 +2,10 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
+  {version:'1.14',released:true,date:'2026-10-26',title:'A new logo',highlights:[
+    ['The Terracove sun','A new logo: a terracotta tile with a sun rising over the sea. It plays a short float-up when the app opens (still if your device asks for less motion), and switches to a cream sun in dark mode. It is on the sidebar, sign-in, client portal, browser tab and the installed app icon.'],
+    ['A fluid tab bar','On your phone, the highlight in the bottom bar now flows to the tab you tap: it stretches across like a drop of liquid and settles on the new tab.'],
+  ],fixes:[]},
   {version:'1.13',released:true,date:'2026-10-26',title:'SoloDesk is now Terracove',highlights:[
     ['A new name','SoloDesk is now Terracove: terracotta, and a cove, a calm place to keep your client work. Everything you have stays exactly where it is, and your clients’ portal links keep working.'],
   ],fixes:[]},

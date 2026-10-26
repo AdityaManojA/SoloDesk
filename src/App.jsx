@@ -10,6 +10,7 @@ import useTaskflow from './useTaskflow';
 import TaskflowPanel from './TaskflowPanel';
 import { deletionInfo, deleteRecord } from './record-actions';
 import BrandLogo from './BrandLogo';
+import {DockBlob} from './FluidDock';
 import InstallApp from './InstallApp';
 import Experience, { InstallNotice, ReplayIntroduction } from './Experience';
 import { wasSeen, rememberSeen, onboardingKey } from './experience-state';
@@ -769,7 +770,7 @@ export default function App() {
     <InstallNotice/>
     <a className="skip-link" href="#workspace" onClick={e => { e.preventDefault(); mainRef.current?.focus(); }}>Skip to content</a>
     <aside className="sidebar" aria-label="Terracove">
-      <a className="wordmark" href="#/dash">terracove</a>
+      <a className="wordmark" href="#/dash"><BrandLogo /></a>
       {GROUPS.map(([title,keys]) => <div key={title}><span className="nav-caption">{title}</span><nav aria-label={title}>{keys.map(k => { const t = NAV.find(([x]) => x === k)[1], on = page === k; return <a key={k} href={'#/' + k} className={on ? 'on' : ''} aria-current={on ? 'page' : undefined}><Icon name={NAV_ICON[k] || k} size={18} /><span>{t}</span>{k === 'tasks' && d.tasks.filter(x => x.status !== 'Done' && !x.arch).length > 0 && <span className="nav-count">{d.tasks.filter(x => x.status !== 'Done' && !x.arch).length}</span>}{k === 'approvals' && unseenAnswers(d, d.settings.approvalsSeenAt) + clientRequests.filter(r => !r.reply).length > 0 && <span className="nav-count alert" title="New client answers and requests">{unseenAnswers(d, d.settings.approvalsSeenAt) + clientRequests.filter(r => !r.reply).length}</span>}</a>; })}</nav></div>)}
       <div className="sidebar-bottom"><div className="sidebar-user"><a className="sidebar-who" href="#/profile" title="Your profile"><span className="avatar">{(demo ? 'Demo' : user?.displayName || d.settings.biz || 'You').split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase()}</span><span className="who"><b>{demo ? 'Demo explorer' : user?.displayName || 'Your account'}</b><small>{demo ? 'Sample workspace' : user?.email || d.settings.biz || 'Signed in'}</small></span></a><button type="button" className="sidebar-logout" onClick={logout} aria-label={demo ? 'Exit demo' : 'Log out'} title={demo ? 'Exit demo' : 'Log out'}><Icon name="logout" size={16} /></button></div><a className="sidebar-version" href="#/settings/whats-new">Terracove {currentVersion()} · What’s new</a></div>
     </aside>
@@ -802,7 +803,7 @@ export default function App() {
       {page === 'more' && <More {...P} />}
       </div></PageFrame></Suspense></ScreenBoundary><footer className="workspace-footer"><span>Terracove <span className="footer-separator">/</span> Space to do your thing.</span><a href="#/integrations">Your data belongs with you <Icon name="arrow" size={14} /></a><LegalLinks /></footer>
     </main></div>
-    <nav className="bnav" aria-label="Primary">{MOB.slice(0,2).map(([k,t]) => <a key={k} href={'#/' + k} className={page === k ? 'on' : ''} aria-current={page === k ? 'page' : undefined}><span className="dock-icon"><Icon name={k} size={23} /></span>{t}</a>)}<button className="dock-add" aria-label="Create new" onClick={() => open('new')}><Icon name="plus" size={32} /></button>{MOB.slice(2).map(([k,t]) => <a key={k} href={'#/' + k} className={page === k || (k === 'more' && MORE.some(([m]) => m === page)) ? 'on' : ''} aria-current={page === k ? 'page' : undefined}><span className="dock-icon"><Icon name={k} size={23} /></span>{t}</a>)}</nav>
+    <nav className="bnav" aria-label="Primary"><DockBlob page={page}/>{MOB.slice(0,2).map(([k,t]) => <a key={k} href={'#/' + k} className={page === k ? 'on' : ''} aria-current={page === k ? 'page' : undefined}><span className="dock-icon"><Icon name={k} size={23} /></span>{t}</a>)}<button className="dock-add" aria-label="Create new" onClick={() => open('new')}><Icon name="plus" size={32} /></button>{MOB.slice(2).map(([k,t]) => <a key={k} href={'#/' + k} className={page === k || (k === 'more' && MORE.some(([m]) => m === page)) ? 'on' : ''} aria-current={page === k ? 'page' : undefined}><span className="dock-icon"><Icon name={k} size={23} /></span>{t}</a>)}</nav>
 
     {updateNote && !experience && <UpdateNotice Modal={Modal} onClose={closeUpdate}/>}
     {experience && <Experience key={experience+'-'+experienceOwner} mode={experience} demo={demo} onClose={closeExperience} onTour={startTour}/>}

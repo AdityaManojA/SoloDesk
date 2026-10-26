@@ -43,7 +43,6 @@ a{color:inherit}
 }
 .sidebar{scrollbar-width:none}.sidebar::-webkit-scrollbar{display:none}
 .sidebar .wordmark{font-size:30px;font-weight:600;letter-spacing:-.03em;color:var(--ink-tx);padding:0 0 26px;display:block}
-.sidebar .wordmark svg,.sidebar .wordmark img{display:none}
 .sidebar .workspace-label{display:none}
 .sidebar .nav-caption{display:block;font-size:13px;font-weight:400;letter-spacing:0;color:var(--ink-mu);margin:4px 0 8px;text-transform:none}
 .sidebar nav{display:flex;flex-direction:column;gap:2px;margin-bottom:20px}
@@ -127,6 +126,11 @@ label{color:var(--tx)}
 .bnav{background:var(--ink)!important;border:0!important;color:var(--ink-tx)}
 .bnav>a{color:var(--ink-mu)!important}.bnav>a.on{color:var(--hero)!important}
 .bnav>a.on .dock-icon{background:var(--hero)!important;color:#141414!important;border:0!important}
+/* fluid selection: one blob slides behind the tabs (FluidDock.jsx); icons sit above it */
+.bnav-blob{position:absolute;left:0;top:0;width:0;height:0;opacity:0;border-radius:999px;background:var(--hero);pointer-events:none;z-index:0;transform-origin:50% 50%}
+.bnav>a{position:relative;z-index:1}.bnav>a .dock-icon{transition:color .25s .15s}
+.bnav:has(.bnav-blob) > a.on .dock-icon{background:transparent!important}
+.bnav>.dock-add{position:relative;z-index:2}
 .dock-icon{border:0!important;background:transparent!important}
 .dock-add{background:var(--hero)!important;color:#141414!important;outline-color:var(--bg)!important}
 
