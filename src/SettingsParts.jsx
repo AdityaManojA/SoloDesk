@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Icon from './Icon';
 import Shape from './Shapes.jsx';
 import { ACTION_COLOURS, DEFAULT_ACTION, actionColour } from './appearance';
@@ -51,15 +52,26 @@ export function InvoiceDefaults({ d, mut, toast }) {
   </form>;
 }
 
+// Settings → What's new: like a phone's software update page. The current version in full; earlier ones
+// stay folded behind "Review earlier updates", each opening on its own.
+const ReleaseNotes = ({ r }) => <>
+  <ul>{r.highlights.map(([t, x]) => <li key={t}><span><b>{t}</b><small>{x}</small></span></li>)}</ul>
+  {r.fixes.length > 0 && <><p className="eyebrow" style={{ margin: '14px 0 8px' }}>FIXES</p><ul className="fixes">{r.fixes.map(f => <li key={f}><span>{f}</span></li>)}</ul></>}
+</>;
 export function WhatsNew() {
-  const released = changelog.filter(r => r.released), upcoming = changelog.filter(r => !r.released);
+  const released = changelog.filter(r => r.released), latest = released[0], earlier = released.slice(1);
+  const [showEarlier, setShowEarlier] = useState(false);
   return <div>
-    <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}><div style={{ flex: 1 }}><h2 style={{ margin: 0 }}>Terracove {currentVersion()}</h2><small className="empty-note">Released {day(released[0]?.date)} · You are on the latest version</small></div><span className="chip sage">Up to date</span></div>
-    {[...upcoming, ...released].map(r => <section key={r.version} className="release" aria-label={'Version ' + r.version}>
-      <div className="release-head"><span className="chip ink">{r.version}</span><h3>{r.title}</h3><span className={'chip ' + (r.released ? (r.version === currentVersion() ? 'sage' : 'white') : 'hero')}>{r.released ? (r.version === currentVersion() ? 'Current' : 'Released') : 'Coming soon'}</span><small className="empty-note">{r.released ? day(r.date) : 'In progress'}</small></div>
-      <ul>{r.highlights.map(([t, x]) => <li key={t}><span><b>{t}</b><small>{x}</small></span></li>)}</ul>
-      {r.fixes.length > 0 && <><p className="eyebrow" style={{ margin: '14px 0 8px' }}>FIXES</p><ul className="fixes">{r.fixes.map(f => <li key={f}><span>{f}</span></li>)}</ul></>}
-    </section>)}
+    <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}><div style={{ flex: 1 }}><h2 style={{ margin: 0 }}>Terracove {currentVersion()}</h2><small className="empty-note">Released {day(latest?.date)} · You are on the latest version</small></div><span className="chip sage">Up to date</span></div>
+    {latest && <section className="release" aria-label={'Version ' + latest.version}>
+      <div className="release-head"><span className="chip ink">{latest.version}</span><h3>{latest.title}</h3><span className="chip sage">Current</span><small className="empty-note">{day(latest.date)}</small></div>
+      <ReleaseNotes r={latest} />
+    </section>}
+    {earlier.length > 0 && <button type="button" className="ghost release-toggle" aria-expanded={showEarlier} onClick={() => setShowEarlier(x => !x)}>{showEarlier ? 'Hide earlier updates' : 'Review earlier updates (' + earlier.length + ')'}</button>}
+    {showEarlier && <div className="release-history">{earlier.map(r => <details key={r.version} className="release">
+      <summary className="release-head"><span className="chip ink">{r.version}</span><h3>{r.title}</h3><small className="empty-note">{day(r.date)}</small></summary>
+      <ReleaseNotes r={r} />
+    </details>)}</div>}
   </div>;
 }
 

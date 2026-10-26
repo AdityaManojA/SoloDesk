@@ -14,7 +14,11 @@ Big shoutout to her for laying the foundation for this project!
 
 Original contributions by AdityaManojA are available under the [MIT License](LICENSE). The original MVP currently has no published license; inherited code and third-party dependencies are excluded from that grant. See [third-party notices and licensing scope](THIRD_PARTY_NOTICES.md) before reusing the combined application.
 
-A business workspace for independent professionals and studios: clients, projects, tasks, invoices, payments and reports. **Current version: 1.14** ([release notes](CHANGELOG.md), also in the app under Settings → What's new). The interface uses the 1.02 design: a black sidebar, the Terracotta palette (sage, sand, cream) with a per-workspace action colour, Bricolage Grotesque and Figtree type, and a floating dock on phones. The original React/Firebase data model and hash routes are retained. Calendar exports turn project timelines and dated tasks into scheduler events.
+A business workspace for independent professionals and studios: clients, projects, tasks, invoices, payments and reports. **Current version: 1.15** ([release notes](CHANGELOG.md), also in the app under Settings → What's new). The interface uses the 1.02 design: a black sidebar, the Terracotta palette (sage, sand, cream) with a per-workspace action colour, Bricolage Grotesque and Figtree type, and a floating dock on phones. The original React/Firebase data model and hash routes are retained. Calendar exports turn project timelines and dated tasks into scheduler events.
+
+## What's new in 1.15
+
+The Calendar's project timeline slides (`useSlidingWindow` in `src/Calendar.jsx`): fixed-width day columns that grow by 60 days near either edge, pinned client names, a month label, ‹ › and Today. Settings → What's new shows the current release with earlier ones folded (`WhatsNew` in `src/SettingsParts.jsx`). The update note shows once per version and once per sign-in (`shouldShowUpdate` in `src/changelog.js`, stored in `sd_seen_version` and `sd_seen_login`).
 
 ## What's new in 1.14
 
@@ -74,7 +78,7 @@ A rebuilt calendar with Year/Month/Week/Day zoom and a client-by-client project 
 
 Deploying 1.02 needs the updated `firestore.rules` (public profiles and Excel sync status). Copy it to TaskFlow's rules file first so both stay identical, then deploy rules before Hosting.
 
-**Status:** frontend deployed to https://taskflow-solodesk.web.app in `taskflow-dailytracker`, separately from TaskFlow’s Hosting site. Version 1.14 (26 October 2026) passes all **164 automated tests** and the production build. TaskFlow quests and its shared Google events are read-only in Terracove. Live sign-in/cloud-save round trips still need an account-level check. The standalone integration API and background server functions are not deployed on the Spark plan.
+**Status:** frontend deployed to https://taskflow-solodesk.web.app in `taskflow-dailytracker`, separately from TaskFlow’s Hosting site. Version 1.15 (26 October 2026) passes all **164 automated tests** and the production build. TaskFlow quests and its shared Google events are read-only in Terracove. Live sign-in/cloud-save round trips still need an account-level check. The standalone integration API and background server functions are not deployed on the Spark plan.
 
 ## Shared calendar markers
 

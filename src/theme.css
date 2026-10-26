@@ -236,6 +236,9 @@ label{color:var(--tx)}
 .release li:before{content:'';width:7px;height:7px;border-radius:50%;background:var(--hero-deep);margin-top:8px;flex-shrink:0}
 .release li small{display:block;color:var(--mu)}
 .release .fixes li:before{background:var(--mu)}
+.release-toggle{margin:4px 0 16px}.release-history{display:grid;gap:10px}
+details.release{padding:18px 24px;margin:0}details.release>summary{list-style:none;cursor:pointer;margin:0}details.release>summary::-webkit-details-marker{display:none}
+details.release>summary:after{content:'+';font-size:20px;font-weight:600;color:var(--mu);margin-left:auto}details.release[open]>summary{margin-bottom:12px}details.release[open]>summary:after{content:'\2212'}
 .update-hero{background:var(--hero);border-radius:var(--radius);padding:22px 90px 22px 22px;color:#141414;position:relative;overflow:clip}
 .update-hero>*:not(.shape){position:relative;z-index:1}
 .sheet-edit .sheet [data-edit]{background:color-mix(in srgb,var(--hero) 22%,#fff);border:1px dashed var(--hero-deep)!important;border-radius:6px!important;padding:3px 6px!important;font:inherit;color:#141414;width:100%;min-height:0}
@@ -883,7 +886,7 @@ input[type=radio]{border-radius:50%!important}
 
 .wt-days span.today b{background:var(--hero);color:#141414;border-radius:99px;min-width:22px;padding:1px 5px;text-align:center}
 .wt-days span em{position:absolute;top:0;left:2px;font-style:normal;font-size:10px;font-weight:700;color:var(--tx);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
-.zoom-month .wt-days span:not(.first):not(.today) small{visibility:hidden}
+.zoom-month:not(.sliding) .wt-days span:not(.first):not(.today) small{visibility:hidden}
 .zoom-year .wt-days span{padding-top:6px}
 .wt-name{padding-top:9px}
 .wt-name span{overflow:hidden;text-overflow:ellipsis}
@@ -904,7 +907,15 @@ input[type=radio]{border-radius:50%!important}
 .wt-arrow{font-size:16px;font-weight:700;opacity:.55;line-height:1;flex:0 0 auto}
 .wt-bar.after .wt-arrow:last-child{margin-left:auto}
 .wt-now{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--hero-deep,#D27556);border-radius:2px;z-index:2;opacity:.9}
-@media(max-width:760px){.wt-ticks,.wt-row{grid-template-columns:96px minmax(0,1fr)}.zoom-month .wt-days span:not(.first):not(.today) b{visibility:hidden}.wt-bar small{display:none}}
+/* sliding timeline: fixed-width days; the client names stay pinned while the dates slide */
+.work-timeline{--wt-name:160px}.work-timeline .block-head{flex-wrap:wrap;gap:8px}
+.wt-nav{display:flex;align-items:center;gap:6px;margin-left:auto}.wt-month{font-family:var(--font-display);font-size:15px;font-weight:600;margin-right:6px;white-space:nowrap}.wt-nav .icon-button{width:34px;height:34px}
+.wt-scroll{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;cursor:grab;margin:0 -4px;padding:0 4px 6px}
+.wt-scroll.dragging{cursor:grabbing;user-select:none}.wt-scroll:focus-visible{outline:2px solid var(--tx);outline-offset:2px;border-radius:12px}
+.wt-scroll .wt-grid{width:max-content}
+.wt-scroll .wt-name{position:sticky;left:0;z-index:3;background:var(--card);align-self:stretch;margin-right:-12px;padding-right:12px}
+.wt-scroll .wt-days span em{left:4px}
+@media(max-width:760px){.wt-ticks,.wt-row{grid-template-columns:96px minmax(0,1fr)}.work-timeline{--wt-name:96px}.zoom-month:not(.sliding) .wt-days span:not(.first):not(.today) b{visibility:hidden}.wt-bar small{display:none}}
 
 /* repeat on chosen days */
 .repeat-days{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 4px}

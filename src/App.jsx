@@ -609,9 +609,11 @@ export default function App() {
   const [signingOut, setSigningOut] = useState(false), [experience,setExperience] = useState(null);
   const experienceOwner=demo?'demo':user?.uid, experienceReady=!!d && !!experienceOwner;
   useEffect(()=>{if(!experienceReady){setExperience(null);return;}if(!wasSeen(localStorage,onboardingKey(experienceOwner)))setExperience('onboarding');},[experienceOwner,experienceReady]);
-  useEffect(()=>{if(!experienceReady)return;let seen=null;try{seen=localStorage.getItem('sd_seen_version');}catch{}
-    if(shouldShowUpdate(seen,wasSeen(localStorage,onboardingKey(experienceOwner))))setUpdateNote(true);else{try{localStorage.setItem('sd_seen_version',currentVersion());}catch{}}},[experienceOwner,experienceReady]);
-  const closeUpdate=()=>{setUpdateNote(false);try{localStorage.setItem('sd_seen_version',currentVersion());}catch{}};
+  // The update note: once per new version, and once after each sign-in (lastSignInTime changes on sign-in only).
+  const loginKey=demo?null:user?(user.uid+'|'+(user.metadata?.lastSignInTime||'')):null;
+  useEffect(()=>{if(!experienceReady)return;let seen=null,seenLogin=null;try{seen=localStorage.getItem('sd_seen_version');seenLogin=localStorage.getItem('sd_seen_login');}catch{}
+    if(shouldShowUpdate(seen,wasSeen(localStorage,onboardingKey(experienceOwner)),loginKey,seenLogin))setUpdateNote(true);else{try{localStorage.setItem('sd_seen_version',currentVersion());if(loginKey)localStorage.setItem('sd_seen_login',loginKey);}catch{}}},[experienceOwner,experienceReady,loginKey]);
+  const closeUpdate=()=>{setUpdateNote(false);try{localStorage.setItem('sd_seen_version',currentVersion());if(loginKey)localStorage.setItem('sd_seen_login',loginKey);}catch{}};
   const taskflow = useTaskflow(user?.uid, demo);
   const dataRef = useRef(null), toastTimer = useRef(), loadVersion = useRef(0), mainRef = useRef(null), saves = useRef(null), routeScrolls=useRef(new Map());
   if (!saves.current) saves.current=createWorkspaceSaves(async(owner,value,baseline)=>{

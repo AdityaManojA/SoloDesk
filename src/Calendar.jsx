@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { calendarEvents, calendarIcs } from '../functions/calendar';
 import { download, today } from './lib';
@@ -134,29 +134,76 @@ function timelineLanes(bars) {
   });
 }
 
+// Day-based zooms slide: a strip of fixed-width day columns that grows by SLIDE_DAYS whenever you scroll
+// (or drag) near either end, so you can move as far forward or back as you like. The year zoom still fits.
+const SLIDE_DAYS = 60, EDGE_PX = 240;
+const dayWidth = () => (window.matchMedia('(max-width: 760px)').matches ? 38 : 46);
+
+function useSlidingWindow(range, enabled) {
+  const [win, setWin] = useState(() => ({ start: addDaysKey(range.start, -28), end: addDaysKey(range.end, 56) }));
+  const scroller = useRef(null), shift = useRef(0), [col, setCol] = useState(dayWidth), [mid, setMid] = useState(range.start);
+  // A new period (zoom, Previous/Next, Today): rebuild around it and bring its first day to the left edge.
+  useLayoutEffect(() => {
+    if (!enabled) return;
+    setWin({ start: addDaysKey(range.start, -28), end: addDaysKey(range.end, 56) }); setMid(range.start);
+    requestAnimationFrame(() => { if (scroller.current) scroller.current.scrollLeft = 28 * dayWidth(); });
+  }, [range.start, range.end, enabled]);
+  // After days are added on the left, keep the view where it was.
+  useLayoutEffect(() => { if (shift.current && scroller.current) { scroller.current.scrollLeft += shift.current; shift.current = 0; } }, [win.start]);
+  useEffect(() => { const f = () => setCol(dayWidth()); window.addEventListener('resize', f); return () => window.removeEventListener('resize', f); }, []);
+  const onScroll = () => {
+    const el = scroller.current; if (!el) return;
+    // The month shown in the header follows the middle of the visible dates.
+    const name = el.querySelector('.wt-row .wt-name')?.offsetWidth || 0, at = addDaysKey(win.start, Math.floor((el.scrollLeft + (el.clientWidth - name) / 2) / col));
+    if (at.slice(0, 7) !== mid.slice(0, 7)) setMid(at);
+    if (shift.current) return;
+    if (el.scrollLeft < EDGE_PX) { shift.current = SLIDE_DAYS * col; setWin(w => ({ ...w, start: addDaysKey(w.start, -SLIDE_DAYS) })); }
+    else if (el.scrollLeft + el.clientWidth > el.scrollWidth - EDGE_PX) setWin(w => ({ ...w, end: addDaysKey(w.end, SLIDE_DAYS) }));
+  };
+  // Mouse users can grab the strip and drag it; touch and trackpads scroll natively.
+  const drag = useRef(null);
+  const end = () => { drag.current = null; scroller.current?.classList.remove('dragging'); };
+  const pointer = {
+    onPointerDown: e => { if (e.pointerType !== 'mouse' || e.button !== 0 || e.target.closest('button,a')) return; drag.current = { x: e.clientX, left: scroller.current.scrollLeft }; scroller.current.classList.add('dragging'); },
+    onPointerMove: e => { if (drag.current) scroller.current.scrollLeft = drag.current.left - (e.clientX - drag.current.x); },
+    onPointerUp: end, onPointerLeave: end,
+  };
+  // The strip only exists once there are projects to show, so place it when it first appears.
+  const attach = node => { if (node && node !== scroller.current) { scroller.current = node; node.scrollLeft = 28 * dayWidth(); } if (!node) scroller.current = null; };
+  const goTo = key => { const el = scroller.current; if (!el) return; const days = Math.round((Date.parse(key) - Date.parse(win.start)) / 864e5); el.scrollTo({ left: Math.max(0, days * col - el.clientWidth / 3), behavior: 'smooth' }); };
+  return { win, scroller, attach, col, onScroll, pointer, goTo, mid };
+}
+
 function WorkTimeline({ d, zoom, day, toneOf, completed, client, onOpen }) {
   const range = zoom === 'day' ? zoomRange('week', day) : zoomRange(zoom, day);
-  const t = today(), now = rangeFraction(t, addDaysKey(t, 1), range);
+  const sliding = zoom !== 'year';
+  const { win, scroller, attach, col, onScroll, pointer, goTo, mid } = useSlidingWindow(range, sliding);
+  const view = sliding ? win : range;
+  const t = today(), now = rangeFraction(t, addDaysKey(t, 1), view);
   const projects = d.projects.filter(p => !p.arch && (completed || p.status !== 'Complete') && (!client || p.client === client) && (p.start || p.end));
+  const span = p => [p.start || p.end, p.end ? addDaysKey(p.end, 1) : addDaysKey(t, 3650)];
   const rows = [];
   for (const c of [...d.clients.filter(c => !c.arch), { id: '', name: 'No client' }]) {
-    const bars = projects.filter(p => (p.client || '') === c.id).map(p => { const s = p.start || p.end, e = p.end ? addDaysKey(p.end, 1) : addDaysKey(t, 3650); return { p, f: rangeFraction(s, e, range), ongoing: !p.end }; }).filter(x => x.f);
+    const bars = projects.filter(p => (p.client || '') === c.id).map(p => { const [s, e] = span(p); return { p, f: rangeFraction(s, e, view), ongoing: !p.end }; }).filter(x => x.f);
     if (bars.length) { const laid = timelineLanes(bars); rows.push({ c, bars: laid, lanes: Math.max(...laid.map(x => x.lane)) + 1 }); }
   }
   const undated = d.projects.filter(p => !p.arch && p.status === 'Active' && !p.start && !p.end).length;
   // One column per day (per month in the year view): weekday + date, weekends shaded, today marked.
   const cols = zoom === 'year'
     ? Array.from({ length: 12 }, (_, i) => { const k = `${range.start.slice(0, 4)}-${String(i + 1).padStart(2, '0')}-01`; return { key: k, top: '', label: fmt(k, { month: 'short' }), shade: i % 2 === 1, today: t.slice(0, 7) === k.slice(0, 7), first: true }; })
-    : Array.from({ length: Math.round((Date.parse(range.end) - Date.parse(range.start)) / 864e5) }, (_, i) => { const k = addDaysKey(range.start, i), wd = new Date(k + 'T12:00:00').getDay(); return { key: k, top: fmt(k, { weekday: zoom === 'month' ? 'narrow' : 'short' }), label: String(+k.slice(8)), shade: wd === 0 || wd === 6, today: k === t, first: wd === 1 || i === 0, month: k.slice(8) === '01' || i === 0 ? fmt(k, { month: 'short' }) : '' }; });
-  const grid = { gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` };
+    : Array.from({ length: Math.round((Date.parse(view.end) - Date.parse(view.start)) / 864e5) }, (_, i) => { const k = addDaysKey(view.start, i), wd = new Date(k + 'T12:00:00').getDay(); return { key: k, top: fmt(k, { weekday: 'narrow' }), label: String(+k.slice(8)), shade: wd === 0 || wd === 6, today: k === t, first: wd === 1 || i === 0, month: k.slice(8) === '01' || i === 0 ? fmt(k, { month: 'short', ...(k.slice(0, 4) !== t.slice(0, 4) ? { year: 'numeric' } : {}) }) : '' }; });
+  const grid = { gridTemplateColumns: sliding ? `repeat(${cols.length}, ${col}px)` : `repeat(${cols.length}, minmax(0, 1fr))` };
   const tasksFor = p => { const all = d.tasks.filter(x => x.project === p.id && !x.arch); return `${all.filter(x => x.status === 'Done').length}/${all.length} tasks`; };
   const range2 = p => `${p.start ? fmt(p.start, { day: 'numeric', month: 'short' }) : '?'} → ${p.end ? fmt(p.end, { day: 'numeric', month: 'short' }) : 'ongoing'}`;
-  const count = rows.reduce((n, r) => n + r.bars.length, 0);
-  return <section className={'work-timeline card zoom-' + zoom} aria-label="What you are working on">
-    <div className="block-head" style={{ margin: 0 }}><h3>What you’re working on</h3><small className="empty-note">{count} project{count === 1 ? '' : 's'} in this {zoom === 'day' ? 'week' : zoom}{undated ? ` · ${undated} active without dates` : ''}</small></div>
-    {rows.length ? <div className="wt-grid">
-      <div className="wt-ticks" aria-hidden="true"><span className="wt-name" /><div className="wt-days" style={grid}>{cols.map(c => <span key={c.key} className={(c.today ? 'today ' : '') + (c.shade ? 'shade ' : '') + (c.first ? 'first' : '')}>{c.month && <em>{c.month}</em>}{c.top && <small>{c.top}</small>}<b>{c.label}</b></span>)}</div></div>
-      {rows.map(({ c, bars, lanes }) => <div className="wt-row" key={c.id || 'none'}>
+  const count = projects.filter(p => { const [s, e] = span(p); return rangeFraction(s, e, range); }).length;
+  const rowStyle = sliding ? { gridTemplateColumns: `var(--wt-name) ${cols.length * col}px` } : undefined;
+  const nudge = days => scroller.current?.scrollBy({ left: days * col, behavior: 'smooth' });
+  return <section className={'work-timeline card zoom-' + zoom + (sliding ? ' sliding' : '')} aria-label="What you are working on">
+    <div className="block-head" style={{ margin: 0 }}><h3>What you’re working on</h3><small className="empty-note">{count} project{count === 1 ? '' : 's'} in this {zoom === 'day' ? 'week' : zoom}{undated ? ` · ${undated} active without dates` : ''}{sliding ? ' · slide for more dates' : ''}</small>
+      {sliding && rows.length > 0 && <div className="wt-nav"><b className="wt-month" aria-live="polite">{fmt(mid, { month: 'long', year: 'numeric' })}</b><button type="button" className="icon-button" aria-label="Earlier dates" onClick={() => nudge(-7)}>‹</button><button type="button" className="ghost sm" onClick={() => goTo(t)}>Today</button><button type="button" className="icon-button" aria-label="Later dates" onClick={() => nudge(7)}>›</button></div>}</div>
+    {rows.length ? <div className={sliding ? 'wt-scroll' : undefined} ref={sliding ? attach : undefined} onScroll={sliding ? onScroll : undefined} {...(sliding ? pointer : {})} tabIndex={sliding ? 0 : undefined} aria-label={sliding ? 'Project timeline, scroll sideways for more dates' : undefined}><div className="wt-grid">
+      <div className="wt-ticks" aria-hidden="true" style={rowStyle}><span className="wt-name" /><div className="wt-days" style={grid}>{cols.map(c => <span key={c.key} className={(c.today ? 'today ' : '') + (c.shade ? 'shade ' : '') + (c.first ? 'first' : '')}>{c.month && <em>{c.month}</em>}{c.top && <small>{c.top}</small>}<b>{c.label}</b></span>)}</div></div>
+      {rows.map(({ c, bars, lanes }) => <div className="wt-row" key={c.id || 'none'} style={rowStyle}>
         <a className="wt-name" href={c.id ? '#/clients/' + c.id : '#/projects'}><i style={{ background: toneOf(c.id) }} /><span>{c.name}</span></a>
         <div className="wt-track" style={{ height: lanes * 34 + 8 }}>
           {now && <span className="wt-now" aria-hidden="true" style={{ left: ((now.left + now.width / 2) * 100) + '%' }} />}
@@ -165,7 +212,7 @@ function WorkTimeline({ d, zoom, day, toneOf, completed, client, onOpen }) {
             {f.before && <span className="wt-arrow" aria-hidden="true">‹</span>}<b>{p.name}</b><small>{range2(p)} · {tasksFor(p)}</small>{(f.after || ongoing) && <span className="wt-arrow" aria-hidden="true">›</span>}</button>)}
         </div>
       </div>)}
-    </div> : <p className="empty-note" style={{ margin: 0 }}>No dated projects in this period. Give a project a start date to see it here.</p>}
+    </div></div> : <p className="empty-note" style={{ margin: 0 }}>No dated projects in this period. Give a project a start date to see it here.</p>}
   </section>;
 }
 

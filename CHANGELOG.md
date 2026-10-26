@@ -2,6 +2,11 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.15 — 26 October 2026 · Slide through your timeline
+
+- **Slide the timeline.** Calendar → What you’re working on slides: swipe, scroll sideways or drag to move through the dates, as far forward or back as you like (60 more days load at either end). Client names stay pinned, the header shows the month in view, and ‹ › and Today move it. The year view still fits the whole year.
+- **Updates, tidied.** Settings → What’s new shows the current update first; earlier ones are folded under Review earlier updates. The update note on opening shows once per new version and once after each sign-in (keyed on the sign-in time), not on reloads or new tabs.
+
 ## 1.14 — 26 October 2026 · A new logo
 
 - **The Terracove sun.** A new logo: a terracotta tile with a sun rising over the sea. It plays a short float-up when it appears (still for people who ask for less motion) and switches to a cream sun in dark mode. It is on the sidebar, sign-in, top bar, client portal, legal pages, browser tab (follows the browser's light/dark setting), installed-app icons and link previews. Sources are in `design/logo/`; the old Throughline files stay in `public/brand/` for old links.
