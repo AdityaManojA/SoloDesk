@@ -1244,3 +1244,10 @@ label:has(>input[type=checkbox]){display:inline-flex;align-items:center;gap:8px;
 .link-picker.inline{margin-top:0}.link-picker.inline .select-trigger{min-width:180px}
 .client-link-chip{display:inline-flex;align-items:center;gap:8px}.client-link-chip .text-link{background:none;border:0;padding:0;font:inherit;font-size:13px;color:var(--mu);text-decoration:underline;cursor:pointer}
 .link-picker{flex-wrap:nowrap}.link-picker>:first-child{flex:0 1 360px;min-width:0}.link-picker.inline>:first-child{flex:0 1 240px}
+/* inline client picker on the project page: compact, buttons never squeeze */
+.link-picker button{flex-shrink:0;white-space:nowrap}
+.link-picker.inline{flex-wrap:wrap;gap:6px}
+.link-picker.inline>:first-child{flex:0 1 220px}
+.link-picker.inline .select-trigger{min-height:36px!important;height:36px;padding:4px 14px!important;font-size:14px}
+.link-picker.inline .btn.sm,.link-picker.inline .ghost.sm{min-height:36px;height:36px;padding:0 16px}
+.tag-row .link-picker.inline{flex-basis:100%;flex-wrap:nowrap;order:10;margin-top:4px}

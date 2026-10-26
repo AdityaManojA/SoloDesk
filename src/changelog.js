@@ -2,6 +2,9 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
+  {version:'1.23',released:true,date:'2026-10-27',title:'Tidier client picker',highlights:[
+    ['Tidier client picker','On a project page, Change or Link a client opens a compact picker on its own line, with Save and Cancel beside it instead of squeezed buttons.'],
+  ],fixes:[]},
   {version:'1.22',released:true,date:'2026-10-27',title:'Link projects and clients any time',highlights:[
     ['Link projects and clients','A client’s Work tab lists its linked projects, with Unlink, and a picker to link an existing project (one without a client, or move one from another client). A project page shows its client with Change, or Link a client if it has none. The project’s tasks move with it.'],
   ],fixes:[]},

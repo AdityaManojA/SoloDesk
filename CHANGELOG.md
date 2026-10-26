@@ -2,6 +2,10 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.23 — 27 October 2026 · Tidier client picker
+
+- On a project page, Change / Link a client opens a compact picker on its own line (`.tag-row .link-picker.inline`, 36 px controls) with Save and Cancel that never shrink or wrap.
+
 ## 1.22 — 27 October 2026 · Link projects and clients any time
 
 - **Linking.** Client Work tab: linked projects with Unlink, plus “Link an existing project…” (projects without a client first, then “Move from another client”). Project page: the client with Change, or “Link a client”. `src/linking.js` (`linkProject`, `linkableProjects`): tasks with no client or the project’s previous client move with the project; tasks set to another client stay. Tests in `functions/linking.test.js`.
