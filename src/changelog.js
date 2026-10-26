@@ -4,7 +4,7 @@
 export const changelog=[
   {version:'1.24',released:true,date:'2026-10-27',title:'TaskFlow is now Levern',highlights:[
     ['Levern','TaskFlow is now called Levern, so Terracove says Levern everywhere: the calendar, search, Home and Data & connections. The panel is simply “from levern” with your quests and an Open Levern button (getlevern.web.app). Nothing to reconnect.'],
-  ],fixes:[]},
+  ],fixes:['The calendar’s event details now say “From Levern” too.']},
   {version:'1.23',released:true,date:'2026-10-27',title:'Tidier client picker',highlights:[
     ['Tidier client picker','On a project page, Change or Link a client opens a compact picker on its own line, with Save and Cancel beside it instead of squeezed buttons.'],
   ],fixes:[]},

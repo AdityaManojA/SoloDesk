@@ -11,7 +11,7 @@ How it runs (code in `functions/excel-*.js`, client in `src/excel-sync-client.js
 
 ## What you need to do (once)
 
-1. **Upgrade the Firebase project to Blaze.** `taskflow-dailytracker` is shared with TaskFlow, so billing covers both apps. Set a budget alert in Google Cloud Billing. Expected use is small (a function call per save and per sheet change).
+1. **Upgrade the Firebase project to Blaze.** `taskflow-dailytracker` is shared with Levern, so billing covers both apps. Set a budget alert in Google Cloud Billing. Expected use is small (a function call per save and per sheet change).
 2. **Register an app with Microsoft** at entra.microsoft.com → App registrations → New registration:
    - Name: Terracove. Supported accounts: *any organizational directory and personal Microsoft accounts*.
    - Redirect URI (Web): `https://us-central1-taskflow-dailytracker.cloudfunctions.net/excel-oauthCallback`
@@ -37,7 +37,7 @@ How it runs (code in `functions/excel-*.js`, client in `src/excel-sync-client.js
    MS_WEBHOOK_URL=https://us-central1-taskflow-dailytracker.cloudfunctions.net/excel-webhook
    ```
 5. **Deploy, in this order:**
-   - Firestore rules — copy `firestore.rules` to TaskFlow's copy first so both stay identical, then `firebase deploy --only firestore:rules --project taskflow-dailytracker`.
+   - Firestore rules — copy `firestore.rules` to Levern's copy first so both stay identical, then `firebase deploy --only firestore:rules --project taskflow-dailytracker`.
    - Functions — only the Excel group: `firebase deploy --only functions:excel --project taskflow-dailytracker`.
    - Hosting — add `VITE_EXCEL_SYNC=on` to `.env.local` (until then the panel shows "Coming soon"), run `npm run build`, then `firebase deploy --only hosting:solodesk --project taskflow-dailytracker`.
 

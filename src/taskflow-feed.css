@@ -1,5 +1,5 @@
 .taskflow-feed{margin:28px 0}.taskflow-feed .section-head{align-items:center;flex-wrap:wrap}.taskflow-feed h3{margin:6px 0 0}.taskflow-feed>p{font-size:13px;line-height:1.8}.taskflow-list{display:grid;gap:12px}.taskflow-item{padding:18px;border:1px solid var(--ln);border-radius:14px;background:var(--bg)}.taskflow-item-title{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.taskflow-item-title b{overflow-wrap:anywhere}.taskflow-item p{margin:8px 0 0;font-size:13px}.taskflow-item details{margin:14px 0 0;padding:12px}.taskflow-item summary{font-size:12px}.taskflow-item li{font-size:13px;overflow-wrap:anywhere}.taskflow-notes{white-space:pre-wrap;overflow-wrap:anywhere}.taskflow-source-note{font-size:12px;color:var(--mu);line-height:1.8}
-/* TaskFlow's six priority hues, from TaskFlow-controls/app/css/app.css. */
+/* Levern's six priority hues, from TaskFlow-controls/app/css/app.css. */
 .taskflow-priority[data-priority=P1]{--quest-bg:#f4918a;--quest-outline:#1e1b18}
 .taskflow-priority[data-priority=P2]{--quest-bg:#f9b77e;--quest-outline:#1e1b18}
 .taskflow-priority[data-priority=P3]{--quest-bg:#ffe08a;--quest-outline:#1e1b18}

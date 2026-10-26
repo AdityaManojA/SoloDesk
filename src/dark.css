@@ -1,4 +1,4 @@
-/* A dedicated dark palette. Light mode keeps the original TaskFlow styling. */
+/* A dedicated dark palette. Light mode keeps the original Levern styling. */
 :root[data-theme=dark] {
   color-scheme:dark;
   --bg:#14171b; --sf:#1d2229; --tx:#f1eee8; --mu:#b8c0cc;

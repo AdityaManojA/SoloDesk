@@ -74,9 +74,9 @@ Search finds settings and pages ([`src/settings-index.js`](src/settings-index.js
 
 ## What's new in 1.09
 
-Approvals for PRDs, files and quotes; client comments, cheers, change requests, link updates, meeting requests and requests with labelled replies ([`src/ClientPortal.jsx`](src/ClientPortal.jsx), [`src/portal-sync.js`](src/portal-sync.js), [`src/client-feed.js`](src/client-feed.js)); a notifications bell ([`src/notifications.js`](src/notifications.js)); quick add (N or Ctrl/⌘ J); invoice unbilled hours ([`src/billing.js`](src/billing.js)); TaskFlow repeats; a redesigned task page and list; and split storage so workspaces can grow past 1 MB ([`src/workspace-store.js`](src/workspace-store.js)). Approval emails are ready for Blaze ([setup](docs/approval-emails-setup.md)).
+Approvals for PRDs, files and quotes; client comments, cheers, change requests, link updates, meeting requests and requests with labelled replies ([`src/ClientPortal.jsx`](src/ClientPortal.jsx), [`src/portal-sync.js`](src/portal-sync.js), [`src/client-feed.js`](src/client-feed.js)); a notifications bell ([`src/notifications.js`](src/notifications.js)); quick add (N or Ctrl/⌘ J); invoice unbilled hours ([`src/billing.js`](src/billing.js)); Levern repeats; a redesigned task page and list; and split storage so workspaces can grow past 1 MB ([`src/workspace-store.js`](src/workspace-store.js)). Approval emails are ready for Blaze ([setup](docs/approval-emails-setup.md)).
 
-Deploying 1.09 needs the updated `firestore.rules` (workspace `parts`, portal `comments`, `updates` and `requests`). Copy it to TaskFlow's rules file first so both stay identical, then deploy rules before Hosting.
+Deploying 1.09 needs the updated `firestore.rules` (workspace `parts`, portal `comments`, `updates` and `requests`). Copy it to Levern's rules file first so both stay identical, then deploy rules before Hosting.
 
 ## What's new in 1.08
 
@@ -92,35 +92,35 @@ Client portals publish themselves: while Terracove is open, [`src/portal-sync.js
 
 ## What's new in 1.05
 
-**Client approvals** — send a task for approval; the client approves or asks for changes in the portal, and answers sync back to the task ([`src/approvals.js`](src/approvals.js), [`src/Approvals.jsx`](src/Approvals.jsx), Approvals page at `#/approvals`). **Client portal** redesigned and extended with project tasks, client links, chosen documents/PRDs and invoices ([`src/ClientPortal.jsx`](src/ClientPortal.jsx); sample at `#/portal-preview`). **Smart typing** ported from TaskFlow's parser: dates, times, clients and projects fill in as you type in tasks, projects, search and checklist items ([`src/smart-parse.js`](src/smart-parse.js), [`src/SmartField.jsx`](src/SmartField.jsx)). Also: clickable breadcrumb, client links, more action colours plus custom, confirm-password fields, completed projects tucked away in pickers, new onboarding.
+**Client approvals** — send a task for approval; the client approves or asks for changes in the portal, and answers sync back to the task ([`src/approvals.js`](src/approvals.js), [`src/Approvals.jsx`](src/Approvals.jsx), Approvals page at `#/approvals`). **Client portal** redesigned and extended with project tasks, client links, chosen documents/PRDs and invoices ([`src/ClientPortal.jsx`](src/ClientPortal.jsx); sample at `#/portal-preview`). **Smart typing** ported from Levern's parser: dates, times, clients and projects fill in as you type in tasks, projects, search and checklist items ([`src/smart-parse.js`](src/smart-parse.js), [`src/SmartField.jsx`](src/SmartField.jsx)). Also: clickable breadcrumb, client links, more action colours plus custom, confirm-password fields, completed projects tucked away in pickers, new onboarding.
 
-Deploying 1.05 needs the updated `firestore.rules` (portal `docIds` and the `responses` subcollection for approvals). Copy it to TaskFlow's rules file first so both stay identical, then deploy rules before Hosting.
+Deploying 1.05 needs the updated `firestore.rules` (portal `docIds` and the `responses` subcollection for approvals). Copy it to Levern's rules file first so both stay identical, then deploy rules before Hosting.
 
 ## What's new in 1.04
 
-Home's "Jump back in" edits your most recently changed notes, tasks, projects and clients in place; TaskFlow quests become a small pill; Apple Notes-style nested checklists ([`src/checklist.js`](src/checklist.js)); a two-pane Notes page; calendar zoom buttons and pinch zoom. Details in [CHANGELOG.md](CHANGELOG.md).
+Home's "Jump back in" edits your most recently changed notes, tasks, projects and clients in place; Levern quests become a small pill; Apple Notes-style nested checklists ([`src/checklist.js`](src/checklist.js)); a two-pane Notes page; calendar zoom buttons and pinch zoom. Details in [CHANGELOG.md](CHANGELOG.md).
 
 ## What's new in 1.03
 
-A rebuilt calendar with Year/Month/Week/Day zoom and a client-by-client project timeline ([`src/Calendar.jsx`](src/Calendar.jsx), layout helpers in [`src/calendar-view.js`](src/calendar-view.js)); Google Keep-style notes and checklists with a Notes page ([`src/NotesKeep.jsx`](src/NotesKeep.jsx)); a profile setup walkthrough; Settings on one scrolling page; a cleaner toolbar and sidebar account area; uniform project cards; palette colours in Reports and TaskFlow items. Details in [CHANGELOG.md](CHANGELOG.md).
+A rebuilt calendar with Year/Month/Week/Day zoom and a client-by-client project timeline ([`src/Calendar.jsx`](src/Calendar.jsx), layout helpers in [`src/calendar-view.js`](src/calendar-view.js)); Google Keep-style notes and checklists with a Notes page ([`src/NotesKeep.jsx`](src/NotesKeep.jsx)); a profile setup walkthrough; Settings on one scrolling page; a cleaner toolbar and sidebar account area; uniform project cards; palette colours in Reports and Levern items. Details in [CHANGELOG.md](CHANGELOG.md).
 
 ## What's new in 1.02
 
 - **New design and action colour** — every page restyled ([`src/theme.css`](src/theme.css)); Settings → Appearance picks the highlight colour ([`src/appearance.js`](src/appearance.js)).
-- **Home: Jump back in** — the three most recently edited clients, projects and TaskFlow quests ([`src/recents.js`](src/recents.js)), revenue, needs-attention, mini calendar and today's timeline. **All work** at `#/work`.
+- **Home: Jump back in** — the three most recently edited clients, projects and Levern quests ([`src/recents.js`](src/recents.js)), revenue, needs-attention, mini calendar and today's timeline. **All work** at `#/work`.
 - **Notes, checklists and reminders** on every client and project; **project pages** at `#/projects/<id>`.
 - **Files & docs** — PRDs written in Terracove with requirements that become tasks, plus file links.
 - **Live Microsoft Excel sync** per project or client (server code in `functions/excel-*.js`; needs Blaze and a Microsoft app — [setup](docs/excel-sync-setup.md)).
 - **Public profile** at `/<username>`, private by default ([`src/profile.js`](src/profile.js); Firestore collection `solodeskProfiles`).
 - **Invoice editing on the page** with bank details and defaults; **What's new** in Settings and an update note for returning users.
 
-Deploying 1.02 needs the updated `firestore.rules` (public profiles and Excel sync status). Copy it to TaskFlow's rules file first so both stay identical, then deploy rules before Hosting.
+Deploying 1.02 needs the updated `firestore.rules` (public profiles and Excel sync status). Copy it to Levern's rules file first so both stay identical, then deploy rules before Hosting.
 
-**Status:** frontend deployed to https://terracove.web.app (the old address, taskflow-solodesk.web.app, now redirects there) in `taskflow-dailytracker`, separately from TaskFlow’s Hosting site. Version 1.24 (27 October 2026) passes all **164 automated tests** and the production build. TaskFlow quests and its shared Google events are read-only in Terracove. Live sign-in/cloud-save round trips still need an account-level check. The standalone integration API and background server functions are not deployed on the Spark plan.
+**Status:** frontend deployed to https://terracove.web.app (the old address, taskflow-solodesk.web.app, now redirects there) in `taskflow-dailytracker`, separately from Levern’s Hosting site. Version 1.24 (27 October 2026) passes all **164 automated tests** and the production build. Levern quests and its shared Google events are read-only in Terracove. Live sign-in/cloud-save round trips still need an account-level check. The standalone integration API and background server functions are not deployed on the Spark plan.
 
 ## Shared calendar markers
 
-TaskFlow quests and Google events now have separate dot/count markers on each month date, alongside project and task markers. Click a date or marker to see the full schedule. [Verification and sample screenshot](qa/calendar-shared-sources-2026-10-20.md). **106 tests pass.**
+Levern quests and Google events now have separate dot/count markers on each month date, alongside project and task markers. Click a date or marker to see the full schedule. [Verification and sample screenshot](qa/calendar-shared-sources-2026-10-20.md). **106 tests pass.**
 
 ## Calendar and mobile refresh
 
@@ -189,12 +189,12 @@ For real data, copy `.env.example` to `.env.local` and enter your Firebase web a
 
 ## Firebase setup and deployment
 
-1. Terracove's local `.env.local` uses the supplied TaskFlow web configuration, and `.firebaserc` maps the `solodesk` alias to `taskflow-dailytracker`. Restart Vite after configuration changes; rebuild when using preview.
-2. In that Firebase project's Authentication settings, enable Google sign-in and authorize the Terracove domain (including `localhost` and `127.0.0.1` when used locally). Ensure a Firestore database exists. Terracove stores its workspace in `solodeskWorkspaces/{uid}`; it does not read or overwrite TaskFlow's task collections. Data from the previous Firebase project is not migrated.
+1. Terracove's local `.env.local` uses the supplied Levern web configuration, and `.firebaserc` maps the `solodesk` alias to `taskflow-dailytracker`. Restart Vite after configuration changes; rebuild when using preview.
+2. In that Firebase project's Authentication settings, enable Google sign-in and authorize the Terracove domain (including `localhost` and `127.0.0.1` when used locally). Ensure a Firestore database exists. Terracove stores its workspace in `solodeskWorkspaces/{uid}`; it does not read or overwrite Levern's task collections. Data from the previous Firebase project is not migrated.
 
-   **Shared project rules:** merge the owner-only `solodeskWorkspaces/{uid}` rule from `firestore.rules` into TaskFlow's existing rules. Do not deploy this standalone rules file over TaskFlow's rules: Firebase replaces the complete ruleset. Integration key collections must remain inaccessible to browser clients. Terracove's workspace deletion keeps the shared Firebase Authentication account.
+   **Shared project rules:** merge the owner-only `solodeskWorkspaces/{uid}` rule from `firestore.rules` into Levern's existing rules. Do not deploy this standalone rules file over Levern's rules: Firebase replaces the complete ruleset. Integration key collections must remain inaccessible to browser clients. Terracove's workspace deletion keeps the shared Firebase Authentication account.
 
-   **Hosting:** `firebase.json` has two targets in `.firebaserc`: `terracove` (the app, site `terracove`, https://terracove.web.app) and `solodesk` (the old `taskflow-solodesk` site, which now serves only `legacy/`: a redirect to the same path and #route on the new address, plus a service worker that retires old installs). Deploy only this target to leave TaskFlow's existing site intact. The read-only TaskFlow listener uses the shared account to display quests and calendar events.
+   **Hosting:** `firebase.json` has two targets in `.firebaserc`: `terracove` (the app, site `terracove`, https://terracove.web.app) and `solodesk` (the old `taskflow-solodesk` site, which now serves only `legacy/`: a redirect to the same path and #route on the new address, plus a service worker that retires old installs). Deploy only this target to leave Levern's existing site intact. The read-only Levern listener uses the shared account to display quests and calendar events.
 3. Install server dependencies in their own directory:
 
    ```powershell
@@ -215,29 +215,29 @@ The frontend-only deployment above completed successfully. The current Hosting c
 
 After deployment, sign in, save a record, open Integrations, create a calendar-only key and test a subscription or API request from your calendar backend. Do not mark cloud integration complete until that succeeds.
 
-## TaskFlow live connection (Spark plan)
+## Levern live connection (Spark plan)
 
-The shared Firestore rules were copied exactly from `D:/Projects/TaskFlow-controls/firestore.rules` and deployed first. Always preserve both apps' owner-only rule blocks. Terracove owns rules deployment; TaskFlow's copy must stay identical. Function codebases remain `default` (Terracove) and `taskflow` (TaskFlow), and neither was deployed.
+The shared Firestore rules were copied exactly from `D:/Projects/TaskFlow-controls/firestore.rules` and deployed first. Always preserve both apps' owner-only rule blocks. Terracove owns rules deployment; Levern's copy must stay identical. Function codebases remain `default` (Terracove) and `taskflow` (Levern), and neither was deployed.
 
 `src/useTaskflow.js` attaches one read-only `onSnapshot` listener to `taskflowUsers/{uid}/share/open` for the signed-in user. It unsubscribes and clears the view on account change, sign-out or demo mode. Terracove never reads chunks and never writes under `taskflowUsers/`. Incoming records stay outside the Terracove workspace and are not saved back to Firestore. Loading, missing-document, empty, cached and permission/network error states are distinct; errors offer retry.
 
-Tasks has a **From TaskFlow** list including undated quests, P1–P6, notes, repeat labels and subtask completion. Calendar merges dated quests and shared calendar events, with source labels, a TaskFlow-only filter and source links instead of edit controls. Client filters hide unlinked TaskFlow records. Due times use TaskFlow's timezone; missing/invalid timezone or nonexistent daylight-saving times fall back to an all-day reminder with an explanation. Due times are reminders, not scheduled work blocks. Repeat labels are shown but future occurrences are not invented: TaskFlow owns each quest's next due date. Shared calendar all-day end dates stay exclusive. Calendar month/event downloads include displayed items; other workspace exports remain Terracove-only.
+Tasks has a **From Levern** list including undated quests, P1–P6, notes, repeat labels and subtask completion. Calendar merges dated quests and shared calendar events, with source labels, a Levern-only filter and source links instead of edit controls. Client filters hide unlinked Levern records. Due times use Levern's timezone; missing/invalid timezone or nonexistent daylight-saving times fall back to an all-day reminder with an explanation. Due times are reminders, not scheduled work blocks. Repeat labels are shown but future occurrences are not invented: Levern owns each quest's next due date. Shared calendar all-day end dates stay exclusive. Calendar month/event downloads include displayed items; other workspace exports remain Terracove-only.
 
-This connection runs entirely in the browser on Spark; no function or API key is needed. Google events appear only when TaskFlow shares them. Terracove's optional server API and direct Google/Apple syncing remain unavailable on the current deployment.
+This connection runs entirely in the browser on Spark; no function or API key is needed. Google events appear only when Levern shares them. Terracove's optional server API and direct Google/Apple syncing remain unavailable on the current deployment.
 
-Validation: 34 automated tests and the production build passed, including schema handling, timezone/DST conversion, malformed events, safe links, date boundaries and exports. A real same-account round trip must also be checked by creating a dated quest in TaskFlow while Terracove is open.
+Validation: 34 automated tests and the production build passed, including schema handling, timezone/DST conversion, malformed events, safe links, date boundaries and exports. A real same-account round trip must also be checked by creating a dated quest in Levern while Terracove is open.
 
 ## Pages and behavior
 
 Brand assets: Terracove uses an SD monogram in a warm-yellow tile, paired with its wordmark. Shared `src/BrandLogo.jsx` renders it in the app header, login and policy pages. Reusable transparent SVGs are in `public/brand/`: `solodesk-mark.svg`, `solodesk-logo.svg` and `solodesk-logo-dark.svg`. The mark is also the browser favicon. Logo changes do not replace business logos uploaded for invoices. Production build and local light/dark appearance were checked.
 
-Deletion and sign-out: red actions are available for clients, projects, tasks, all invoice states and individual payments, with explicit confirmation. Deleting a project keeps and unlinks its tasks. Deleting a client explicitly confirms cascading removal of its linked projects, tasks, invoices and payments. Deleting invoices/payments recalculates reports from the remaining records. TaskFlow remains read-only. Settings retains the full-workspace delete action and the shared Firebase account is kept. Sign-out is available in the header and Settings, clears demo/auth state, and returns to `/` with the Google login screen. Unsaved changes offer an explicit sign-out-anyway option instead of blocking exit. In-flight old workspace loads cannot repopulate the UI after account changes. Validated with 39 automated tests, a production build, browser confirmation/cancel checks and demo sign-out; real-account cloud deletion/sign-out was not exercised in this change.
+Deletion and sign-out: red actions are available for clients, projects, tasks, all invoice states and individual payments, with explicit confirmation. Deleting a project keeps and unlinks its tasks. Deleting a client explicitly confirms cascading removal of its linked projects, tasks, invoices and payments. Deleting invoices/payments recalculates reports from the remaining records. Levern remains read-only. Settings retains the full-workspace delete action and the shared Firebase account is kept. Sign-out is available in the header and Settings, clears demo/auth state, and returns to `/` with the Google login screen. Unsaved changes offer an explicit sign-out-anyway option instead of blocking exit. In-flight old workspace loads cannot repopulate the UI after account changes. Validated with 39 automated tests, a production build, browser confirmation/cancel checks and demo sign-out; real-account cloud deletion/sign-out was not exercised in this change.
 
 Form controls share `src/Controls.jsx` and `src/controls.css`. Date fields expose a themed month picker with date limits, keyboard navigation and Today/Clear controls where applicable. Dropdowns use themed option panels with type-ahead, arrow keys and Escape; native form values remain available to submission and validation. Settings uses a themed file-upload surface; the operating system's file chooser remains native. The same controls are used in reports, calendar filters, project/task/invoice dialogs and integrations. Verified in the browser: light/dark calendar appearance, report date selection by mouse and keyboard, currency selection and persistence after Settings submission, and Escape closing nested controls without dismissing the task dialog. Mobile/browser combinations and assistive technologies have not received a full audit.
 
 Dark mode uses a dedicated palette in `src/dark.css`: graphite surfaces, restrained semantic tints, amber actions, visible form borders and blue focus indicators. It covers navigation, dashboard, forms/dropdowns, calendar, statuses, integrations, login, policy pages and invoice previews; print styling keeps invoices on white paper. Light mode retains the existing palette. Verified locally on the dashboard, calendar controls, new-task dialog and invoice preview; this is not a full accessibility certification.
 
-Public policy pages are available at `/privacy` and `/cookies` (also `#/privacy` and `#/cookies`) without authentication. Links appear on the sign-in screen and workspace footer. Their contact email is configured using `VITE_POLICY_CONTACT_EMAIL`; optional `VITE_POLICY_OPERATOR_NAME` supplies the operator name. Rebuild after changing these public values. The pages describe current data handling, the shared TaskFlow Firebase account, deletion limits and actual browser storage. The cookies page can clear local demo data without deleting cloud records. Update these disclosures whenever trackers, integrations or retention practices change.
+Public policy pages are available at `/privacy` and `/cookies` (also `#/privacy` and `#/cookies`) without authentication. Links appear on the sign-in screen and workspace footer. Their contact email is configured using `VITE_POLICY_CONTACT_EMAIL`; optional `VITE_POLICY_OPERATOR_NAME` supplies the operator name. Rebuild after changing these public values. The pages describe current data handling, the shared Levern Firebase account, deletion limits and actual browser storage. The cookies page can clear local demo data without deleting cloud records. Update these disclosures whenever trackers, integrations or retention practices change.
 
 | Route | What it does |
 | --- | --- |
@@ -252,7 +252,7 @@ Public policy pages are available at `/privacy` and `/cookies` (also `#/privacy`
 | `#/settings` | Business details, currency, logo, payment instructions, CSVs and account actions |
 | `#/more` | Mobile access to projects, reports, integrations and settings |
 
-Hash routing retains browser history. A sticky header and TaskFlow-style floating bottom dock stay available on desktop and mobile. More exposes clients, projects, invoices, reports, integrations and settings. CSS handles page entry, hover/focus, chart and dialog transitions. Native scrolling and native selects preserve keyboard behavior. Dialogs trap focus, close with Escape, lock background scrolling and restore focus. Forms retain required/type/range validation. Google login and existing invoice state rules are retained. Invoice PDF uses the browser’s Print → Save as PDF flow.
+Hash routing retains browser history. A sticky header and Levern-style floating bottom dock stay available on desktop and mobile. More exposes clients, projects, invoices, reports, integrations and settings. CSS handles page entry, hover/focus, chart and dialog transitions. Native scrolling and native selects preserve keyboard behavior. Dialogs trap focus, close with Escape, lock background scrolling and restore focus. Forms retain required/type/range validation. Google login and existing invoice state rules are retained. Invoice PDF uses the browser’s Print → Save as PDF flow.
 
 Cloud writes are queued to preserve order within one browser session. The top bar shows saving/error state and retries the latest complete workspace. Unsaved changes warn on tab close and prevent sign-out. This remains a single-document workspace with last-writer-wins behavior across multiple tabs/devices; there is no realtime conflict merging or offline write queue. Live failure/retry behavior and destructive account deletion have not been exercised against a cloud account.
 
@@ -275,7 +275,7 @@ This is one-way import/subscription/polling. Provider-specific OAuth, two-way ed
 | File | Purpose |
 | --- | --- |
 | `src/App.jsx` | App shell, routes, Firebase loading/saves, existing business pages and dialogs |
-| `src/styles.css`, `src/taskflow.css` | Shared layouts and the TaskFlow palette, type, outlines, responsive controls, motion and print styling |
+| `src/styles.css`, `src/taskflow.css` | Shared layouts and the Levern palette, type, outlines, responsive controls, motion and print styling |
 | `src/Calendar.jsx`, `src/calendar-view.js` | Full month/agenda view, selected-day timeline, per-event exports and local-date grid helpers |
 | `src/Icon.jsx`, `src/demo.js` | Local inline SVG UI icons; explicitly fictional demo records |
 | `src/Integrations.jsx` | Timeline/export UI and key management |
@@ -292,9 +292,9 @@ Existing browser dependencies retained: React/React DOM **18.3.1**, Firebase **1
 
 ## Design and assets
 
-The supplied `anti-SLOP.md` informed the initial overhaul and remains useful for accessibility, restrained CSS motion and honest verification. The later explicit TaskFlow reference takes precedence over the earlier navy/neutral direction.
+The supplied `anti-SLOP.md` informed the initial overhaul and remains useful for accessibility, restrained CSS motion and honest verification. The later explicit Levern reference takes precedence over the earlier navy/neutral direction.
 
-TaskFlow reference source: `D:/Projects/TaskFlow/design/DESIGN_BRIEF.md` and `design/prototype/index.html`. Applied palette: cream `#FFF8EE`, ink `#1E1B18`, mint `#A8D8B9`, coral `#F4A59A`, lavender `#C9B8E8`, butter `#FFD66B`, sky `#A9D6F0`; flat surfaces, 2.5px outlines and generous rounded corners. The dock uses four destinations and a raised central Create button. No TaskFlow mascot, sounds, art or source files were copied or modified. The UI retains Terracove’s existing three task priority levels. Typography uses local Inter when available, with Segoe UI/system fallbacks; no remote font is fetched.
+Levern reference source: `D:/Projects/Levern/design/DESIGN_BRIEF.md` and `design/prototype/index.html`. Applied palette: cream `#FFF8EE`, ink `#1E1B18`, mint `#A8D8B9`, coral `#F4A59A`, lavender `#C9B8E8`, butter `#FFD66B`, sky `#A9D6F0`; flat surfaces, 2.5px outlines and generous rounded corners. The dock uses four destinations and a raised central Create button. No Levern mascot, sounds, art or source files were copied or modified. The UI retains Terracove’s existing three task priority levels. Typography uses local Inter when available, with Segoe UI/system fallbacks; no remote font is fetched.
 
 [Prompt Motion](https://prompt-motion.com/) and [SiteInspire](https://www.siteinspire.com/) were reviewed during the initial design pass; no assets or copied components were used. No animation/chart/icon packages were added. Icons are local inline SVG paths; stock photography, analytics and tracking were not introduced. Existing dependency licenses remain applicable.
 
@@ -348,7 +348,7 @@ See [the detailed functional review](qa/functional-review-2026-10-19.md) and [re
 
 ## Opening the full calendar and exporting individual work
 
-Google Calendar through TaskFlow: shared Google events appear alongside quests and Terracove work in Month and Agenda. Use **All clients** and **All calendars & work**, or select **Google Calendar via TaskFlow**. Event priorities, locations and busy times are retained. Connect Google and use **Sync now** in TaskFlow with the same Google account. TaskFlow currently publishes the primary calendar from 7 days back to 62 days ahead; Terracove cannot refresh Google's API itself. **71 tests/build pass**; see [Google feed verification](qa/taskflow-google-2026-10-20.md).
+Google Calendar through Levern: shared Google events appear alongside quests and Terracove work in Month and Agenda. Use **All clients** and **All calendars & work**, or select **Google Calendar via Levern**. Event priorities, locations and busy times are retained. Connect Google and use **Sync now** in Levern with the same Google account. Levern currently publishes the primary calendar from 7 days back to 62 days ahead; Terracove cannot refresh Google's API itself. **71 tests/build pass**; see [Google feed verification](qa/taskflow-google-2026-10-20.md).
 
 Onboarding update (20 October 2026): a one-time top **Add to Home Screen** banner opens installation guidance, and a four-step first-run introduction offers installation again on its final step. An eight-step guided tour highlights actual screens on desktop and mobile. Replay either from **Settings** or **More**. Completion/skip preferences are local to this browser, separated by signed-in account and demo. **69 tests and production build pass**; see [onboarding verification](qa/onboarding-2026-10-20.md).
 
@@ -358,9 +358,9 @@ Scrollbars now match the cream/ink/yellow theme and its dark variant across page
 
 **Add to Home Screen** is available on login, Settings and More. Supporting browsers can show a native install prompt; iOS and other browsers get platform-specific instructions. A web manifest, desktop/Android PNGs, maskable icon and Apple touch icon enable standalone launches. No service worker or offline workspace cache is introduced. See [installation verification](qa/install-2026-10-20.md); 61 tests/build pass, with real OS/device installation still pending.
 
-Calendar rescheduling/mobile update (20 October 2026): drag Terracove tasks or project spans onto another visible date, or open event details and use **Move to date**. Task times/duration and project lengths are preserved. TaskFlow items stay read-only. Shared phone layouts, forms, touch targets and overlay clearance were improved. **54 tests/build pass**, with 60 page/width layout observations and real browser drag checks; see [calendar/mobile verification](qa/calendar-mobile-2026-10-20.md) for exact scope and device-testing limits.
+Calendar rescheduling/mobile update (20 October 2026): drag Terracove tasks or project spans onto another visible date, or open event details and use **Move to date**. Task times/duration and project lengths are preserved. Levern items stay read-only. Shared phone layouts, forms, touch targets and overlay clearance were improved. **54 tests/build pass**, with 60 page/width layout observations and real browser drag checks; see [calendar/mobile verification](qa/calendar-mobile-2026-10-20.md) for exact scope and device-testing limits.
 
-TaskFlow quest cards and their calendar entries now use the six priority colors from `D:/Projects/TaskFlow-controls/app/css/app.css`: P1 coral `#F4918A`, P2 orange `#F9B77E`, P3 yellow `#FFE08A`, P4 mint `#B9E7CC`, P5 sky `#A9D6F0`, P6 lilac `#D4C4F2`. Dark mode uses corresponding dark surfaces and pastel borders. Priority labels remain visible. Verified all six rendered card colors in light/dark mode and a 320px viewport using a local sample-data fixture, without reading or writing an account.
+Levern quest cards and their calendar entries now use the six priority colors from `D:/Projects/TaskFlow-controls/app/css/app.css`: P1 coral `#F4918A`, P2 orange `#F9B77E`, P3 yellow `#FFE08A`, P4 mint `#B9E7CC`, P5 sky `#A9D6F0`, P6 lilac `#D4C4F2`. Dark mode uses corresponding dark surfaces and pastel borders. Priority labels remain visible. Verified all six rendered card colors in light/dark mode and a 320px viewport using a local sample-data fixture, without reading or writing an account.
 
 Latest invoice/client verification (20 October 2026): **47 automated tests and production build pass**. Invoices support inline **+ New client** without losing the draft. Multiple new clients, repeat invoices for an existing client, draft editing, reload persistence and partial-payment arithmetic were checked in the local demo. See [invoice/client review](qa/invoice-client-2026-10-20.md) for scope and remaining cloud checks. Use the red **Sign out** button in the header or Settings → Account to leave demo and return to Google login.
 

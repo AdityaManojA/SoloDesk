@@ -17,9 +17,9 @@ app (Settings → What's new). **Read §1, §2 and §7 first if you are picking 
 | **Stack** | React 18 + Vite (Lightning CSS minifier), Firebase Auth / Firestore / Hosting, hash routes |
 | **Sister app** | **Levern** (formerly TaskFlow) — https://getlevern.web.app, repo `D:\Projects\TaskFlow-controls`, owned by another session. Terracove's UI says Levern; code keeps `taskflow*` names |
 | **Firebase** | Project `taskflow-dailytracker` (shared with Levern). Hosting targets in `.firebaserc`: **`terracove` → site `terracove` (the app)**, `solodesk` → site `taskflow-solodesk` (serves only `legacy/`, a redirect). **Spark plan** (Blaze expected ~mid-Nov 2026) |
-| **Auth** | Sign-in through `taskflow-dailytracker.firebaseapp.com` (authDomain). Authorized domains include `terracove.web.app`, `localhost`, the TaskFlow domains; `taskflow-solodesk.web.app` was removed |
+| **Auth** | Sign-in through `taskflow-dailytracker.firebaseapp.com` (authDomain). Authorized domains include `terracove.web.app`, `localhost`, the Levern domains; `taskflow-solodesk.web.app` was removed |
 | **Tests** | 175 passing — `npm test` (node --test functions/*.test.js); `npm run check` = tests + build |
-| **Rules** | `firestore.rules`, shared with TaskFlow; TaskFlow's copy `D:\Projects\TaskFlow-controls\firestore.rules` must stay identical |
+| **Rules** | `firestore.rules`, shared with Levern; Levern's copy `D:\Projects\TaskFlow-controls\firestore.rules` must stay identical |
 | **Design** | Figma file `bnt8lsuv1xdCg4xHFitxvZ`, page 68:234 (see §9) |
 
 **Release checklist** (every user-facing change):
@@ -33,7 +33,7 @@ app (Settings → What's new). **Read §1, §2 and §7 first if you are picking 
 firebase deploy --only hosting:terracove --project taskflow-dailytracker --account aditya.dev.org@gmail.com
 firebase deploy --only firestore:rules   --project taskflow-dailytracker --account aditya.dev.org@gmail.com   # only when rules change, first
 ```
-Never deploy the app to `hosting:solodesk` again (it is the redirect), and never deploy TaskFlow's Hosting or functions from here.
+Never deploy the app to `hosting:solodesk` again (it is the redirect), and never deploy Levern's Hosting or functions from here.
 7. Verify live: fetch the JS chunks and grep for `` version:`X.YY`,released:!0 `` and a string from the change.
 
 ---
@@ -52,7 +52,7 @@ Keep these unless the user says otherwise.
 - **Logo**: the "Terracove sun" (since 1.14) — terracotta tile, sun in the top half, sea below; ink sun/sea on light, cream on dark; float-up motion on load (off for reduced motion). Rendered inline by `src/BrandLogo.jsx` (`BrandMark`, `BrandLogo`). Masters in `design/logo/`. Desktop app icons are transparent with the cream sun (`terracove-app-192/512.png`); iPhone/Android icons keep a cream tile.
 - **Gmail first** for anything that drafts email (meetings, payment reminders); "Use my email app" is the secondary link.
 - **Don't commit `.claude/`** (local `launch.json`: `solodesk-dev` on 5173 and `terracove-prod` = `vite preview` on 4173).
-- **`firestore.rules` has an uncommitted TaskFlow edit** (leaderboard refill `15 *` → `60 *` in `tfBoardGrowth`) owned by the TaskFlow session. Keep that line; never revert it; leave the file out of Terracove commits unless rules change.
+- **`firestore.rules` has an uncommitted Levern edit** (leaderboard refill `15 *` → `60 *` in `tfBoardGrowth`) owned by the Levern session. Keep that line; never revert it; leave the file out of Terracove commits unless rules change.
 - **Things hidden until they can work** (Spark plan): API keys (`VITE_API=on` to show), live Excel sync (`VITE_EXCEL_SYNC=on`).
 
 ---
@@ -65,7 +65,7 @@ Keep these unless the user says otherwise.
 | 1.02 | 25 Oct | New design (Terracotta), recent work, notes, profiles, invoice editing |
 | 1.03 | 25 Oct | Calendar zoom (Year/Month/Week/Day), Keep-style notes |
 | 1.04 | 25 Oct | Edit recent work on Home, nested checklists, two-pane Notes |
-| 1.05 | 25 Oct | Free/busy calendar, client approvals, new portal, smart typing (from TaskFlow) |
+| 1.05 | 25 Oct | Free/busy calendar, client approvals, new portal, smart typing (from Levern) |
 | 1.06–1.08 | 25 Oct | Portals publish themselves; client name in portal; Jump back in opens records |
 | 1.09 | 25 Oct | Approvals for PRDs/files/quotes, billable hours, split storage, notifications, client requests, quick add |
 | 1.10 | 25 Oct | Settings search; custom colour removed; stale tabs can't overwrite portals |
@@ -221,11 +221,11 @@ Keep these unless the user says otherwise.
 | Styles | `src/theme.css` (last; current palette + all newer rules), older `styles.css` / `taskflow.css` / `dark.css` |
 | Hosting | `firebase.json`, `.firebaserc`, `legacy/` (old-address redirect), `vite.config.js` (service worker precache list) |
 | Release notes | `src/changelog.js`, `CHANGELOG.md`, `README.md` |
-| Rules | `firestore.rules` (+ TaskFlow copy) |
+| Rules | `firestore.rules` (+ Levern copy) |
 | Server code (not deployed) | `functions/approval-*.js`, `functions/excel-*.js`, `functions/index.js` (api) |
 
 ---
 
 ## 9. Figma
 
-File `bnt8lsuv1xdCg4xHFitxvZ` (TaskFlow file). Page 68:234 holds Terracove's design; the other pages are TaskFlow's. What to keep is listed in §7 (cleanup pending). Note the Figma MCP **View seat** has a call limit; heavy board-building can exhaust it.
+File `bnt8lsuv1xdCg4xHFitxvZ` (Levern file). Page 68:234 holds Terracove's design; the other pages are Levern's. What to keep is listed in §7 (cleanup pending). Note the Figma MCP **View seat** has a call limit; heavy board-building can exhaust it.

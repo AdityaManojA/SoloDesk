@@ -359,7 +359,7 @@ details.release>summary:after{content:'+';font-size:20px;font-weight:600;color:v
 @media(max-width:760px){.year-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cal-label{width:100%;order:-1;margin:0;font-size:22px}.wt-ticks,.wt-row{grid-template-columns:90px minmax(0,1fr)}.month-b-week{min-height:84px}.month-b-items .cal-chip{padding:2px 4px;font-size:10px}.month-b-items .cal-chip .cal-time{display:none}.timegrid:not(.single){overflow-x:auto}.timegrid:not(.single)>div{min-width:640px}}
 @media(max-width:480px){.year-grid{grid-template-columns:1fr}.month-b-items .cal-chip .cal-title{display:none}.month-b-items .cal-chip{height:6px;padding:0;border-radius:3px}}
 
-/* ---------- 1.03 toolbar, project cards, sidebar user, charts, TaskFlow colours ---------- */
+/* ---------- 1.03 toolbar, project cards, sidebar user, charts, Levern colours ---------- */
 .header-actions{display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;background:var(--card)}
 .header-actions .icon-button,.header-actions .header-link{width:38px!important;height:38px!important;background:transparent!important;color:var(--tx)!important;border:0!important;font-size:16px}
 .header-actions .icon-button:hover,.header-actions .header-link:hover{background:var(--sf)!important}
@@ -474,7 +474,7 @@ details.release>summary:after{content:'+';font-size:20px;font-weight:600;color:v
 .project-actions>*{margin:0!important}
 .search-field input{border:0!important;box-shadow:none!important;background:transparent!important}
 
-/* ---------- 1.04 Home: editable recent cards and the TaskFlow pill ---------- */
+/* ---------- 1.04 Home: editable recent cards and the Levern pill ---------- */
 .edit-tile{cursor:pointer}
 .edit-tile:focus-visible{outline:3px solid var(--tx);outline-offset:2px}
 .edit-tile .check-box{width:20px;height:20px;border:1.5px solid #141414!important;color:#FFFDF8;flex-shrink:0}
@@ -702,7 +702,7 @@ input[type=radio]{border-radius:50%!important}
 .select-option.in-group{color:var(--mu)}
 .select-option.in-group[aria-selected=true]{color:var(--tx)}
 
-/* smart entry (TaskFlow-style) */
+/* smart entry (Levern-style) */
 .smart-field{position:relative;display:grid;gap:6px}
 .smart-suggest{position:absolute;z-index:30;left:0;right:0;top:calc(100% - 4px);margin:0;padding:6px;list-style:none;background:var(--card);border:1px solid var(--ln);border-radius:16px;box-shadow:0 14px 34px #14141422;display:grid;gap:2px;max-height:260px;overflow:auto}
 .smart-field:has(.smart-chips) .smart-suggest,.smart-field:has(.smart-hint) .smart-suggest{top:auto;margin-top:-2px}

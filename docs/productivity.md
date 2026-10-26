@@ -16,7 +16,7 @@ Open [Terracove](https://terracove.web.app) and sign in, or choose **Explore the
 
 ## Things to know
 
-- **TaskFlow and Google events are read-only.** Sign in with the same account as TaskFlow to see its shared quests and events. Conflict suggestions use the timed records currently loaded; refresh TaskFlow for its latest Google events. Deadlines and project date ranges do not reserve working time.
+- **Levern and Google events are read-only.** Sign in with the same account as Levern to see its shared quests and events. Conflict suggestions use the timed records currently loaded; refresh Levern for its latest Google events. Deadlines and project date ranges do not reserve working time.
 - **Undo is session-only**, with up to 20 changes. Reloading or signing out clears Undo. **Trash persists** in the workspace and does not automatically expire. Restoring a deleted client also restores the linked records removed with it.
 - **Recurring invoice generation is manual.** Each click creates up to 24 due drafts per schedule. These remain unsent; there are no automatic charges or payment follow-up messages.
 - **Focus measures elapsed wall-clock time**, including time while the app is closed, capped at 24 hours per session. Finish records the session.
