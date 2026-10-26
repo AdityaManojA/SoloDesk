@@ -1209,3 +1209,31 @@ input[type=radio]{border-radius:50%!important}
 .reports-invoices{margin-top:28px}.reports-invoices .hd h2{margin:0;font-size:26px}
 
 .wt-days span[role=button]{cursor:pointer;border-radius:10px 10px 0 0}.wt-days span[role=button]:hover{background:color-mix(in srgb,var(--hero) 18%,transparent)}
+
+/* ---------- 1.21: themed checkboxes and scrollbars everywhere ---------- */
+input[type=checkbox]{appearance:none;-webkit-appearance:none;width:20px!important;height:20px!important;min-width:20px;min-height:0!important;margin:0;padding:0!important;border:1.5px solid var(--tx)!important;border-radius:6px!important;background:var(--sf)!important;box-shadow:none!important;display:inline-grid;place-items:center;cursor:pointer;vertical-align:middle;transition:background .15s,border-color .15s;flex-shrink:0}
+input[type=checkbox]::after{content:'';width:10px;height:6px;border-left:2px solid var(--ink-tx);border-bottom:2px solid var(--ink-tx);transform:translateY(-1px) rotate(-45deg) scale(0);transition:transform .15s}
+input[type=checkbox]:checked{background:var(--ink)!important;border-color:var(--ink)!important}
+input[type=checkbox]:checked::after{transform:translateY(-1px) rotate(-45deg) scale(1)}
+input[type=checkbox]:focus-visible{outline:3px solid var(--hero);outline-offset:2px}
+input[type=checkbox]:disabled{opacity:.45;cursor:default}
+:root[data-theme=dark] input[type=checkbox]{border-color:var(--mu)!important;background:var(--sf)!important}
+:root[data-theme=dark] input[type=checkbox]:checked{background:var(--tx)!important;border-color:var(--tx)!important}
+:root[data-theme=dark] input[type=checkbox]::after{border-color:#161412}
+label:has(>input[type=checkbox]){display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+/* scrollbars: slim, rounded, no outline; quiet until you need them */
+:root{--scroll-thumb:color-mix(in srgb,var(--tx) 22%,transparent);--scroll-hover:color-mix(in srgb,var(--tx) 38%,transparent);--scroll-track:transparent}
+*{scrollbar-width:thin;scrollbar-color:var(--scroll-thumb) transparent}
+@supports selector(::-webkit-scrollbar){
+  *{scrollbar-width:auto;scrollbar-color:auto}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent!important}
+  ::-webkit-scrollbar-thumb{background:var(--scroll-thumb)!important;border:3px solid transparent!important;background-clip:padding-box!important;border-radius:999px;box-shadow:none!important;min-height:36px;min-width:36px}
+  ::-webkit-scrollbar-thumb:hover{background:var(--scroll-hover)!important;background-clip:padding-box!important}
+}
+/* notes: no stray scroll containers in the list column */
+.notes-index,.notes-index>*{overflow-x:clip!important}
+.note-link-picker{display:inline-flex;min-width:180px;max-width:280px}.note-link-picker .select-trigger{border-radius:999px}
+/* client list: round palette icon */
+.client-dot{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#141414;flex-shrink:0}
+.client-dot.tone-0{background:var(--sand)}.client-dot.tone-1{background:var(--hero)}.client-dot.tone-2{background:var(--sage)}

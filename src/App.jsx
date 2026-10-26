@@ -60,7 +60,7 @@ const NAV = [['dash', 'Home'], ['work', 'All work'], ['clients', 'Clients'], ['p
 const MOB = [['dash', 'Home'], ['tasks', 'Tasks'], ['calendar', 'Calendar'], ['more', 'More']];
 const MORE = [['work','All work'],['clients','Clients'],['projects','Projects'],['approvals','Approvals'],['notes','Notes'],['reports','Reports'],['planner','Daily planner'],['focus','Focus timer'],['integrations','Data & connections'],['profile','Profile'],['settings','Settings']];
 // Sidebar groups (desktop). Other tools stay reachable from their pages and from More.
-const GROUPS = [['General',['dash','clients','projects','tasks','calendar']],['Tools',['work','approvals','notes','reports','integrations']],['Account',['profile','settings']]];
+const GROUPS = [['General',['dash','clients','projects','tasks','notes','calendar']],['Tools',['work','approvals','reports','integrations']],['Account',['profile','settings']]];
 // The last breadcrumb names the record you are looking at.
 const crumbName = (d, page, id) => ({ clients: () => d.clients.find(x => x.id === id)?.name, projects: () => d.projects.find(x => x.id === id)?.name, tasks: () => d.tasks.find(x => x.id === id)?.title, invoices: () => d.invoices.find(x => x.id === id)?.no, notes: () => { const n = (d.notes || []).find(x => x.id === id); return n && (n.title || 'Note'); }, settings: () => ({ general: 'General', invoices: 'Invoices & bank', appearance: 'Appearance', data: 'Data & connections', 'whats-new': "What's new", account: 'Account' })[id] }[page]?.() || 'Details');
 const NAV_ICON = {dash:'home',work:'work',notes:'notes',planner:'planner',profile:'profile',focus:'focus',approvals:'approve'};
@@ -164,11 +164,11 @@ function Clients({ d, open }) {
     <div className="hd"><h1>Clients <span className="heading-count">{d.clients.filter(c => !c.arch).length}</span></h1><button className="btn" onClick={() => open('client')}>Add client</button></div>
     <div className="list-toolbar"><div className="search-field"><Icon name="search" size={17} /><input placeholder="Find a name or email…" aria-label="Search clients" value={q} onChange={(e) => setQ(e.target.value)} /></div><span className="mu">{plural(a.length, 'client', 'clients')}</span>
       <div className="layout-toggle" role="group" aria-label="Show clients as"><button type="button" aria-pressed={layout === 'cards'} onClick={() => setLayout('cards')}>Cards</button><button type="button" aria-pressed={layout === 'list'} onClick={() => setLayout('list')}>List</button></div></div>
-    <label><input type="checkbox" style={{ width: 'auto' }} checked={arch} onChange={(e) => setArch(e.target.checked)} /> Show archived</label>
+    <label><input type="checkbox" checked={arch} onChange={(e) => setArch(e.target.checked)} /> Show archived</label>
     {!a.length ? <Empty m={d.clients.length ? 'No clients match.' : 'No clients yet. Add your first client to get started.'} label={d.clients.length ? '' : 'Add client'} onClick={() => open('client')} />
-    : layout === 'list' ? a.map((c) => (
-      <a className="row" key={c.id} href={'#/clients/' + c.id}>
-        <span className="client-avatar">{initials(c.name)}</span><div className="grow"><b>{c.name} {c.arch && <span className="b">Archived</span>}</b><small>{c.email || c.phone || 'No contact details yet'}</small></div><span className="client-project-count">{plural(d.projects.filter(p => p.client === c.id).length, 'project', 'projects')}</span><Icon name="arrow" size={17} />
+    : layout === 'list' ? a.map((c, n) => (
+      <a className="row client-row" key={c.id} href={'#/clients/' + c.id}>
+        <span className={'client-dot tone-' + (n % 3)} aria-hidden="true"><Icon name="clients" size={18} /></span><div className="grow"><b>{c.name} {c.arch && <span className="b">Archived</span>}</b><small>{c.email || c.phone || 'No contact details yet'}</small></div><span className="client-project-count">{plural(d.projects.filter(p => p.client === c.id).length, 'project', 'projects')}</span><Icon name="arrow" size={17} />
       </a>
     )) : <div className="client-cards">{a.map((c, n) => { const f = facts(c); return (
       <a className={'client-card tone-' + (n % 3)} key={c.id} href={'#/clients/' + c.id}>

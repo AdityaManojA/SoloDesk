@@ -2,7 +2,7 @@
 
 The working history behind the app: what was built, what was tried and dropped, what broke and how it was fixed,
 the decisions that now constrain the codebase, and what is still open. It covers 25–27 October 2026, from the
-1.01 mobile fixes to 1.20. Release-by-release notes for users live in [CHANGELOG.md](../CHANGELOG.md) and in the
+1.01 mobile fixes to 1.21. Release-by-release notes for users live in [CHANGELOG.md](../CHANGELOG.md) and in the
 app (Settings → What's new). **Read §1, §2 and §7 first if you are picking this project up cold.**
 
 ---
@@ -12,7 +12,7 @@ app (Settings → What's new). **Read §1, §2 and §7 first if you are picking 
 | | |
 |---|---|
 | **Name** | **Terracove** (renamed from SoloDesk in 1.13) |
-| **Live** | **1.20** — https://terracove.web.app (the old address https://taskflow-solodesk.web.app redirects there) |
+| **Live** | **1.21** — https://terracove.web.app (the old address https://taskflow-solodesk.web.app redirects there) |
 | **Repo** | `D:\Projects\Solodesk-MVP`, branch `main`, GitHub `AdityaManojA/SoloDesk`, tags `v1.02`…`v1.20` |
 | **Stack** | React 18 + Vite (Lightning CSS minifier), Firebase Auth / Firestore / Hosting, hash routes |
 | **Firebase** | Project `taskflow-dailytracker` (shared with TaskFlow). Hosting targets in `.firebaserc`: **`terracove` → site `terracove` (the app)**, `solodesk` → site `taskflow-solodesk` (serves only `legacy/`, a redirect). **Spark plan** (Blaze expected ~mid-Nov 2026) |
@@ -77,6 +77,7 @@ Keep these unless the user says otherwise.
 | 1.18 | 26 Oct | Log time on tasks; payment reminders; tidy-up (dead CSS, menus, hide undeployable features) |
 | 1.19 | 27 Oct | Clients as cards (with List); install-tab highlight; icon refresh |
 | 1.20 | 27 Oct | Projects in sections; invoices under Reports; click timeline dates; no blur in production; notes/tabs/tick fixes |
+| 1.21 | 27 Oct | Themed checkboxes and scrollbars; Notes under Tasks; round client icons; trimmed Data & connections |
 
 ---
 
@@ -84,7 +85,7 @@ Keep these unless the user says otherwise.
 
 ### 4.1 Design, shell and navigation
 - Direction B / Terracotta UI, designed in Figma first (1.02–1.04). Clickable breadcrumb (1.05).
-- Sidebar (desktop): General = Home, Clients, Projects, Tasks, Calendar; Tools = All work, Approvals, Notes, **Reports & invoices**, Data & connections; Account = Profile, Settings (1.18, 1.20). Phone dock: Home, Tasks, +, Calendar, More; More lists All work, Clients, Projects, Approvals, Notes, Reports, Daily planner, Focus timer, Data & connections, Profile, Settings.
+- Sidebar (desktop): General = Home, Clients, Projects, Tasks, **Notes**, Calendar; Tools = All work, Approvals, **Reports & invoices**, Data & connections; Account = Profile, Settings (1.18, 1.20). Phone dock: Home, Tasks, +, Calendar, More; More lists All work, Clients, Projects, Approvals, Notes, Reports, Daily planner, Focus timer, Data & connections, Profile, Settings.
 - **Fluid dock** (1.14, `src/FluidDock.jsx`): one terracotta blob stretches between tabs like liquid. The cream ring around + is unchanged; four alternatives were sketched (cradle notch, liquid bridge, flush tile, thin halo) — not chosen yet.
 - Header: quick add, search, bell, settings, theme toggle (Reports icon removed in 1.18).
 - Update note (pop-up on opening): once per new version and once per sign-in (`shouldShowUpdate` in `src/changelog.js`, keys `sd_seen_version`, `sd_seen_login` = `uid|lastSignInTime`); single "Got it" button (1.18). Settings → What's new shows the current release with "Review earlier updates" folding older ones (1.15).
@@ -146,6 +147,8 @@ Keep these unless the user says otherwise.
 | Sliding timeline snapped back | A new callback ref every render | `useCallback` |
 | Tour left a stray outline after navigating | Tour kept running on another page | Leaving the step's page ends the tour |
 | Settings tab didn't stay selected | Scroll-spy overrode the click mid-scroll | Spy paused ~1.2 s after a click |
+| Stray "dot" next to New note (1.21) | `overflow-x:hidden` on children made them scroll boxes | Use `overflow-x:clip` |
+| Checked checkboxes stayed cream (1.21) | A global `input{background:… !important}` rule | Checkbox rules use `!important` |
 | Tick off-centre | Text glyph "☑" plus a translated `:after` tick | One centred SVG icon |
 | Desktop app kept the old icon | Installed PWAs cache icons; Chrome checks rarely | Renamed icon files (`terracove-app-*`); fastest fix is uninstall + reinstall from terracove.web.app |
 | Browser-pane screenshots cropped/stale; rAF not running when the pane is hidden | Pane quirks | Verify with DOM measurements; computed styles can lag right after a toggle — re-read after a delay |

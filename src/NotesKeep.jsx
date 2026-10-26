@@ -83,7 +83,7 @@ function Checklist({ note, save }) {
 function LinkPicker({ note, d, edit }) {
   const value = note.project ? 'project:' + note.project : note.client ? 'client:' + note.client : '';
   const pick = e => { const [k, r] = String(e.target.value).split(':'); const p = k === 'project' ? d.projects.find(x => x.id === r) : null; edit(n => { n.client = k === 'client' ? r : p?.client || ''; n.project = p?.id || ''; }); };
-  return <span className="keep-link"><Select aria-label="Linked to" value={value} onChange={pick}>
+  return <span className="note-link-picker"><Select aria-label="Linked to" value={value} onChange={pick}>
     <option value="">Not linked</option>
     {d.clients.length > 0 && <option value="h:clients" disabled>Clients</option>}
     {d.clients.filter(c => !c.arch).map(c => <option key={c.id} value={'client:' + c.id}>{c.name}</option>)}

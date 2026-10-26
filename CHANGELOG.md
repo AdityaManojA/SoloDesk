@@ -2,6 +2,13 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.21 — 27 October 2026 · Small things, in style
+
+- **Checkboxes and scrollbars.** All checkboxes are a custom rounded box (`appearance:none`, ink fill and tick when checked, cream in dark mode; `!important` needed because a global `input` rule sets the background). Scrollbars are slim and quiet everywhere (transparent track, soft thumb, no outline).
+- **Navigation.** Notes moved under Tasks in the sidebar.
+- **Data & connections** trimmed to TaskFlow, calendar export (ICS) and the import guide; JSON export, the badge and the long note removed.
+- **Fixes.** Client list rows use round palette icons. Note link picker uses its own class (`note-link-picker`), so old pill styles no longer paint behind it. The notes column used `overflow-x:hidden`, which turned children into scroll boxes (a stray scrollbar looked like a dot); now `overflow-x:clip`.
+
 ## 1.20 — 27 October 2026 · Projects in sections, invoices in Reports
 
 - **Projects in sections.** “Recently edited” (two) first, then one section per client (or Ongoing / Completed via a switch, `projects.group`). Cards say “No tasks yet” instead of “0 of 0”.
