@@ -45,7 +45,7 @@ export function moveCalendarItem(workspace, eventId, fromDay, toDay) {
     if (record.start) patch.start = shiftDay(record.start, delta);
     if (record.end) patch.end = shiftDay(record.end, delta);
     if (!Object.keys(patch).length) throw new Error('Add dates to this project before moving it.');
-  } else throw new Error('TaskFlow items must be moved in their source app.');
+  } else throw new Error('Levern items must be moved in their source app.');
   if (!delta) return false;
   Object.assign(record, patch);
   return true;

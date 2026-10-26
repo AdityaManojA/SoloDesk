@@ -2,6 +2,10 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.24 — 27 October 2026 · TaskFlow is now Levern
+
+- The sister app is now **Levern** (https://getlevern.web.app). Every visible “TaskFlow” in `src/` became “Levern” (calendar filter, search kinds, Home, legal pages, Data & connections); `TASKFLOW_URL` points to getlevern.web.app. The panel is just the heading “from levern”, an Open Levern button and the quests. Code identifiers (`taskflow*`, `TASKFLOW_URL`, feed paths) and older release notes are unchanged.
+
 ## 1.23 — 27 October 2026 · Tidier client picker
 
 - On a project page, Change / Link a client opens a compact picker on its own line (`.tag-row .link-picker.inline`, 36 px controls) with Save and Cancel that never shrink or wrap.

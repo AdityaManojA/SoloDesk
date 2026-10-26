@@ -2,7 +2,7 @@
 
 The working history behind the app: what was built, what was tried and dropped, what broke and how it was fixed,
 the decisions that now constrain the codebase, and what is still open. It covers 25–27 October 2026, from the
-1.01 mobile fixes to 1.23. Release-by-release notes for users live in [CHANGELOG.md](../CHANGELOG.md) and in the
+1.01 mobile fixes to 1.24. Release-by-release notes for users live in [CHANGELOG.md](../CHANGELOG.md) and in the
 app (Settings → What's new). **Read §1, §2 and §7 first if you are picking this project up cold.**
 
 ---
@@ -12,10 +12,11 @@ app (Settings → What's new). **Read §1, §2 and §7 first if you are picking 
 | | |
 |---|---|
 | **Name** | **Terracove** (renamed from SoloDesk in 1.13) |
-| **Live** | **1.23** — https://terracove.web.app (the old address https://taskflow-solodesk.web.app redirects there) |
+| **Live** | **1.24** — https://terracove.web.app (the old address https://taskflow-solodesk.web.app redirects there) |
 | **Repo** | `D:\Projects\Solodesk-MVP`, branch `main`, GitHub `AdityaManojA/SoloDesk`, tags `v1.02`…`v1.20` |
 | **Stack** | React 18 + Vite (Lightning CSS minifier), Firebase Auth / Firestore / Hosting, hash routes |
-| **Firebase** | Project `taskflow-dailytracker` (shared with TaskFlow). Hosting targets in `.firebaserc`: **`terracove` → site `terracove` (the app)**, `solodesk` → site `taskflow-solodesk` (serves only `legacy/`, a redirect). **Spark plan** (Blaze expected ~mid-Nov 2026) |
+| **Sister app** | **Levern** (formerly TaskFlow) — https://getlevern.web.app, repo `D:\Projects\TaskFlow-controls`, owned by another session. Terracove's UI says Levern; code keeps `taskflow*` names |
+| **Firebase** | Project `taskflow-dailytracker` (shared with Levern). Hosting targets in `.firebaserc`: **`terracove` → site `terracove` (the app)**, `solodesk` → site `taskflow-solodesk` (serves only `legacy/`, a redirect). **Spark plan** (Blaze expected ~mid-Nov 2026) |
 | **Auth** | Sign-in through `taskflow-dailytracker.firebaseapp.com` (authDomain). Authorized domains include `terracove.web.app`, `localhost`, the TaskFlow domains; `taskflow-solodesk.web.app` was removed |
 | **Tests** | 175 passing — `npm test` (node --test functions/*.test.js); `npm run check` = tests + build |
 | **Rules** | `firestore.rules`, shared with TaskFlow; TaskFlow's copy `D:\Projects\TaskFlow-controls\firestore.rules` must stay identical |
@@ -80,6 +81,7 @@ Keep these unless the user says otherwise.
 | 1.21 | 27 Oct | Themed checkboxes and scrollbars; Notes under Tasks; round client icons; trimmed Data & connections |
 | 1.22 | 27 Oct | Link projects and clients any time (client Work tab and project page) |
 | 1.23 | 27 Oct | Tidier client picker on the project page |
+| 1.24 | 27 Oct | **TaskFlow is now Levern** (getlevern.web.app); panel is just “from levern” |
 
 ---
 

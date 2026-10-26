@@ -65,7 +65,7 @@ test('unscheduled tray can drop on the selected day and rejects stale tray items
 });
 test('global search combines query terms and includes shared data without changing it',()=>{
   const w=fixture(),feed={quests:[{id:'q',title:'Buy paper',notes:'Studio supplies'}],events:[{id:'e',title:'Planning call',where:'HQ'}]},before=structuredClone(feed);
-  assert.equal(searchWorkspace(w,feed,'review studio')[0].id,'t');assert.equal(searchWorkspace(w,feed,'planning')[0].kind,'Google event via TaskFlow');assert.equal(searchWorkspace(w,feed,'INV-0008')[0].id,'i');assert.deepEqual(feed,before);assert.deepEqual(searchWorkspace(w,feed,''),[]);
+  assert.equal(searchWorkspace(w,feed,'review studio')[0].id,'t');assert.equal(searchWorkspace(w,feed,'planning')[0].kind,'Google event via Levern');assert.equal(searchWorkspace(w,feed,'INV-0008')[0].id,'i');assert.deepEqual(feed,before);assert.deepEqual(searchWorkspace(w,feed,''),[]);
 });
 test('templates create linked tasks and uniquely numbered unsent milestone drafts',()=>{
   const w=fixture(),template={tasks:parseTemplateLines('Kickoff | 0\nReview | 7'),milestones:parseTemplateLines('Deposit | 0 | 500\nDelivery | 14 | 1500',true)};

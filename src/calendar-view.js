@@ -47,7 +47,7 @@ export function groupCalendarAgenda(items, month) {
 
 // Count every source, including events beyond the three visible title previews.
 export function calendarSourceCounts(items) {
-  const sources=[['taskflow','TaskFlow'],['google','Google Calendar'],['projects','Projects'],['tasks','Terracove tasks']];
+  const sources=[['taskflow','Levern'],['google','Google Calendar'],['projects','Projects'],['tasks','Terracove tasks']];
   const counts={taskflow:0,google:0,projects:0,tasks:0};
   for(const event of items) counts[event.type==='taskflow-event'?'google':event.type==='taskflow-quest'?'taskflow':event.type==='project'?'projects':'tasks']++;
   return sources.filter(([key])=>counts[key]).map(([key,label])=>({key,label,count:counts[key]}));
@@ -111,7 +111,7 @@ export function layoutTimed(events, day) {
   return rows;
 }
 
-// How full a day is: everything on it (project timelines, tasks, deadlines, TaskFlow items) and how many
+// How full a day is: everything on it (project timelines, tasks, deadlines, Levern items) and how many
 // different clients are involved. Levels drive the free / light / busy / packed colours.
 export function dayLoad(events, day) {
   const items = events.filter(e => onDay(e, day));

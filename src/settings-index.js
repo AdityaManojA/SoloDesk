@@ -16,7 +16,7 @@ export const SETTINGS_INDEX = [
   S('Action colour', 'appearance', 'colour color accent highlight theme terracotta palette', ''),
   S('Light or dark mode', 'appearance', 'dark mode light mode night theme', ''),
   S('Home options', 'appearance', 'home dashboard jump back in needs attention calendar timeline hide show', ''),
-  S('Data & connections', 'data', 'taskflow csv export import integrations google calendar ics', ''),
+  S('Data & connections', 'data', 'levern taskflow csv export import integrations google calendar ics', ''),
   S('Offline access', 'data', 'offline cache no internet', ''),
   S('Onboarding & tour', 'data', 'onboarding tour welcome replay help getting started', ''),
   S('Install the app', 'data', 'install app home screen pwa desktop phone', ''),

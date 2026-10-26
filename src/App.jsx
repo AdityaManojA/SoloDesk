@@ -473,7 +473,7 @@ function Settings({ d, mut, toast, ask, user, logout, demo, saving, signingOut, 
     return () => io.disconnect();
   }, []);
   const go = k => { setActive(k); clicked.current = Date.now() + 1200; document.getElementById('settings-' + k)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); history.replaceState(null, '', '#/settings/' + k); };
-  const del = () => ask('This permanently deletes your Terracove workspace, clients, projects, tasks, invoices and public profile. Your shared TaskFlow sign-in is kept. Consider exporting a backup first.', async () => {
+  const del = () => ask('This permanently deletes your Terracove workspace, clients, projects, tasks, invoices and public profile. Your shared Levern sign-in is kept. Consider exporting a backup first.', async () => {
     if (demo) { localStorage.removeItem('sd_demo'); await logout({force:true}); return; }
     try {
       await reauthenticateWithPopup(user, provider);
@@ -505,9 +505,9 @@ function Settings({ d, mut, toast, ask, user, logout, demo, saving, signingOut, 
     </form></section>
     <section id="settings-invoices" className="settings-section"><InvoiceDefaults d={d} mut={mut} toast={toast}/></section>
     <section id="settings-appearance" className="settings-section"><AppearanceSettings d={d} mut={mut} theme={theme} setTheme={setTheme}/></section>
-    <section id="settings-data" className="settings-section"><div className="card"><h2 style={{marginTop:0}}>Data & connections</h2><p>Manage TaskFlow, export CSVs, and back up or restore your workspace in one place. Link Excel workbooks from a client’s or project’s Files & docs.</p><div className="context-actions"><a className="btn" href="#/integrations">Open data & connections</a><a className="ghost" href="#/backups">Backup & restore</a><a className="ghost" href="#/trash">Trash</a></div><h3>Offline access</h3><p>{offlineReady?'Terracove is ready to open offline on this device.':'Offline access becomes ready after the hosted app has loaded and finished preparing.'}</p><p>Keep this tab open for recovery after a reload or reconnect. Export a backup for longer-term storage. Signing out clears the current account’s recovery copy.</p><h3>Getting started</h3><ReplayIntroduction onOnboarding={startOnboarding} onTour={startTour}/><InstallApp/></div></section>
+    <section id="settings-data" className="settings-section"><div className="card"><h2 style={{marginTop:0}}>Data & connections</h2><p>Manage Levern, export CSVs, and back up or restore your workspace in one place. Link Excel workbooks from a client’s or project’s Files & docs.</p><div className="context-actions"><a className="btn" href="#/integrations">Open data & connections</a><a className="ghost" href="#/backups">Backup & restore</a><a className="ghost" href="#/trash">Trash</a></div><h3>Offline access</h3><p>{offlineReady?'Terracove is ready to open offline on this device.':'Offline access becomes ready after the hosted app has loaded and finished preparing.'}</p><p>Keep this tab open for recovery after a reload or reconnect. Export a backup for longer-term storage. Signing out clears the current account’s recovery copy.</p><h3>Getting started</h3><ReplayIntroduction onOnboarding={startOnboarding} onTour={startTour}/><InstallApp/></div></section>
     <section id="settings-whats-new" className="settings-section"><WhatsNew/></section>
-    <section id="settings-account" className="settings-section"><div className="card account-settings"><h2 style={{marginTop:0}}>Account</h2><p className="mu">{demo ? 'You are exploring the demo with sample data.' : 'Signed in as ' + (user?.email || user?.displayName || 'your Google account') + '.'} Signing out returns to the login page. Workspace deletion keeps your shared TaskFlow account.</p><div className="end" style={{ justifyContent: 'flex-start' }}><button className="ghost" disabled={signingOut} onClick={logout}>{signingOut ? 'Signing out…' : 'Sign out'}</button><button className="ghost danger" disabled={signingOut || (!demo && saving === 'saving')} onClick={del}>Delete Terracove workspace</button></div></div></section>
+    <section id="settings-account" className="settings-section"><div className="card account-settings"><h2 style={{marginTop:0}}>Account</h2><p className="mu">{demo ? 'You are exploring the demo with sample data.' : 'Signed in as ' + (user?.email || user?.displayName || 'your Google account') + '.'} Signing out returns to the login page. Workspace deletion keeps your shared Levern account.</p><div className="end" style={{ justifyContent: 'flex-start' }}><button className="ghost" disabled={signingOut} onClick={logout}>{signingOut ? 'Signing out…' : 'Sign out'}</button><button className="ghost danger" disabled={signingOut || (!demo && saving === 'saving')} onClick={del}>Delete Terracove workspace</button></div></div></section>
   </>);
 }
 
@@ -527,7 +527,7 @@ function ClientSummary({ d, c, user, demo, share, toast, onAccess }) {
 
 /* ---------- task form ---------- */
 // Type the task in one line ("Call Ava tomorrow at 7pm for Website launch") and the fields below fill in,
-// as in TaskFlow. A field you change yourself stays as you set it.
+// as in Levern. A field you change yourself stays as you set it.
 function TaskForm({ v, d, cOpts, close, save, removeItem }) {
   const base = { priority: v.priority || '', repeat: v.repeat || '', repeatDays: v.repeatDays || null, due: v.due || '', client: v.client || '', project: v.project || '', scheduledAt: localDateTime(v.scheduledAt) };
   const [text, setText] = useState(v.title || ''), [f, setF] = useState(base), [manual, setManual] = useState(() => new Set()), [parsed, setParsed] = useState(null);

@@ -1,5 +1,5 @@
-// Smart entry, shared with TaskFlow: "Call Ava tomorrow at 7pm for Website launch" fills in the date, time,
-// client and project. parseWhen is a port of TaskFlow's parseQuest (TaskFlow-controls/app/js/parse.js);
+// Smart entry, shared with Levern: "Call Ava tomorrow at 7pm for Website launch" fills in the date, time,
+// client and project. parseWhen is a port of Levern's parseQuest (Levern-controls/app/js/parse.js);
 // keep the two in step when the wording rules change. parseTask and suggest add Terracove's clients and projects.
 
 const pad = n => String(n).padStart(2, '0');

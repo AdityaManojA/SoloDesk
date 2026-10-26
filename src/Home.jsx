@@ -30,7 +30,7 @@ function MiniBars({ done, total }) {
 
 export function WorkTile({ d, entry, tone, shape }) {
   const { kind, row, at } = entry;
-  const top = <div className="tile-top"><span>{kind === 'quest' ? 'TaskFlow quest' : kind[0].toUpperCase() + kind.slice(1)}</span><span className="chip white">{ago(at)}</span></div>;
+  const top = <div className="tile-top"><span>{kind === 'quest' ? 'Levern quest' : kind[0].toUpperCase() + kind.slice(1)}</span><span className="chip white">{ago(at)}</span></div>;
   const deco = shape && <Shape kind={shape[0]} color={shape[1]} size={120} style={{ position: 'absolute', ...shape[2] }} />;
   if (kind === 'client') {
     const projects = d.projects.filter(p => p.client === row.id).length, todos = openTodos(d, row.id);
@@ -43,7 +43,7 @@ export function WorkTile({ d, entry, tone, shape }) {
     return <a className={'tile ' + tone} href={href}>{deco}{top}<span className="tile-title">{row.name || row.title}</span><span className="tile-meta">{L.cname(d, row.client) || 'No client'}{kind === 'project' ? ` · ${done} of ${tasks.length} tasks complete` : ''}</span>{kind === 'project' && <MiniBars done={done} total={tasks.length} />}</a>;
   }
   const left = (row.subtasks || []).filter(s => !s.done).length;
-  return <a className={'tile ' + tone} href={TASKFLOW_URL} target="_blank" rel="noopener noreferrer">{deco}{top}<span className="tile-title">{row.title}</span><span className="tile-meta">{row.due ? 'Due ' + new Date(row.due + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }) : 'No due date'}{left ? ` · ${left} subtask${left === 1 ? '' : 's'} left` : ''}</span><span className="chip white" style={{ alignSelf: 'flex-start', marginTop: 'auto' }}>Open in TaskFlow ↗</span></a>;
+  return <a className={'tile ' + tone} href={TASKFLOW_URL} target="_blank" rel="noopener noreferrer">{deco}{top}<span className="tile-title">{row.title}</span><span className="tile-meta">{row.due ? 'Due ' + new Date(row.due + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }) : 'No due date'}{left ? ` · ${left} subtask${left === 1 ? '' : 's'} left` : ''}</span><span className="chip white" style={{ alignSelf: 'flex-start', marginTop: 'auto' }}>Open in Levern ↗</span></a>;
 }
 
 // An editable "Jump back in" card: clicking edits the item right here instead of leaving Home.
@@ -76,7 +76,7 @@ function EditTile({ d, entry, tone, shape, open, mut, onNote }) {
   return <div className={'tile edit-tile ' + tone} role="button" tabIndex={0} aria-label={'Open ' + label.toLowerCase() + ' ' + (row.title || row.name || '')} onClick={act} onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); act(); } }}>{deco}{top}{body}</div>;
 }
 
-// TaskFlow quests are a small pill on Home, opening a compact list. TaskFlow stays the place to edit them.
+// Levern quests are a small pill on Home, opening a compact list. Levern stays the place to edit them.
 function TaskflowPill({ taskflow }) {
   const [show, setShow] = useState(false), ref = useRef(null);
   const quests = taskflow?.status === 'ready' ? taskflow.data.quests : [];
@@ -84,8 +84,8 @@ function TaskflowPill({ taskflow }) {
   if (!quests.length) return null;
   const sorted = [...quests].sort((a, b) => (a.due || '9').localeCompare(b.due || '9'));
   return <span className="tf-pill-wrap" ref={ref}>
-    <button type="button" className="tf-pill" aria-expanded={show} onClick={() => setShow(!show)} title="TaskFlow quests"><i aria-hidden="true" />TaskFlow · {quests.length}</button>
-    {show && <span className="tf-pop" role="dialog" aria-label="TaskFlow quests">{sorted.slice(0, 8).map(q => <span key={q.id} className="tf-row"><span>{q.title}</span><small>{q.due ? new Date(q.due + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : ''}</small></span>)}{quests.length > 8 && <small>+{quests.length - 8} more</small>}<a className="text-link" href={TASKFLOW_URL} target="_blank" rel="noopener noreferrer">Open TaskFlow ↗</a></span>}
+    <button type="button" className="tf-pill" aria-expanded={show} onClick={() => setShow(!show)} title="Levern quests"><i aria-hidden="true" />Levern · {quests.length}</button>
+    {show && <span className="tf-pop" role="dialog" aria-label="Levern quests">{sorted.slice(0, 8).map(q => <span key={q.id} className="tf-row"><span>{q.title}</span><small>{q.due ? new Date(q.due + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : ''}</small></span>)}{quests.length > 8 && <small>+{quests.length - 8} more</small>}<a className="text-link" href={TASKFLOW_URL} target="_blank" rel="noopener noreferrer">Open Levern ↗</a></span>}
   </span>;
 }
 

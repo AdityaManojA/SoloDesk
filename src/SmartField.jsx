@@ -6,7 +6,7 @@ const KIND_ICON = { project: 'projects', client: 'clients', when: 'calendar' };
 const KIND_LABEL = { project: 'Project', client: 'Client', when: '' };
 
 // A text field that offers clients, projects and date words as you type (↑ ↓ to move, Enter or Tab to pick),
-// like TaskFlow's quest entry. `chips` shows what was understood under the field.
+// like Levern's quest entry. `chips` shows what was understood under the field.
 export function SmartField({ label, value, onChange, workspace, chips = [], hint, names = true, dates = true, inputRef, ...props }) {
   const [caret, setCaret] = useState(null), [active, setActive] = useState(0), [closed, setClosed] = useState(false), [focused, setFocused] = useState(false);
   const own = useRef(null), input = inputRef || own, listId = useId();

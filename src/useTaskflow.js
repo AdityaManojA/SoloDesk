@@ -16,7 +16,7 @@ export default function useTaskflow(uid, demo) {
       const cached = snapshot.metadata.fromCache;
       setState({uid,status:snapshot.exists() ? 'ready' : cached ? 'loading' : 'missing',cached,data:snapshot.exists() ? normalizeTaskflow(snapshot.data()) : emptyTaskflow()});
     },error => {
-      if (active) setState({uid,status:'error',data:emptyTaskflow(),error:error.code === 'permission-denied' ? 'TaskFlow access was denied. Check the shared database rules and sign in with the same Google account.' : 'TaskFlow could not be reached. Check your connection and try again.'});
+      if (active) setState({uid,status:'error',data:emptyTaskflow(),error:error.code === 'permission-denied' ? 'Levern access was denied. Check the shared database rules and sign in with the same Google account.' : 'Levern could not be reached. Check your connection and try again.'});
     });
     return () => { active=false; unsubscribe(); };
   },[uid,demo,attempt]);

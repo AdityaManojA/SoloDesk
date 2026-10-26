@@ -1,4 +1,4 @@
-// Operates only on Terracove's workspace, never the separate TaskFlow feed.
+// Operates only on Terracove's workspace, never the separate Levern feed.
 export function deletionInfo(workspace, kind, id, invoiceId) {
   if (kind === 'payments') {
     const invoice = workspace.invoices.find(i => i.id === invoiceId), payment = invoice?.pays.find(p => p.id === id);
@@ -11,7 +11,7 @@ export function deletionInfo(workspace, kind, id, invoiceId) {
     const projects = workspace.projects.filter(p=>p.client===id), ids = new Set(projects.map(p=>p.id));
     const tasks = workspace.tasks.filter(t=>t.client===id || ids.has(t.project));
     const invoices = workspace.invoices.filter(i=>i.client===id);
-    return {label:'Delete client & linked data',message:`Delete “${title}” and its ${projects.length} projects, ${tasks.length} tasks and ${invoices.length} invoices, including their payments? Other clients and TaskFlow records are kept. This cannot be undone.`};
+    return {label:'Delete client & linked data',message:`Delete “${title}” and its ${projects.length} projects, ${tasks.length} tasks and ${invoices.length} invoices, including their payments? Other clients and Levern records are kept. This cannot be undone.`};
   }
   if (kind === 'projects') return {label:'Delete project',message:`Delete “${title}”? Its tasks will be kept and unlinked from this project. This cannot be undone.`};
   if (kind === 'invoices') return {label:'Delete invoice',message:`Delete ${title}, including its ${record.pays.length} payment records? Outstanding balances and revenue reports will be recalculated. This cannot be undone.`};

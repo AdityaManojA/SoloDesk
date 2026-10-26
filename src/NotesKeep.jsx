@@ -29,7 +29,7 @@ function useDebounced(fn, ms = 1200) {
   }), [ms]);
 }
 
-// "Call Ava tomorrow" → item "Call Ava" with a reminder for tomorrow (same wording as TaskFlow and task titles).
+// "Call Ava tomorrow" → item "Call Ava" with a reminder for tomorrow (same wording as Levern and task titles).
 function withReminder(item) {
   if (item.due || !item.title) return item;
   const w = parseWhen(item.title), date = w.chips.find(c => c.kind === 'date');

@@ -6,7 +6,7 @@ import {taskflowCalendarEvents} from './taskflow-data.js';
 import {onDay,localDay} from './calendar-view.js';
 
 const collections=['clients','projects','tasks','invoices'];
-// Same repeats as TaskFlow. "custom" repeats on chosen weekdays (task.repeatDays, 0 = Sunday).
+// Same repeats as Levern. "custom" repeats on chosen weekdays (task.repeatDays, 0 = Sunday).
 export const frequencies=[['','Does not repeat'],['daily','Daily'],['alternate','Every other day'],['weekdays','Weekdays'],['weekly','Weekly'],['custom','On days I choose'],['monthly','Monthly'],['yearly','Yearly']];
 const DAY_NAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 export const repeatLabel=(repeat,days)=>repeat==='custom'?'Every '+(days||[]).slice().sort((a,b)=>a-b).map(d=>DAY_NAMES[d]).join(', '):(frequencies.find(([f])=>f===repeat)?.[1]||'Does not repeat');
@@ -143,7 +143,7 @@ export function searchWorkspace(workspace,feed,query){
   const terms=query.trim().toLowerCase().split(/\s+/).filter(Boolean);if(!terms.length)return [];
   const clients=new Map(workspace.clients.map(c=>[c.id,c])),projects=new Map(workspace.projects.map(p=>[p.id,p]));
   const rows=collections.flatMap(kind=>workspace[kind].map(item=>({kind,id:item.id,title:item.name||item.title||item.no,detail:[item.email,item.notes,item.status,clients.get(item.client)?.name,projects.get(item.project)?.name].filter(Boolean).join(' · '),path:kind==='projects'?'#/projects':'#/'+kind+'/'+item.id})));
-  rows.push(...(feed?.quests||[]).map(q=>({kind:'TaskFlow quest',id:q.id,title:q.title,detail:q.notes||'',url:'https://taskflow-dailytracker.web.app/'})),...(feed?.events||[]).map(e=>({kind:'Google event via TaskFlow',id:e.id,title:e.title,detail:e.where||'',url:e.url||'https://taskflow-dailytracker.web.app/'})));
+  rows.push(...(feed?.quests||[]).map(q=>({kind:'Levern quest',id:q.id,title:q.title,detail:q.notes||'',url:'https://getlevern.web.app/'})),...(feed?.events||[]).map(e=>({kind:'Google event via Levern',id:e.id,title:e.title,detail:e.where||'',url:e.url||'https://getlevern.web.app/'})));
   return rows.filter(row=>terms.every(term=>(row.title+' '+row.detail+' '+row.kind).toLowerCase().includes(term))).slice(0,50);
 }
 

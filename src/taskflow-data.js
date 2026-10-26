@@ -1,9 +1,9 @@
-// Normalize TaskFlow's public share document only; never read its internal chunks.
+// Normalize Levern's public share document only; never read its internal chunks.
 const text = value => typeof value === 'string' ? value : '';
 const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value || '') && Number.isFinite(Date.parse(value + 'T00:00:00Z')) && new Date(value + 'T00:00:00Z').toISOString().slice(0,10) === value;
 const instant = value => typeof value === 'string' && /T.*(?:Z|[+-]\d{2}:\d{2})$/i.test(value) && Number.isFinite(Date.parse(value));
 const nextDay = value => new Date(Date.parse(value + 'T12:00:00Z') + 86400000).toISOString().slice(0,10);
-export const TASKFLOW_URL = 'https://taskflow-dailytracker.web.app/';
+export const TASKFLOW_URL = 'https://getlevern.web.app/';
 const repeats = new Set(['daily','weekdays','weekly','monthly']);
 export function safeEventUrl(value) { try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password ? url.href : null; } catch { return null; } }
 export function normalizeTaskflow(data) {
@@ -48,10 +48,10 @@ export function taskflowCalendarEvents(feed) {
     return {id:'taskflow-quest-'+q.id,type:'taskflow-quest',source:'taskflow',sourceId:q.id,title:q.title,
       start:start || q.due,end:start ? new Date(Date.parse(start)+60000).toISOString() : nextDay(q.due),allDay:!start,
       availability:'free',durationMinutes:start ? 1 : null,priority:q.tier === null ? null : 'P'+(q.tier+1),
-      description:['TaskFlow quest',q.tier === null ? '' : 'P'+(q.tier+1),q.repeat ? 'Repeats '+q.repeat : '',q.time ? `Due ${q.time} (${feed.tz || 'timezone unavailable'})` : '',q.time && !start ? 'Shown as an all-day reminder; due time could not be resolved.' : '',q.notes].filter(Boolean).join(' · '),
+      description:['Levern quest',q.tier === null ? '' : 'P'+(q.tier+1),q.repeat ? 'Repeats '+q.repeat : '',q.time ? `Due ${q.time} (${feed.tz || 'timezone unavailable'})` : '',q.time && !start ? 'Shown as an all-day reminder; due time could not be resolved.' : '',q.notes].filter(Boolean).join(' · '),
       path:'/tasks',url:TASKFLOW_URL,reminder:true};
   });
-  const events = feed.events.map(e => ({...e,id:'taskflow-event-'+e.id,sourceId:e.id,type:'taskflow-event',source:'taskflow',priority:e.tier == null ? null : 'P'+(e.tier+1),availability:'busy',durationMinutes:e.allDay ? null : Math.round((Date.parse(e.end)-Date.parse(e.start))/60000),description:['Google Calendar via TaskFlow',e.where].filter(Boolean).join(' · '),path:'/calendar',url:e.url || TASKFLOW_URL}));
+  const events = feed.events.map(e => ({...e,id:'taskflow-event-'+e.id,sourceId:e.id,type:'taskflow-event',source:'taskflow',priority:e.tier == null ? null : 'P'+(e.tier+1),availability:'busy',durationMinutes:e.allDay ? null : Math.round((Date.parse(e.end)-Date.parse(e.start))/60000),description:['Google Calendar via Levern',e.where].filter(Boolean).join(' · '),path:'/calendar',url:e.url || TASKFLOW_URL}));
   return [...quests,...events].sort((a,b)=>a.start.localeCompare(b.start)||a.id.localeCompare(b.id));
 }
 

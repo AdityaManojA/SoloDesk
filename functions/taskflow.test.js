@@ -50,7 +50,7 @@ test('Google events retain TaskFlow priority, location and busy time alongside q
   const event=taskflowCalendarEvents(normalizeTaskflow(data)).find(e=>e.type==='taskflow-event');
   assert.equal(event.priority,'P3'); assert.equal(event.where,'Studio'); assert.equal(event.availability,'busy');
   assert.equal(event.durationMinutes,30); assert.equal(event.path,'/calendar');
-  assert.match(event.description,/Google Calendar via TaskFlow/);
+  assert.match(event.description,/Google Calendar via Levern/);
   assert.match(calendarIcs([event]),/LOCATION:Studio/);
   assert.ok(onDay(event,'2026-10-20'));
 });
