@@ -2,6 +2,11 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
+  {version:'1.25',released:false,title:'A calmer mobile workspace',highlights:[
+    ['Mobile calendar','Clearer rows for date navigation, calendar views and filters, with compact actions and a quieter project timeline. Desktop calendar controls are unchanged.'],
+    ['App-like mobile zoom','The page stays at its normal scale on mobile, including when entering text. Calendar view buttons still work; desktop browser zoom is unchanged.'],
+    ['Notes at your fingertips','Notes replaces Tasks in the mobile dock. Open Tasks directly from Home. Swipe right on a checklist item to indent, or left to outdent; desktop keeps Tab and Shift+Tab.'],
+  ],fixes:['Notifications stay inside the screen instead of being clipped beside the bell.','On mobile Home, Today items open the task in the calendar day view; the redundant View full calendar button is hidden.']},
   {version:'1.24',released:true,date:'2026-10-27',title:'TaskFlow is now Levern',highlights:[
     ['Levern','TaskFlow is now called Levern, so Terracove says Levern everywhere: the calendar, search, Home and Data & connections. The panel is simply “from levern” with your quests and an Open Levern button (getlevern.web.app). Nothing to reconnect.'],
   ],fixes:['The calendar’s event details now say “From Levern” too.']},

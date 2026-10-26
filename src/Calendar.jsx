@@ -38,6 +38,14 @@ export default function Calendar({ d, mut, open, user, taskflow, toast = () => {
   const range = zoomRange(zoom, day);
   const inRange = useMemo(() => events.filter(e => (e.allDay ? e.end > range.start && e.start < range.end : Date.parse(e.end) > new Date(range.start + 'T00:00:00').getTime() && Date.parse(e.start) < new Date(range.end + 'T00:00:00').getTime())), [events, range.start, range.end]);
   const selected = events.find(e => e.id === eventId);
+  // Home's mobile Today items open this day and task, even after another calendar filter was saved.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.hash.split('?')[1] || ''), date = params.get('day');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '') || Number.isNaN(Date.parse(date + 'T12:00:00'))) return;
+    setDay(date); setZoom('day'); setClient('');
+    if (params.get('event')) setEventId(params.get('event'));
+  }, []);
+
 
   const moveItem = (id, from, to) => {
     if (to.includes('|') && (id.startsWith('task-') || id.startsWith('unscheduled-'))) {

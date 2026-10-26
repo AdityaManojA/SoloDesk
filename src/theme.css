@@ -1251,3 +1251,58 @@ label:has(>input[type=checkbox]){display:inline-flex;align-items:center;gap:8px;
 .link-picker.inline .select-trigger{min-height:36px!important;height:36px;padding:4px 14px!important;font-size:14px}
 .link-picker.inline .btn.sm,.link-picker.inline .ghost.sm{min-height:36px;height:36px;padding:0 16px}
 .tag-row .link-picker.inline{flex-basis:100%;flex-wrap:nowrap;order:10;margin-top:4px}
+
+/* Notification overlay stays inside the viewport, outside header clipping contexts. */
+.notif-panel{box-sizing:border-box;z-index:80;overscroll-behavior:contain}
+.notif-head{gap:10px;flex-wrap:wrap}
+.notif-item b{overflow-wrap:anywhere}
+
+/* Phone calendar: clear rows, compact secondary actions, full-width view switch. */
+@media(max-width:600px){
+  .calendar-b .page-head{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center}
+  .calendar-b .page-head>.grow{grid-column:1/-1;min-width:0}
+  .calendar-b .page-head .empty-note{display:none}
+  .calendar-b .page-head>.ghost{font-size:12px;padding:8px 10px;min-height:40px;justify-content:center;gap:6px}
+  .calendar-b .page-head>.btn{grid-column:1/-1;justify-self:end;min-height:40px;font-size:13px;padding:8px 16px}
+  .calendar-b .cal-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px 6px}
+  .calendar-b .cal-label{grid-column:1;grid-row:1;order:0;width:auto;font-size:20px;margin:0}
+  .calendar-b .cal-toolbar>.ghost{grid-column:2;grid-row:1;min-height:40px;padding:6px 12px}
+  .calendar-b .cal-step{grid-column:3;grid-row:1;display:flex}
+  .calendar-b .cal-step .icon-x{width:40px;height:40px}
+  .calendar-b .cal-zoom{grid-column:1/-1;display:block;min-width:0}
+  .calendar-b .cal-zoom>.zoom-btn{display:none}
+  .calendar-b .cal-zoom .tabs-pill{display:flex;width:100%;box-sizing:border-box}
+  .calendar-b .cal-zoom .tabs-pill button{flex:1;min-width:0;min-height:40px;padding:8px 4px;font-size:13px}
+  .calendar-b .cal-filters{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
+  .calendar-b .cal-filters>.select-control{grid-column:1/-1;min-width:0;width:100%}
+  .calendar-b .cal-filters .select-trigger{min-height:40px;font-size:13px}
+  .calendar-b .cal-check{font-size:12px;gap:6px;min-height:36px;margin:0}
+  .calendar-b .load-legend{gap:8px 12px;font-size:11px}
+  .calendar-b .load-legend i{width:10px;height:10px}
+  .calendar-b .work-timeline{padding:14px;gap:10px;border-radius:20px}
+  .calendar-b .work-timeline .block-head{gap:6px}
+  .calendar-b .work-timeline h3{font-size:19px;line-height:1.25;width:100%;margin:0}
+  .calendar-b .work-timeline .block-head>small{font-size:12px;width:100%}
+  .calendar-b .wt-nav{width:100%;margin:4px 0 0;gap:4px}
+  .calendar-b .wt-month{font-size:13px;margin-right:auto}
+  .calendar-b .wt-nav .icon-button{width:40px;height:40px;min-width:40px}
+  .calendar-b .wt-nav .ghost{min-height:40px;padding:6px 12px}
+}
+
+/* Mobile navigation and touch editing; desktop keeps its original controls. */
+.mobile-home-tasks,.keep-touch-hint{display:none}
+@media(max-width:1023px){
+  .mobile-home-tasks{display:flex;align-items:center;gap:10px;margin-bottom:16px;width:100%;box-sizing:border-box;min-height:44px}
+  .mobile-home-tasks span{margin-left:auto;color:var(--mu);font-size:13px}
+  .keep-item,.keep-item>input{touch-action:pan-y pinch-zoom}
+  .keep-keyboard-hint{display:none}
+  .keep-touch-hint{display:block}
+}
+
+@media(max-width:1023px){.home-full-calendar{display:none}}
+
+/* Phone page scale stays fixed; single-finger scrolling and checklist swipes still work. */
+@media(max-width:1023px){
+  html,body{touch-action:pan-x pan-y}
+  input:not([type=checkbox]):not([type=radio]),textarea,select{font-size:16px!important}
+}

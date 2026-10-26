@@ -109,21 +109,27 @@ export function Home({ d, open, user, taskflow, mut, toast }) {
   const t = today(), hidden = d.settings.dashboardHidden || [];
   const recents = recentWork(d);
   const overdue = d.invoices.filter(i => status(i) === 'Overdue');
-  const dueSoon = d.invoices.filter(i => ['Sent', 'Partially paid'].includes(status(i)) && i.due >= t && i.due <= addDays(t, 3));
-  const reminders = (d.notes || []).flatMap(n => (n.checklist || []).filter(c => !c.done && c.due && c.due <= t).map(c => ({ ...c, note: n })));
+  const attentionEnd = addDays(t, 2);
+  const dateLabel = due => due === t ? 'Today' : due === addDays(t, 1) ? 'Tomorrow' : due === addDays(t, 2) ? 'In 2 days' : new Date(due + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  const priorityRank = priority => ({ High: 0, Medium: 1, Low: 2 })[priority] ?? 3;
+  const dueTasks = d.tasks.filter(k => k.status !== 'Done' && !k.arch && k.due && k.due <= attentionEnd);
+  const dueInvoices = d.invoices.filter(i => ['Sent', 'Partially paid'].includes(status(i)) && i.due && i.due <= attentionEnd);
+  const reminders = (d.notes || []).flatMap(n => (n.checklist || []).filter(c => !c.done && c.due && c.due <= attentionEnd).map(c => ({ ...c, note: n })));
   const changes = [...d.tasks, ...(d.docs || []), ...d.invoices].filter(x => x.approval?.state === 'changes' && !x.arch);
   const attention = [
-    ...changes.map(x => ({ key: 'ap-' + x.id, href: '#/approvals', icon: 'approve', tone: 'sand', title: x.title || x.no, meta: x.approval.comment ? '“' + x.approval.comment + '”' : 'Client asked for changes', chip: 'Changes', chipTone: 'sand' })),
-    ...overdue.map(i => ({ key: i.id, href: '#/invoices/' + i.id, icon: 'invoices', tone: 'hero', title: `${i.no} · ${L.cname(d, i.client)}`, meta: `${money(calc(i).bal)} overdue${(i.reminders || []).length ? ' · reminded ' + new Date(i.reminders.at(-1)).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : ''}`, chip: `${Math.max(1, Math.round((Date.parse(t) - Date.parse(i.due)) / 864e5))} days`, chipTone: 'hero' })),
-    ...reminders.map(r => ({ key: r.id, href: r.note.client ? '#/clients/' + r.note.client : '#/notes', icon: 'notes', tone: 'sand', title: r.title, meta: r.note.title, chip: r.due === t ? 'Today' : 'Overdue', chipTone: 'sand' })),
-    ...dueSoon.map(i => ({ key: i.id, href: '#/invoices/' + i.id, icon: 'invoices', tone: 'sage', title: `${i.no} · ${L.cname(d, i.client)}`, meta: `${money(calc(i).bal)} due soon`, chip: new Date(i.due + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' }), chipTone: 'sage' })),
-  ].slice(0, 4);
+    ...changes.map(x => ({ key: 'ap-' + x.id, href: '#/approvals', icon: 'approve', tone: 'sand', title: x.title || x.no, meta: x.approval.comment ? '“' + x.approval.comment + '”' : 'Client asked for changes', chip: 'Changes', chipTone: 'sand', due: '', priority: -1, kind: 0 })),
+    ...overdue.map(i => ({ key: 'inv-' + i.id, href: '#/invoices/' + i.id, icon: 'invoices', tone: 'hero', title: `${i.no} · ${L.cname(d, i.client)}`, meta: `${money(calc(i).bal)} overdue${(i.reminders || []).length ? ' · reminded ' + new Date(i.reminders.at(-1)).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : ''}`, chip: `${Math.max(1, Math.round((Date.parse(t) - Date.parse(i.due)) / 864e5))} days overdue`, chipTone: 'hero', due: i.due, priority: -1, kind: 1 })),
+    ...dueTasks.map(k => ({ key: 'task-' + k.id, href: '#/tasks/' + k.id, icon: 'tasks', tone: k.priority === 'High' ? 'hero' : k.priority === 'Medium' ? 'sand' : 'sage', title: k.title, meta: [L.cname(d, k.client) !== '—' && L.cname(d, k.client), k.priority && k.priority + ' priority'].filter(Boolean).join(' · ') || 'Task due soon', chip: dateLabel(k.due), chipTone: k.priority === 'High' ? 'hero' : k.priority === 'Medium' ? 'sand' : 'sage', due: k.due, priority: priorityRank(k.priority), kind: 2 })),
+    ...reminders.map(r => ({ key: 'note-' + r.note.id + '-' + r.id, href: r.note.client ? '#/clients/' + r.note.client : '#/notes', icon: 'notes', tone: 'sand', title: r.title, meta: r.note.title + (r.priority ? ' · ' + r.priority + ' priority' : ''), chip: dateLabel(r.due), chipTone: 'sand', due: r.due, priority: priorityRank(r.priority), kind: 3 })),
+    ...dueInvoices.filter(i => status(i) !== 'Overdue').map(i => ({ key: 'due-inv-' + i.id, href: '#/invoices/' + i.id, icon: 'invoices', tone: 'sage', title: `${i.no} · ${L.cname(d, i.client)}`, meta: `${money(calc(i).bal)} due soon`, chip: dateLabel(i.due), chipTone: 'sage', due: i.due, priority: 3, kind: 4 })),
+  ].sort((a, b) => (a.kind !== b.kind && (a.kind < 2 || b.kind < 2) ? a.kind - b.kind : a.priority - b.priority || a.due.localeCompare(b.due))).slice(0, 6);
   const dueToday = d.tasks.filter(k => k.status !== 'Done' && !k.arch && (k.due === t || (k.scheduledAt && new Date(k.scheduledAt).toLocaleDateString('en-CA') === t)));
   const timeline = [...dueToday].sort((a, b) => (a.scheduledAt || '9').localeCompare(b.scheduledAt || '9')).slice(0, 5);
   const name = firstName(user);
   return <section className="home">
     <div className="home-grid">
       <div className="home-main">
+        <a className="mobile-home-tasks ghost" href="#/tasks"><Icon name="tasks" size={18} />Tasks<span>{d.tasks.filter(k => !k.arch && k.status !== 'Done').length} open</span><Icon name="arrow" size={18} /></a>
         <div className="hello"><h1>{greeting()}{name ? ', ' + name : ''}</h1><p>{dueToday.length} task{dueToday.length === 1 ? '' : 's'} due today · {overdue.length} invoice{overdue.length === 1 ? '' : 's'} overdue{reminders.length ? ` · ${reminders.length} reminder${reminders.length === 1 ? '' : 's'}` : ''}. <TaskflowPill taskflow={taskflow} /></p></div>
         {!hidden.includes('metrics') && <div>
           <div className="block-head"><h2>Jump back in</h2><a href="#/work">View all work →</a></div>
@@ -133,8 +139,8 @@ export function Home({ d, open, user, taskflow, mut, toast }) {
         </div>}
         {!hidden.includes('overview') && <div className="overview-row single">
           <div className="tile" style={{ cursor: 'default' }}>
-            <div className="block-head" style={{ marginBottom: 4 }}><span className="tile-title">Needs attention:</span><a className="chip ink" href="#/invoices">Invoices</a></div>
-            {attention.length ? attention.map(a => <a key={a.key} className="list-row" href={a.href}><span className={'dot-icon ' + a.tone}><Icon name={a.icon} size={18} /></span><span className="grow"><b>{a.title}</b><small>{a.meta}</small></span><span className={'chip ' + a.chipTone}>{a.chip}</span></a>) : <p className="empty-note">Nothing needs you right now. Overdue invoices and dated to-dos appear here.</p>}
+            <div className="block-head" style={{ marginBottom: 4 }}><span className="tile-title">Needs attention:</span><a className="chip ink" href="#/work">View all work</a></div>
+            {attention.length ? attention.map(a => <a key={a.key} className="list-row" href={a.href}><span className={'dot-icon ' + a.tone}><Icon name={a.icon} size={18} /></span><span className="grow"><b>{a.title}</b><small>{a.meta}</small></span><span className={'chip ' + a.chipTone}>{a.chip}</span></a>) : <p className="empty-note">Nothing needs you right now. Overdue work and deadlines in the next two days appear here.</p>}
           </div>
         </div>}
       </div>
@@ -143,8 +149,8 @@ export function Home({ d, open, user, taskflow, mut, toast }) {
         <div style={{ display: 'flex', gap: 8 }}><button className="btn wide-btn" onClick={() => open('task')}>Add task</button><button className="ghost" aria-label="New invoice" onClick={() => open('invoice')}><Icon name="invoices" size={18} /></button></div>
         <a className="keep-composer-bar home-note" href="#/notes/new"><Icon name="notes" size={18} /><span>Take a note…</span></a>
         <div className="block-head" style={{ margin: 0 }}><h3>Today</h3><span className="chip ink">{dueToday.length}</span></div>
-        <div className="timeline">{timeline.length ? timeline.map(k => <div className="timeline-item" key={k.id}><time>{k.scheduledAt ? new Date(k.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'All day'}</time><a className="list-row" href={'#/tasks/' + k.id}><span className={'dot-icon ' + (k.priority === 'High' ? 'hero' : k.priority === 'Medium' ? 'sand' : 'sage')}><Icon name="tasks" size={16} /></span><span className="grow"><b>{k.title}</b><small>{L.cname(d, k.client) || 'No client'}{k.durationMinutes && k.scheduledAt ? ' · ' + k.durationMinutes + ' min' : ''}</small></span></a></div>) : <p className="empty-note">A clear day. Scheduled and due tasks show up here.</p>}</div>
-        <a className="btn wide-btn" href="#/calendar">View full calendar</a>
+        <div className="timeline">{timeline.length ? timeline.map(k => <div className="timeline-item" key={k.id}><time>{k.scheduledAt ? new Date(k.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'All day'}</time><a className="list-row" href={'#/tasks/' + k.id} onClick={e => { if (matchMedia('(max-width: 1023px)').matches && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) { e.preventDefault(); window.location.hash = '#/calendar?day=' + t + '&event=' + encodeURIComponent('task-' + k.id); } }}><span className={'dot-icon ' + (k.priority === 'High' ? 'hero' : k.priority === 'Medium' ? 'sand' : 'sage')}><Icon name="tasks" size={16} /></span><span className="grow"><b>{k.title}</b><small>{L.cname(d, k.client) || 'No client'}{k.durationMinutes && k.scheduledAt ? ' · ' + k.durationMinutes + ' min' : ''}</small></span></a></div>) : <p className="empty-note">A clear day. Scheduled and due tasks show up here.</p>}</div>
+        <a className="btn wide-btn home-full-calendar" href="#/calendar">View full calendar</a>
       </aside>}
     </div>
   </section>;

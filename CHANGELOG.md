@@ -2,6 +2,15 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.25 — Unreleased · A calmer mobile workspace
+
+- Mobile page zoom is locked, including input-focus zoom; calendar view controls and desktop browser zoom remain available.
+- Notifications stay within the viewport, with scrolling for longer lists.
+- Mobile calendar controls use separate compact rows; desktop calendar layout is unchanged.
+- Mobile Home Today items open the calendar day view with that task selected; the extra View full calendar button is hidden.
+- Notes replaces Tasks in the mobile dock. Tasks is accessible directly from Home on mobile.
+- Swipe a checklist item right to indent and left to outdent on mobile. Vertical scrolling, reminder controls and desktop keyboard editing are preserved.
+
 ## 1.24 — 27 October 2026 · TaskFlow is now Levern
 
 - The sister app is now **Levern** (https://getlevern.web.app). Every visible “TaskFlow” in `src/` became “Levern” (calendar filter, search kinds, Home, legal pages, Data & connections); `TASKFLOW_URL` points to getlevern.web.app. The panel is just the heading “from levern”, an Open Levern button and the quests. Code identifiers (`taskflow*`, `TASKFLOW_URL`, feed paths) and older release notes are unchanged.

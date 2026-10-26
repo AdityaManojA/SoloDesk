@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from './Icon';
+import { checklistSwipe } from './checklist-swipe';
 import { parseWhen } from './smart-parse';
 import { rid, today } from './lib';
 import { trashReusable } from './productivity';
@@ -40,12 +41,23 @@ function withReminder(item) {
 
 // Apple Notes-style checklist: type, Enter for the next item, Tab / Shift+Tab to nest, all in place.
 function Checklist({ note, save }) {
-  const [items, setItems] = useState(note.checklist || []), refs = useRef({}), focus = useRef(null);
+  const [items, setItems] = useState(note.checklist || []), refs = useRef({}), focus = useRef(null), swipe = useRef(null);
   useEffect(() => { setItems(note.checklist || []); }, [note.id]);
   useEffect(() => { const f = focus.current, el = f && refs.current[f.id]; if (el) { el.focus(); const at = f.at === 'start' ? 0 : el.value.length; el.setSelectionRange(at, at); } focus.current = null; });
   const debounced = useDebounced(list => save(list));
   const commit = (list, now = false) => { setItems(list); now ? debounced.flush(list) : debounced.run(list); };
   const t = today();
+  const swipeStart = (e, id) => {
+    swipe.current = null;
+    if (e.pointerType !== 'touch' || !e.isPrimary || !matchMedia('(max-width: 1023px)').matches || e.target.closest('button, label')) return;
+    swipe.current = { id, pointerId: e.pointerId, x: e.clientX, y: e.clientY, time: e.timeStamp };
+  };
+  const swipeEnd = (e, id) => {
+    const start = swipe.current; swipe.current = null;
+    if (start?.id !== id) return;
+    const delta = checklistSwipe(start, e);
+    if (delta) { e.preventDefault(); commit(shiftLevel(items, id, delta), true); }
+  };
   const key = (e, c, i) => {
     const el = e.currentTarget, atStart = el.selectionStart === 0 && el.selectionEnd === 0, level = c.level || 0;
     if (e.key === 'Enter') {
@@ -65,7 +77,7 @@ function Checklist({ note, save }) {
     else if (e.key === 'ArrowDown' && i < items.length - 1) { e.preventDefault(); focus.current = { id: items[i + 1].id }; setItems([...items]); }
   };
   return <div className="keep-list">
-    {items.map((c, i) => <div key={c.id} className={'keep-item' + (c.done ? ' done' : '')} style={{ paddingLeft: 4 + (c.level || 0) * 30 }}>
+    {items.map((c, i) => <div key={c.id} className={'keep-item' + (c.done ? ' done' : '')} style={{ paddingLeft: 4 + (c.level || 0) * 30 }} onPointerDown={e => swipeStart(e, c.id)} onPointerUp={e => swipeEnd(e, c.id)} onPointerCancel={() => { swipe.current = null; }}>
       <button type="button" className="check-box" role="checkbox" aria-checked={!!c.done} aria-label={(c.done ? 'Untick ' : 'Tick ') + (c.title || 'item')} onClick={() => commit(toggleItem(items, c.id), true)}>{c.done && <Icon name="check" size={13} />}</button>
       <input ref={el => { refs.current[c.id] = el; }} aria-label={(c.level ? 'Sub-item' : 'List item') + (c.level ? ', level ' + (c.level + 1) : '')} value={c.title} placeholder={i === 0 ? 'List item' : ''}
         onChange={e => commit(items.map(x => x.id === c.id ? { ...x, title: e.target.value } : x))} onBlur={() => { const next = items.map(x => x.id === c.id ? withReminder(x) : x); if (next.some((x, j) => x !== items[j])) commit(next, true); else debounced.flush(items); }} onKeyDown={e => key(e, c, i)} />
@@ -75,7 +87,7 @@ function Checklist({ note, save }) {
       </label>
     </div>)}
     {!items.length && <div className="keep-item"><span className="check-box" aria-hidden="true" /><input autoFocus aria-label="First list item" placeholder="List item" value="" onChange={e => { const id = rid(); focus.current = { id }; commit([{ id, title: e.target.value, done: false, level: 0 }], true); }} /></div>}
-    <p className="keep-hint">Enter for a new item · Tab to indent · Shift+Tab to outdent</p>
+    <p className="keep-hint keep-keyboard-hint">Enter for a new item · Tab to indent · Shift+Tab to outdent</p><p className="keep-hint keep-touch-hint">Enter for a new item · Swipe right to indent · Swipe left to outdent</p>
   </div>;
 }
 

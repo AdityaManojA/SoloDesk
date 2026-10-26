@@ -58,7 +58,7 @@ import * as L from './lib';
 const { rid, num, today, addDays, calc, status, money, fresh } = L;
 
 const NAV = [['dash', 'Home'], ['work', 'All work'], ['clients', 'Clients'], ['projects', 'Projects'], ['tasks', 'Tasks'], ['calendar', 'Calendar'], ['invoices', 'Invoices'], ['reports', 'Reports & invoices'], ['integrations', 'Data & connections'], ['settings', 'Settings'],['planner','Daily planner'],['templates','Project templates'],['recurring','Recurring drafts'],['focus','Focus timer'],['trash','Trash'],['backups','Backup & restore'],['notes','Notes'],['profile','Profile'],['approvals','Approvals']];
-const MOB = [['dash', 'Home'], ['tasks', 'Tasks'], ['calendar', 'Calendar'], ['more', 'More']];
+const MOB = [['dash', 'Home'], ['notes', 'Notes'], ['calendar', 'Calendar'], ['more', 'More']];
 const MORE = [['work','All work'],['clients','Clients'],['projects','Projects'],['approvals','Approvals'],['notes','Notes'],['reports','Reports'],['planner','Daily planner'],['focus','Focus timer'],['integrations','Data & connections'],['profile','Profile'],['settings','Settings']];
 // Sidebar groups (desktop). Other tools stay reachable from their pages and from More.
 const GROUPS = [['General',['dash','clients','projects','tasks','notes','calendar']],['Tools',['work','approvals','reports','integrations']],['Account',['profile','settings']]];
