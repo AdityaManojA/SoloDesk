@@ -14,7 +14,7 @@ export const changelog=[
   {version:'1.21',released:true,date:'2026-10-27',title:'Small things, in style',highlights:[
     ['Checkboxes and scrollbars match','Every checkbox is the same rounded ink box with a tick, and scrollbars are slim and quiet everywhere, in light and dark.'],
     ['Notes under Tasks','Notes sits right below Tasks in the sidebar.'],
-    ['A simpler Data & connections','Just TaskFlow, your calendar export and how to add it to Google or Apple Calendar.'],
+    ['A simpler Data & connections','Just Levern, your calendar export and how to add it to Google or Apple Calendar.'],
   ],fixes:['The client list uses round colour icons instead of bordered initials.','No more shadow behind the “linked to” menu in Notes, and no stray dot next to New note.']},
   {version:'1.20',released:true,date:'2026-10-27',title:'Projects in sections, invoices in Reports',highlights:[
     ['Projects in sections','Projects show your two most recently edited first, then section by section: by client, or switch to Ongoing / Completed.'],
@@ -97,7 +97,7 @@ export const changelog=[
     ['A shorter sidebar','Daily planner opens from the Calendar (Plan your day) and Reports from the top bar.'],
     ['Approve PRDs, files and quotes','Send a PRD, a linked file or a draft invoice (as a quote) for approval, not just tasks. Clients read the PRD, open the file or see the quote’s lines and total in their portal, then approve or ask for changes. An approved PRD is marked Approved by itself.'],
     ['Invoice unbilled hours','A project’s Budget tab shows logged time that is not on an invoice yet. One click turns it into a draft invoice, one line per task at the project’s hourly rate.'],
-    ['Repeats like TaskFlow','Tasks can repeat every other day, yearly, or on the weekdays you pick, and smart typing fills these in from “every Mon, Wed and Fri”.'],
+    ['Repeats like Levern','Tasks can repeat every other day, yearly, or on the weekdays you pick, and smart typing fills these in from “every Mon, Wed and Fri”.'],
     ['Room to grow','Notes, documents, activity, focus history and Trash are now stored separately from the rest of your workspace, so it can keep growing well past the old 1 MB limit.'],
     ['Requested changes on Home','When a client asks for changes, it shows in Needs attention with their comment.'],
     ['Portal settings','Clients change their password in a new Settings tab in their portal, which also shows the name and email they are signed in with.'],
@@ -122,7 +122,7 @@ export const changelog=[
   {version:'1.05',released:true,date:'2026-10-25',title:'Client approvals, a new client portal and smart typing',highlights:[
     ['Send work for approval','Open a task and choose Send for approval. Your client approves it or asks for changes in their portal, and the answer comes back to the task. A new Approvals page shows what is waiting, approved or needs changes.'],
     ['A client portal that shows the work','Clients now see the project tasks you share, their links, the documents and PRDs you pick, and sent invoices, in a new colourful portal with their approvals at the top. Copy the portal link straight from Client access.'],
-    ['Type it, and it fills in','Like TaskFlow: type “Send the draft to Ava tomorrow at 7pm” and the date, time, client and project fill themselves in. Suggestions appear as you type; press Tab to pick one. Works for tasks, projects (“from Nov 3 to Dec 20”), search and checklist reminders.'],
+    ['Type it, and it fills in','Like Levern: type “Send the draft to Ava tomorrow at 7pm” and the date, time, client and project fill themselves in. Suggestions appear as you type; press Tab to pick one. Works for tasks, projects (“from Nov 3 to Dec 20”), search and checklist reminders.'],
     ['Search by day','Search for “tomorrow” or “next Friday” to see the work on that day.'],
     ['Clearer document buttons','Link a file and New PRD are now two clear buttons with a short description each.'],
     ['Free and busy days','Every day in the calendar is coloured by how full it is — free, light, busy or packed — with a count of items and clients. The year view becomes a heatmap of your free days.'],
@@ -143,7 +143,7 @@ export const changelog=[
   ]},
   {version:'1.04',released:true,date:'2026-10-25',title:'Edit what you were working on, right from Home',highlights:[
     ['Jump back in, editable','Home now shows the notes, tasks, projects and clients you edited most recently. Open a note, tick a checklist item or a task, or edit a project or client without leaving Home.'],
-    ['TaskFlow, tucked away','Your TaskFlow quests sit in a small pill next to the greeting; tap it for a quick list.'],
+    ['Levern, tucked away','Your Levern quests sit in a small pill next to the greeting; tap it for a quick list.'],
     ['Checklists like Apple Notes','Type an item, press Enter for the next one, Tab to make a sub-item and Shift+Tab to move it back. Ticking an item ticks its sub-items, and items stay where you put them.'],
     ['Notes, side by side','The Notes page lists your notes on the left and opens the one you pick on the right, ready to type. On Home, a note opens right under your recent work.'],
     ['Zoom buttons in the calendar','Clear Zoom in and Zoom out buttons, plus Ctrl/⌘ + scroll or a trackpad pinch over the calendar.'],
@@ -159,14 +159,14 @@ export const changelog=[
     ['Settings on one page','Scroll through General, Invoices & bank, Appearance, Data & connections, What’s new and Account. The tabs follow along as you scroll.'],
     ['Cleaner toolbar and account area','Quick actions, search (⌘K), reports, settings and light/dark mode sit together in one bar; your name and log out sit neatly at the bottom of the sidebar.'],
     ['Even project cards','Every project card is the same size, with Archive and Delete side by side.'],
-    ['Your colours everywhere','Reports and TaskFlow items now use the SoloDesk palette.'],
+    ['Your colours everywhere','Reports and Levern items now use the SoloDesk palette.'],
   ],fixes:[
     'The “All changes saved” label is gone; SoloDesk only speaks up while saving or if something did not save.',
   ]},
   {version:'1.02',released:true,date:'2026-10-25',title:'A new look, and your whole client business in one place',highlights:[
     ['New design','A calmer, business-ready look: a black sidebar, warm Terracotta colours and clearer type across every page.'],
     ['Choose your action colour','Pick the highlight colour for your workspace in Settings → Appearance. Terracotta is the default.'],
-    ['Jump back in','Home shows your three most recently edited clients, projects and TaskFlow quests, with revenue, what needs attention and today’s timeline.'],
+    ['Jump back in','Home shows your three most recently edited clients, projects and Levern quests, with revenue, what needs attention and today’s timeline.'],
     ['All work','See every project, client and completed piece of work as cards, newest first.'],
     ['Client and project notes','Keep notes, checklists and dated reminders on each client and project. Reminders also show on Home.'],
     ['Project pages','Every project now has its own page with tasks, notes and files.'],
@@ -183,7 +183,7 @@ export const changelog=[
     ['Calendar source markers','Every date shows which connected calendars have events on it.'],
     ['Clients, projects, tasks & invoices','Your whole client business in one private workspace.'],
     ['Calendar','Month and agenda views, drag work to a new date, and export to Google or Apple Calendar.'],
-    ['TaskFlow connection','See TaskFlow quests and shared Google Calendar events next to your work.'],
+    ['Levern connection','See Levern quests and shared Google Calendar events next to your work.'],
     ['Planning tools','Daily planner, conflicts & free time, focus timer, project templates and recurring invoice drafts.'],
     ['Client portal','Share chosen projects and sent invoices with a client.'],
     ['Safety nets','Undo, Trash, and backup & restore. Install as an app, dark mode and offline access.'],
