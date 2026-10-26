@@ -250,6 +250,7 @@ details.release>summary:after{content:'+';font-size:20px;font-weight:600;color:v
 .profile-public{min-height:100dvh;background:var(--bg)}
 .profile-public header{display:flex;align-items:center;gap:10px;padding:16px 28px;background:var(--sf);border-bottom:1px solid var(--ln)}
 .profile-public header b{font-family:var(--font-display);font-size:22px;font-weight:600;flex:1}
+.profile-public header .profile-brand{flex:1;color:var(--tx);text-decoration:none}.profile-public header .profile-brand .brand-mark{width:34px;height:34px}
 .profile-public .wrap{max-width:760px;margin:0 auto;padding:56px 20px;display:flex;flex-direction:column;gap:20px}
 .empty-note{color:var(--mu);font-size:14px}
 .file-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:var(--sf)}

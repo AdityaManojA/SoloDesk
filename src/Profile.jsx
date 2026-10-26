@@ -1,3 +1,4 @@
+import BrandLogo from './BrandLogo';
 import { useEffect, useState } from 'react';
 import { doc, getDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import Icon from './Icon';
@@ -144,7 +145,7 @@ export function PublicProfile({ username }) {
   }, [username]);
   const p = state.p;
   return <div className="profile-public">
-    <header><span className="avatar-xl" style={{ width: 30, height: 30, fontSize: 14, borderRadius: 8 }}>S</span><b>terracove</b><a className="ghost sm" href="/">Create your profile</a></header>
+    <header><a href="/" className="profile-brand" aria-label="Terracove home"><BrandLogo /></a><a className="ghost sm" href="/">Create your profile</a></header>
     <main className="wrap" id="workspace">
       {state.status === 'loading' && <p className="empty-note">Opening profile…</p>}
       {state.status === 'missing' && <div className="card" style={{ textAlign: 'center' }}><h1 style={{ fontSize: 28 }}>No profile here</h1><p className="empty-note">There is no Terracove profile called “{username}”.</p></div>}

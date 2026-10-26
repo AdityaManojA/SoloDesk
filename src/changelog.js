@@ -5,7 +5,9 @@ export const changelog=[
   {version:'1.16',released:true,date:'2026-10-26',title:'A new address: terracove.web.app',highlights:[
     ['terracove.web.app','Terracove now lives at terracove.web.app. The old address sends you, and your clients’ portal links, to the same page there. Sign in once on the new address; your workspace and portals are unchanged.'],
     ['A cleaner desktop icon','The installed app icon on computers has no background tile now, just the logo.'],
-  ],fixes:[]},
+  ],fixes:[
+    'Public profile pages showed an old “S” badge instead of the Terracove logo.',
+  ]},
   {version:'1.15',released:true,date:'2026-10-26',title:'Slide through your timeline',highlights:[
     ['Slide the timeline','In Calendar, What you’re working on now slides: swipe, scroll sideways or drag to move through the dates, as far forward or back as you like. The month shows as you go, and Today brings you back.'],
     ['Updates, tidied','Settings → What’s new shows the current update first; earlier ones are under Review earlier updates. The update note on opening shows once per new version and once after you sign in, not every time.'],
