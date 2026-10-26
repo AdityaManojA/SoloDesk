@@ -9,7 +9,7 @@ import { defineString } from 'firebase-functions/params';
 import { logger } from 'firebase-functions';
 import { newlyRequested, shareItems, requestEmail, answerEmail } from './approval-mail.js';
 
-const APP_URL = defineString('SOLODESK_URL', { default: 'https://taskflow-solodesk.web.app', description: 'Where Terracove is hosted, used for links in approval emails.' });
+const APP_URL = defineString('SOLODESK_URL', { default: 'https://terracove.web.app', description: 'Where Terracove is hosted, used for links in approval emails.' });
 const MAIL = defineString('MAIL_COLLECTION', { default: 'mail', description: 'Collection the Trigger Email extension watches.' });
 
 export const onShareWrite = onDocumentWritten('solodeskPortals/{owner}/shares/{client}', async event => {

@@ -1,6 +1,6 @@
 {
   "functions": [{ "source": "functions", "codebase": "default", "ignore": ["node_modules", ".git", "*.test.js"] }],
-  "hosting": { "target": "solodesk", "public": "dist", "ignore": ["firebase.json", "**/.*", "**/node_modules/**"], "rewrites": [{ "source": "**", "destination": "/index.html" }], "headers": [{ "source": "**", "headers": [
+  "hosting": [{ "target": "terracove", "public": "dist", "ignore": ["firebase.json", "**/.*", "**/node_modules/**"], "rewrites": [{ "source": "**", "destination": "/index.html" }], "headers": [{ "source": "**", "headers": [
     { "key": "X-Content-Type-Options", "value": "nosniff" },
     { "key": "Cache-Control", "value": "no-cache" },
     { "key": "X-Frame-Options", "value": "DENY" },
@@ -8,5 +8,11 @@
     { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
     { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' https://apis.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://us-central1-taskflow-dailytracker.cloudfunctions.net https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://taskflow-dailytracker.firebaseapp.com; frame-src https://taskflow-dailytracker.firebaseapp.com https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" }
   ] }] },
+    { "target": "solodesk", "public": "legacy", "rewrites": [{ "source": "**", "destination": "/index.html" }], "headers": [{ "source": "**", "headers": [
+    { "key": "Cache-Control", "value": "no-cache" },
+    { "key": "X-Content-Type-Options", "value": "nosniff" },
+    { "key": "X-Frame-Options", "value": "DENY" },
+    { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'" }
+  ] }] }],
   "firestore": { "rules": "firestore.rules" }
 }

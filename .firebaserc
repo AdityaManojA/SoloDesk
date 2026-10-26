@@ -7,6 +7,9 @@
       "hosting": {
         "solodesk": [
           "taskflow-solodesk"
+        ],
+        "terracove": [
+          "terracove"
         ]
       }
     }

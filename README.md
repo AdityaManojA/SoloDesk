@@ -2,7 +2,7 @@
 
 ![Terracove Throughline logo](public/brand/solodesk-logo.png)
 
-**Throughline branding:** [Download the logo and app-icon pack](https://taskflow-solodesk.web.app/brand/solodesk-throughline-brand-kit.zip), or open Settings → Appearance. Includes SVGs, transparent PNG wordmarks, light/dark icons and phone/desktop install sizes. [Verification](qa/throughline-brand-2026-10-21.md).
+**Throughline branding:** [Download the logo and app-icon pack](https://terracove.web.app/brand/solodesk-throughline-brand-kit.zip), or open Settings → Appearance. Includes SVGs, transparent PNG wordmarks, light/dark icons and phone/desktop install sizes. [Verification](qa/throughline-brand-2026-10-21.md).
 
 ## Original MVP & credit
 
@@ -14,7 +14,11 @@ Big shoutout to her for laying the foundation for this project!
 
 Original contributions by AdityaManojA are available under the [MIT License](LICENSE). The original MVP currently has no published license; inherited code and third-party dependencies are excluded from that grant. See [third-party notices and licensing scope](THIRD_PARTY_NOTICES.md) before reusing the combined application.
 
-A business workspace for independent professionals and studios: clients, projects, tasks, invoices, payments and reports. **Current version: 1.15** ([release notes](CHANGELOG.md), also in the app under Settings → What's new). The interface uses the 1.02 design: a black sidebar, the Terracotta palette (sage, sand, cream) with a per-workspace action colour, Bricolage Grotesque and Figtree type, and a floating dock on phones. The original React/Firebase data model and hash routes are retained. Calendar exports turn project timelines and dated tasks into scheduler events.
+A business workspace for independent professionals and studios: clients, projects, tasks, invoices, payments and reports. **Current version: 1.16** ([release notes](CHANGELOG.md), also in the app under Settings → What's new). The interface uses the 1.02 design: a black sidebar, the Terracotta palette (sage, sand, cream) with a per-workspace action colour, Bricolage Grotesque and Figtree type, and a floating dock on phones. The original React/Firebase data model and hash routes are retained. Calendar exports turn project timelines and dated tasks into scheduler events.
+
+## What's new in 1.16
+
+Terracove moved to https://terracove.web.app (Hosting site `terracove`, target `terracove`). The old `taskflow-solodesk` site serves `legacy/` only and redirects to the same path and #route. Desktop app icons (192/512) are transparent.
 
 ## What's new in 1.15
 
@@ -78,7 +82,7 @@ A rebuilt calendar with Year/Month/Week/Day zoom and a client-by-client project 
 
 Deploying 1.02 needs the updated `firestore.rules` (public profiles and Excel sync status). Copy it to TaskFlow's rules file first so both stay identical, then deploy rules before Hosting.
 
-**Status:** frontend deployed to https://taskflow-solodesk.web.app in `taskflow-dailytracker`, separately from TaskFlow’s Hosting site. Version 1.15 (26 October 2026) passes all **164 automated tests** and the production build. TaskFlow quests and its shared Google events are read-only in Terracove. Live sign-in/cloud-save round trips still need an account-level check. The standalone integration API and background server functions are not deployed on the Spark plan.
+**Status:** frontend deployed to https://terracove.web.app (the old address, taskflow-solodesk.web.app, now redirects there) in `taskflow-dailytracker`, separately from TaskFlow’s Hosting site. Version 1.16 (26 October 2026) passes all **164 automated tests** and the production build. TaskFlow quests and its shared Google events are read-only in Terracove. Live sign-in/cloud-save round trips still need an account-level check. The standalone integration API and background server functions are not deployed on the Spark plan.
 
 ## Shared calendar markers
 
@@ -156,7 +160,7 @@ For real data, copy `.env.example` to `.env.local` and enter your Firebase web a
 
    **Shared project rules:** merge the owner-only `solodeskWorkspaces/{uid}` rule from `firestore.rules` into TaskFlow's existing rules. Do not deploy this standalone rules file over TaskFlow's rules: Firebase replaces the complete ruleset. Integration key collections must remain inaccessible to browser clients. Terracove's workspace deletion keeps the shared Firebase Authentication account.
 
-   **Hosting:** `firebase.json` uses the named `solodesk` target, mapped in `.firebaserc` to the separate `taskflow-solodesk` site. Deploy only this target to leave TaskFlow's existing site intact. The read-only TaskFlow listener uses the shared account to display quests and calendar events.
+   **Hosting:** `firebase.json` has two targets in `.firebaserc`: `terracove` (the app, site `terracove`, https://terracove.web.app) and `solodesk` (the old `taskflow-solodesk` site, which now serves only `legacy/`: a redirect to the same path and #route on the new address, plus a service worker that retires old installs). Deploy only this target to leave TaskFlow's existing site intact. The read-only TaskFlow listener uses the shared account to display quests and calendar events.
 3. Install server dependencies in their own directory:
 
    ```powershell
@@ -170,7 +174,7 @@ For real data, copy `.env.example` to `.env.local` and enter your Firebase web a
 
    ```powershell
    npm run check
-   firebase deploy --project taskflow-dailytracker --only hosting:solodesk
+   firebase deploy --project taskflow-dailytracker --only hosting:terracove
    ```
 
 The frontend-only deployment above completed successfully. The current Hosting configuration serves the SPA and its public policy routes. The server integration API is not deployed; listing functions in this project failed during setup. Before enabling it, confirm runtime/billing prerequisites and function-name isolation, deploy the backend, then add a `/api/**` rewrite to function `api` in `us-central1` ahead of the SPA fallback. Configure `API_ALLOWED_ORIGINS` for the Terracove site. In development, set `VITE_API_BASE_URL` to the deployed API origin plus `/api/v1`. A missing API is shown as an actionable error in Integrations. Do not use a blanket functions/rules deployment against this shared project.

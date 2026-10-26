@@ -19,7 +19,7 @@ import { createGraph, resolveWorkbook, syncLink, rowsHash } from './excel-runner
 
 const CLIENT_ID = defineString('MS_CLIENT_ID', { description: 'Application (client) ID of the Microsoft Entra app registration.' });
 const TENANT = defineString('MS_TENANT', { default: 'common', description: '"common" for work, school and personal Microsoft accounts.' });
-const APP_URL = defineString('SOLODESK_APP_URL', { description: 'Terracove origin, for example https://taskflow-solodesk.web.app' });
+const APP_URL = defineString('SOLODESK_APP_URL', { description: 'Terracove origin, for example https://terracove.web.app' });
 const REDIRECT_URI = defineString('MS_REDIRECT_URI', { description: 'Redirect URI registered with Microsoft; must reach excel-oauthCallback.' });
 const WEBHOOK_URL = defineString('MS_WEBHOOK_URL', { description: 'Public HTTPS URL that reaches excel-webhook.' });
 const CLIENT_SECRET = defineSecret('MS_CLIENT_SECRET');

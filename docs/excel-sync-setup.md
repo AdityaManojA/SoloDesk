@@ -32,7 +32,7 @@ How it runs (code in `functions/excel-*.js`, client in `src/excel-sync-client.js
    ```
    MS_CLIENT_ID=<Application (client) ID>
    MS_TENANT=common
-   SOLODESK_APP_URL=https://taskflow-solodesk.web.app
+   SOLODESK_APP_URL=https://terracove.web.app
    MS_REDIRECT_URI=https://us-central1-taskflow-dailytracker.cloudfunctions.net/excel-oauthCallback
    MS_WEBHOOK_URL=https://us-central1-taskflow-dailytracker.cloudfunctions.net/excel-webhook
    ```

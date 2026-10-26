@@ -2,6 +2,11 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.16 — 26 October 2026 · A new address
+
+- **terracove.web.app.** The app moved from taskflow-solodesk.web.app to its own Hosting site, `terracove`. The old site now serves only `legacy/`: a page that sends people to the same path, query and #route on the new address (so client portal links keep working), and a service worker that clears and unregisters old installs. Browser storage is per address, so people sign in once more and see the welcome tour again; Firestore data is unchanged.
+- **Desktop icon without a tile.** The 192/512 app icons are transparent with the cream sun (reads on dark taskbars); the iPhone and Android icons keep their cream tile.
+
 ## 1.15 — 26 October 2026 · Slide through your timeline
 
 - **Slide the timeline.** Calendar → What you’re working on slides: swipe, scroll sideways or drag to move through the dates, as far forward or back as you like (60 more days load at either end). Client names stay pinned, the header shows the month in view, and ‹ › and Today move it. The year view still fits the whole year.

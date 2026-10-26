@@ -15,7 +15,7 @@ Without these functions everything still works: the client sees the request in t
    ```
    firebase deploy --only functions:approvals --project taskflow-dailytracker --account aditya.dev.org@gmail.com
    ```
-   Parameters (asked on first deploy): `SOLODESK_URL` (default `https://taskflow-solodesk.web.app`) and `MAIL_COLLECTION` (default `mail`).
+   Parameters (asked on first deploy): `SOLODESK_URL` (default `https://terracove.web.app`) and `MAIL_COLLECTION` (default `mail`).
 3. The `mail` collection is written by the functions only. Firestore rules deny client access by default, so no rules change is needed.
 
 ## What gets sent
