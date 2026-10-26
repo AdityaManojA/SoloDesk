@@ -7,8 +7,8 @@
   "start_url": "/#/dash",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#fff8ee",
-  "theme_color": "#fff8ee",
+  "background_color": "#F8F2E6",
+  "theme_color": "#F8F2E6",
   "prefer_related_applications": false,
   "icons": [
     {

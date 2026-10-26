@@ -35,3 +35,10 @@ test('portal whitelist excludes private notes, contacts, drafts and unrelated cl
   const w=fixture();w.invoices.push({...w.invoices[0],id:'draft',state:'draft'},{...w.invoices[0],id:'other-invoice',client:'other'});w.projects.push({id:'other-project',name:'OTHER',client:'other'});w.tasks.push({id:'secret',title:'OTHER',project:'other-project',client:'other'});
   const shared=publishablePortal(w,'c',['p','other-project'],['i','draft','other-invoice']);assert.equal(shared.projects.length,1);assert.equal(shared.tasks.length,2);assert.equal(shared.invoices.length,1);assert.ok(!JSON.stringify(shared).includes('SECRET'));assert.ok(!JSON.stringify(shared).includes('PRIVATE'));assert.ok(!JSON.stringify(shared).includes('OTHER'));assert.equal(shared.tasks[0].projectId,'p');
 });
+
+test('every repeat the recurring invoice page offers also loads again', () => {
+  for (const repeat of ['daily','alternate','weekdays','weekly','monthly','yearly']) {
+    const w = { ...fresh(), invoiceSchedules: [{ id: 's', name: 'Retainer', client: '', repeat, notes: '', next: '2026-11-01', items: [{ desc: 'Work', qty: 1, price: 10 }] }] };
+    assert.doesNotThrow(() => validateWorkspace(w), repeat);
+  }
+});

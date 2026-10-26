@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { calendarEvents, calendarIcs } from '../functions/calendar';
 import { download, today } from './lib';
@@ -52,7 +52,12 @@ export default function Calendar({ d, mut, open, user, taskflow, toast = () => {
   const { drag, over, props: dragProps, cellProps } = useCalendarDrag(moveItem);
   const exportEvents = (items, name) => download(name + '.ics', calendarIcs(items, { namespace: user?.uid || 'demo', origin: window.location.origin }), 'text/calendar;charset=utf-8');
   const edit = e => { const record = e.type === 'task' ? d.tasks.find(x => 'task-' + x.id === e.id) : d.projects.find(p => 'project-' + p.id === e.id); if (record) { setEventId(null); open(e.type, record); } };
-  const zoomTo = (z, date) => { if (date) setDay(date); setZoom(z); };
+  const zoomTo = (z, date) => {
+    if (date) setDay(date); setZoom(z);
+    // Picking a date swaps a tall grid for a shorter view; bring its heading back into view instead of
+    // leaving the page scrolled to where the click was (which lands at the bottom).
+    if (date) requestAnimationFrame(() => { const el = document.querySelector('.page-calendar .cal-label'); if (el && el.getBoundingClientRect().top < 0) window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - 96), behavior: 'smooth' }); });
+  };
   const step = by => setDay(shiftZoom(zoom, day, by));
   const zoomIndex = ZOOMS.indexOf(zoom), zoomArea = useRef(null), lastWheel = useRef(0);
   // Ctrl/⌘ + scroll and trackpad pinch (which browsers report as Ctrl + wheel) zoom the calendar, not the page.
@@ -77,7 +82,7 @@ export default function Calendar({ d, mut, open, user, taskflow, toast = () => {
 
   return <section className="calendar-b" aria-label="Calendar" ref={zoomArea}>
     <div className="page-head"><div className="grow"><h1>Calendar</h1><p className="empty-note" style={{ margin: '6px 0 0' }}>Zoom out to see the year, zoom in to plan the day. Keys: Y M W D, T for today.</p></div>
-      <button className="ghost" onClick={() => exportEvents(inRange, `terracove-${zoom}-${range.start}`)}>Export {ZOOM_LABEL[zoom].toLowerCase()} · ICS</button>
+      <button className="ghost" onClick={() => exportEvents(inRange.map(e => e.ongoing ? { ...e, end: addDaysKey(e.start, 1) } : e), `terracove-${zoom}-${range.start}`)}>Export {ZOOM_LABEL[zoom].toLowerCase()} · ICS</button>
       <a className="ghost" href="#/planner"><Icon name="planner" size={18} />Plan your day</a>
       <button className="btn" onClick={() => open('task', { due: zoom === 'day' ? day : undefined })}><Icon name="plus" size={18} />Add task</button></div>
 
@@ -169,7 +174,7 @@ function useSlidingWindow(range, enabled) {
     onPointerUp: end, onPointerLeave: end,
   };
   // The strip only exists once there are projects to show, so place it when it first appears.
-  const attach = node => { if (node && node !== scroller.current) { scroller.current = node; node.scrollLeft = 28 * dayWidth(); } if (!node) scroller.current = null; };
+  const attach = useCallback(node => { if (node && node !== scroller.current) { scroller.current = node; node.scrollLeft = 28 * dayWidth(); } if (!node) scroller.current = null; }, []);
   const goTo = key => { const el = scroller.current; if (!el) return; const days = Math.round((Date.parse(key) - Date.parse(win.start)) / 864e5); el.scrollTo({ left: Math.max(0, days * col - el.clientWidth / 3), behavior: 'smooth' }); };
   return { win, scroller, attach, col, onScroll, pointer, goTo, mid };
 }
@@ -234,7 +239,7 @@ function MonthView({ day, events, t, chip, toneOf, cellProps, dragProps, over, o
         {week.map((k, i) => { const singles = sortCalendarItems(events.filter(e => onDay(e, k) && !(e.allDay && (e.type === 'project' || addDaysKey(e.start, 1) < e.end)))); const hidden = spans.filter(s => s.lane >= 3 && s.col <= i && i < s.col + s.span).length; const shown = singles.slice(0, 3), extra = singles.length - shown.length + hidden;
           const load = dayLoad(events, k);
           return <div key={k} role="gridcell" className={'month-b-cell load-' + load.level + (k.slice(0, 7) !== month ? ' outside' : '') + (over === k ? ' drop-target' : '')} style={{ gridColumn: i + 1 }} {...cellProps(k)}>
-            <div className="month-b-top"><button type="button" className={'month-b-num' + (k === t ? ' today' : '')} onClick={() => onPickDay(k)} aria-label={fmt(k, { dateStyle: 'full' }) + ', ' + (loadText(load, k, t) || 'nothing scheduled') + ', open day'}>{+k.slice(8)}{k.slice(8) === '01' ? ' ' + fmt(k, { month: 'short' }) : ''}</button>{load.count ? <span className={'load-count load-' + load.level} title={loadText(load, k, t)} aria-hidden="true">{load.count}{load.clients > 1 ? <small> · {load.clients}c</small> : null}</span> : k >= t && k.slice(0, 7) === month ? <span className="load-tag" aria-hidden="true">Free</span> : null}</div>
+            <div className="month-b-top"><button type="button" className={'month-b-num' + (k === t ? ' today' : '')} onClick={() => onPickDay(k)} aria-label={fmt(k, { dateStyle: 'full' }) + ', ' + (loadText(load, k, t) || 'nothing scheduled') + ', open day'}>{+k.slice(8)}{k.slice(8) === '01' ? ' ' + fmt(k, { month: 'short' }) : ''}</button>{load.count ? <span className={'load-count load-' + load.level} title={loadText(load, k, t)} aria-hidden="true">{load.count}<small> {load.count === 1 ? 'item' : 'items'}</small></span> : k >= t && k.slice(0, 7) === month ? <span className="load-tag" aria-hidden="true">Free</span> : null}</div>
             <div className="month-b-items" style={{ marginTop: lanes * 24 }}>{shown.map(e => chip(e, k))}{extra > 0 && <button type="button" className="more-events" onClick={() => onPickDay(k)}>+{extra} more</button>}</div>
           </div>; })}
         {spans.filter(s => s.lane < 3).map(s => <button key={s.event.id + week[0]} type="button" className={'month-b-span' + (s.before ? ' before' : '') + (s.after ? ' after' : '') + (s.event.source === 'taskflow' ? ' shared' : '')} style={{ gridColumn: `${s.col + 1} / span ${s.span}`, top: 34 + s.lane * 24, background: s.event.source === 'taskflow' ? 'var(--sf)' : toneOf(s.event.client?.id) }} {...(s.event.source !== 'taskflow' ? dragProps(s.event, week[s.col]) : {})} onClick={() => onOpen(s.event.id)} title={s.event.title}>{s.event.title}</button>)}

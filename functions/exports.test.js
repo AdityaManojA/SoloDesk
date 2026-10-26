@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { csv, exporters, fresh, calc, status, reissuedInvoice } from '../src/lib.js';
+import { csv, exporters, fresh, calc, status, reissuedInvoice, allPays } from '../src/lib.js';
 import { invoiceTotals } from './api.js';
 
 test('CSV protects spreadsheet formulas, quotes embedded text and preserves Unicode', () => {
@@ -27,7 +27,15 @@ test('browser and API invoice calculations agree', () => {
 test('reissuing an old invoice never creates a due date before its new issue date', () => {
   const source = { state: 'void', due: '2026-09-01', items: [{ desc: 'Design', qty: 1, price: 100 }], pays: [{ amt: 25 }] };
   const result = reissuedInvoice(source, 'new', 'INV-2', '2026-10-19');
-  assert.equal(result.due, '2026-11-02'); assert.equal(result.state, 'draft'); assert.deepEqual(result.pays, []);
+  assert.equal(result.due, '2026-11-02'); assert.equal(result.state, 'draft'); assert.deepEqual(result.pays, [{ amt: 25 }], 'what was paid carries over to the new draft');
   assert.equal(source.state, 'void'); assert.equal(source.pays.length, 1);
   assert.equal(reissuedInvoice({ ...source, due: '2026-12-01' }, 'new', 'INV-2', '2026-10-19').due, '2026-12-01');
+});
+
+test('reissue drops the old approval and schedule link, and void invoices do not count as revenue', () => {
+  const source = { id: 'old', state: 'void', due: '2026-12-01', items: [{ desc: 'Design', qty: 1, price: 1000 }], pays: [{ amt: 400, date: '2026-10-01' }], approval: { state: 'approved' }, scheduleId: 's1', scheduleDate: '2026-10-01' };
+  const copy = reissuedInvoice(source, 'new', 'INV-2', '2026-10-19');
+  assert.equal(copy.approval, undefined); assert.equal(copy.scheduleId, undefined); assert.equal(copy.scheduleDate, undefined);
+  const d = { ...fresh(), invoices: [source, copy] };
+  assert.equal(allPays(d).reduce((n, p) => n + p.amt, 0), 400, 'the 400 is counted once');
 });

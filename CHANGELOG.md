@@ -2,6 +2,17 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.17 — 26 October 2026 · A calmer, sturdier Terracove
+
+From a whole-app audit (UI leftovers, logic, what to cut).
+
+- **Delete approval requests.** Approvals rows get a remove button (Undo restores); client requests get Delete (asks first). The item box says “Delete request” for answered ones. Re-sending or withdrawing also deletes the client’s old answer document, so clock skew can’t pre-answer a new request.
+- **Calendar.** Day pills say “8 items” (clients count in the tooltip). Picking a date scrolls back to the heading. The sliding timeline’s pinned names cover the gap, and a stable ref stops it snapping back on re-render. ICS export keeps ongoing projects to their start day. Tasks “Next 7 days” is 7 days.
+- **Guided tour.** No blur, light dim, one spotlight element that glides (no unmount between steps), card slides and fades; leaving the step’s page ends the tour.
+- **Dialogs and dark mode.** No backdrop blur anywhere; dark mode maps the old alias variables (`--ac`, `--action`, `--bar`, `--butter`…) to Terracotta, so menus, date pickers, toasts, scrollbars, progress bars, ticks and danger buttons lose the navy/yellow/pink. Approve button green again; portal file badges visible; invoice sheet uses ink instead of the old blue. theme-color is cream with a dark variant.
+- **Logic fixes.** Recurring invoice repeats the page offers now validate (no load lock-out); impossible ISO dates rejected by smart parse; billing marks only invoiced sessions and the UI uses the same rounding; “Invoice unbilled hours” opens the right draft; reissue carries payments, drops approval/schedule link and moves logged time; void invoices excluded from revenue; NoteDialog keeps text typed just before closing; client updates deleted only after a confirmed save; repeated tasks start clean. Regression tests added (169 total).
+- **Cleanup.** Offline cache uses the Terracove icons; removed 12 unused old brand files (dist/brand 738 KB → 241 KB) and an unused calendar component. Copy: “Buttons stay ink”, no custom-colour mention, “Send for approval”, “Daily planner”, unknown pages titled Home.
+
 ## 1.16 — 26 October 2026 · A new address
 
 - **terracove.web.app.** The app moved from taskflow-solodesk.web.app to its own Hosting site, `terracove`. The old site now serves only `legacy/`: a page that sends people to the same path, query and #route on the new address (so client portal links keep working), and a service worker that clears and unregisters old installs. Browser storage is per address, so people sign in once more and see the welcome tour again; Firestore data is unchanged.

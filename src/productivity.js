@@ -41,6 +41,7 @@ export function repeatCompletedTasks(before,after){
     const day=task.due|| (task.scheduledAt?localDay(task.scheduledAt):today());
     const next=nextRepeat(day,task.repeat,task.repeatAnchor||Number(day.slice(-2)),task.repeatDays);
     const copy={...structuredClone(task),id:rid(),status:'Todo',repeatFrom:task.id,repeatAnchor:task.repeatAnchor||Number(day.slice(-2)),createdAt:new Date().toISOString()};
+    delete copy.approval;delete copy.repeatNextId;delete copy.updatedAt;if(Array.isArray(copy.checklist))copy.checklist=copy.checklist.map(c=>({...c,done:false}));
     if(task.due)copy.due=next;
     if(task.scheduledAt){const date=new Date(task.scheduledAt),delta=Math.round((Date.parse(next+'T12:00:00Z')-Date.parse(day+'T12:00:00Z'))/86400000);date.setDate(date.getDate()+delta);copy.scheduledAt=date.toISOString();}
     if(!task.due&&!task.scheduledAt)copy.due=next;

@@ -47,8 +47,8 @@ export function usePortalSync({ d, user, demo, mut, toast }) {
       }, () => {}));
       offs.push(onSnapshot(collection(db, ...base, 'updates'), snap => {
         for (const x of snap.docs) {
-          mut(n => { const row = applyClientUpdate(n, clientId, x.data()); if (row) n.activity = [row, ...(n.activity || [])].slice(0, 500); });
-          deleteDoc(x.ref).catch(() => {});
+          Promise.resolve(mut(n => { const row = applyClientUpdate(n, clientId, x.data()); if (row) n.activity = [row, ...(n.activity || [])].slice(0, 500); }))
+            .then(saved => { if (saved) deleteDoc(x.ref).catch(() => {}); });
           toast(`${x.data().label || 'A link'} was updated by your client.`);
         }
       }, () => {}));
@@ -61,6 +61,14 @@ export function usePortalSync({ d, user, demo, mut, toast }) {
 // Reply to a client (or leave a note they can see) on a shared task.
 export const sendOwnerComment = (user, clientId, itemId, text) => import('firebase/firestore').then(({ addDoc, serverTimestamp }) =>
   addDoc(collection(db, 'solodeskPortals', user.uid, 'shares', clientId, 'comments'), { itemId, kind: 'comment', text: text.trim().slice(0, 1000), at: serverTimestamp(), email: (user.email || '').toLowerCase(), from: 'owner' }));
+
+// Forget a client's earlier answer, so a new request (or a withdrawn one) can't be "answered" by it.
+export const clearResponse = (user, clientId, itemId) => import('firebase/firestore').then(({ deleteDoc }) =>
+  deleteDoc(doc(db, 'solodeskPortals', user.uid, 'shares', clientId, 'responses', itemId))).catch(() => {});
+
+// Delete a client request for good (rules: only the owner may delete).
+export const deleteRequest = (user, clientId, requestId) => import('firebase/firestore').then(({ deleteDoc }) =>
+  deleteDoc(doc(db, 'solodeskPortals', user.uid, 'shares', clientId, 'requests', requestId)));
 
 // Answer a client request with one of the reply labels (and your own timing for "custom").
 export const replyToRequest = (user, clientId, requestId, reply, replyText = '', taskId) => import('firebase/firestore').then(({ updateDoc, serverTimestamp }) =>

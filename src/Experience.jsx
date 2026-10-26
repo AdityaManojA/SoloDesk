@@ -69,7 +69,7 @@ function MiniPreview({kind,compact=false}){
     {(kind==='workflow'||kind==='clients'||kind==='projects')&&<div className="ob-flow"><div className="ob-row"><span className="ob-avatar">AS</span><span><small>CLIENT</small><b>Ava Studio</b></span></div><span className="ob-arrow">↓</span><div className="ob-row hero"><span><small>PROJECT</small><b>Website launch</b></span><span className="ob-chip">Oct 19 → ongoing</span></div>{kind!=='clients'&&<><span className="ob-arrow">↓</span><div className="ob-row"><i className="ob-check"/><span>Review homepage</span><span className="ob-chip sand">Tomorrow</span></div></>}</div>}
     {kind==='invoices'&&<div className="ob-invoice"><div className="ob-row"><span><small>INVOICE</small><b>INV-0007</b></span><span className="ob-chip sage">Paid</span></div><div className="ob-lines"><span>Website design</span><b>₹12,000</b><span>Bank · HDFC ···4821</span><span>Edit anything</span></div><div className="ob-steps"><span>Draft</span>→<span>Sent</span>→<b>Paid</b></div></div>}
     {kind==='profile'&&<div className="ob-profile"><span className="ob-avatar lg">MR</span><div><b>Maya Rao</b><small>Brand & web designer</small><span className="ob-url">terracove · <b>maya</b></span><div className="ob-links"><span>Portfolio</span><span>LinkedIn</span><span>Dribbble</span></div></div><span className="ob-chip">Private until you share it</span></div>}
-    {(kind==='colours'||kind==='settings')&&<div className="ob-colours"><small className="ob-eyebrow">ACTION COLOUR</small><div className="ob-swatches">{SWATCHES.map((c,i)=><i key={c} style={{background:c}} className={i===0?'on':''}/>)}<i className="custom"/></div><div className="ob-tile hero"><small>FEATURED</small><b>Your colour, everywhere</b></div><span className="ob-black">Buttons stay black</span></div>}
+    {(kind==='colours'||kind==='settings')&&<div className="ob-colours"><small className="ob-eyebrow">ACTION COLOUR</small><div className="ob-swatches">{SWATCHES.map((c,i)=><i key={c} style={{background:c}} className={i===0?'on':''}/>)}</div><div className="ob-tile hero"><small>FEATURED</small><b>Your colour, everywhere</b></div><span className="ob-black">Buttons stay ink</span></div>}
     {kind==='install'&&<div className="ob-device"><span className="ob-app"><BrandMark size={40}/><b>Terracove</b></span><div><b>Your desk, one tap away</b><span className="ob-black">Add to Home Screen</span><small>Desktop · iPhone / iPad · Android</small></div></div>}
   </figure>;
 }
@@ -80,7 +80,7 @@ const welcomeSteps=[
   {nav:'Clients',title:'Client → project → task',preview:'workflow',text:'Add a **client**, give them a **project** with a start date (**no end date = ongoing**), then add the next **task**.'},
   {nav:'Calendar',title:'See how full each day is',preview:'calendar',text:'**Zoom** from **year** to **day**. Projects span **every day** they run, and colours show which days are **free**, **busy** or **packed**.'},
   {nav:'Profile',title:'A page for your work',preview:'profile',text:'Set up a **public profile** at **your own link** with your links. It stays **private** until you switch it on.'},
-  {nav:'Make it yours',title:'Make this desk yours',preview:'colours',text:'Choose an **action colour** (or any **custom** one) in **Settings → Appearance**, then **install** Terracove or take the **guided tour**.'},
+  {nav:'Make it yours',title:'Make this desk yours',preview:'colours',text:'Choose an **action colour** in **Settings → Appearance**, then **install** Terracove or take the **guided tour**.'},
 ];
 
 function Onboarding({onClose,onTour,demo}){
@@ -96,13 +96,12 @@ function Onboarding({onClose,onTour,demo}){
 }
 
 function Tour({onClose}){
-  const maskId='tour-mask-'+useId().replace(/:/g,'');
   const [index,setIndex]=useState(0),[rect,setRect]=useState(null),original=useRef(window.location.hash),step=tourSteps[index];
   const [cardHeight,setCardHeight]=useState(480),[view,setView]=useState({left:0,top:0,width:window.innerWidth,height:window.innerHeight});
   const exit=()=>{window.location.hash=original.current||'#/dash';onClose();};
   useEffect(()=>{
     let frame,attempt=0,element,observer,tracking;
-    setRect(null);window.location.hash='#/'+step.page;
+    window.location.hash='#/'+step.page;
     const measure=()=>{
       if(!element?.isConnected)return;
       const visual=window.visualViewport,viewport={left:visual?.offsetLeft||0,top:visual?.offsetTop||0,width:visual?.width||window.innerWidth,height:visual?.height||window.innerHeight};
@@ -114,23 +113,26 @@ function Tour({onClose}){
     const find=()=>{
       element=document.querySelector(step.target);
       if(!element&&attempt++<60){frame=requestAnimationFrame(find);return;}
-      if(!element)return;
-      if(step.target!=='.dock-add')window.scrollTo({top:Math.max(0,window.scrollY+element.getBoundingClientRect().top-(window.innerWidth<=600?90:112)),behavior:'instant'});
+      if(!element){setRect(null);return;}
+      if(step.target!=='.dock-add')window.scrollTo({top:Math.max(0,window.scrollY+element.getBoundingClientRect().top-(window.innerWidth<=600?90:112)),behavior:'smooth'});
       measure();
       observer=new ResizeObserver(measure);observer.observe(element);
       // Route entrances animate with transforms, which ResizeObserver doesn't report.
-      let ticks=0;const follow=()=>{measure();if(++ticks<40)tracking=requestAnimationFrame(follow);};tracking=requestAnimationFrame(follow);
+      let ticks=0;const follow=()=>{measure();if(++ticks<70)tracking=requestAnimationFrame(follow);};tracking=requestAnimationFrame(follow);
     };
     const resize=()=>{cancelAnimationFrame(frame);cancelAnimationFrame(tracking);observer?.disconnect();attempt=0;find();};
+    // Leaving the step's page yourself (sidebar, back button) ends the tour instead of leaving a stray outline.
+    const away=()=>{if(window.location.hash.split('?')[0]!=='#/'+step.page)onClose();};
+    window.addEventListener('hashchange',away);
     const visual=window.visualViewport;
     frame=requestAnimationFrame(find);window.addEventListener('resize',resize);window.addEventListener('scroll',measure,true);visual?.addEventListener('resize',measure);visual?.addEventListener('scroll',measure);
-    return()=>{cancelAnimationFrame(frame);cancelAnimationFrame(tracking);observer?.disconnect();window.removeEventListener('resize',resize);window.removeEventListener('scroll',measure,true);visual?.removeEventListener('resize',measure);visual?.removeEventListener('scroll',measure);};
+    return()=>{cancelAnimationFrame(frame);cancelAnimationFrame(tracking);observer?.disconnect();window.removeEventListener('hashchange',away);window.removeEventListener('resize',resize);window.removeEventListener('scroll',measure,true);visual?.removeEventListener('resize',measure);visual?.removeEventListener('scroll',measure);};
   },[index]);
   const width=Math.min(420,view.width-24),placement=placeTourCard(rect,{width,height:cardHeight},view);
   const cardStyle={left:placement.left,top:placement.top,width,maxHeight:placement.maxHeight,right:'auto',bottom:'auto'};
-  return <>{rect&&createPortal(<><svg className="tour-shade" aria-hidden="true" width="100%" height="100%"><defs><mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%"><rect width="100%" height="100%" fill="white"/><rect x={rect.left} y={rect.top} width={rect.width} height={rect.height} rx={rect.borderRadius} fill="black"/></mask></defs><rect width="100%" height="100%" fill="#0b1019b8" mask={'url(#'+maskId+')'}/></svg><div className="tour-spotlight" aria-hidden="true" style={rect}/></>,document.body)}
+  return <>{rect&&createPortal(<div className="tour-spotlight tour-glide" aria-hidden="true" style={rect}/>,document.body)}
     <Dialog label={step.title} onClose={exit} cardClass="tour-layer tour-anchored" cardStyle={cardStyle} onMeasure={setCardHeight} footer={<div className="experience-actions"><button type="button" className="ghost" onClick={exit}>Skip tour</button>{index>0&&<button type="button" className="ghost" onClick={()=>setIndex(index-1)}>Back</button>}<button type="button" className="btn" onClick={index===tourSteps.length-1?exit:()=>setIndex(index+1)}>{index===tourSteps.length-1?'Finish tour':'Next'}</button></div>}>
-      <p className="experience-progress" aria-live="polite">WORKSPACE TOUR · Step {index+1} of {tourSteps.length}</p><MiniPreview kind={step.preview} compact/><p className="experience-description"><BoldCopy text={step.text}/></p>
+      <div className="tour-step" key={index}><p className="experience-progress" aria-live="polite">WORKSPACE TOUR · Step {index+1} of {tourSteps.length}</p><MiniPreview kind={step.preview} compact/><p className="experience-description"><BoldCopy text={step.text}/></p></div>
     </Dialog>
   </>;
 }
@@ -140,5 +142,5 @@ export default function Experience({mode,onClose,onTour,demo}){
 }
 
 export function ReplayIntroduction({onOnboarding,onTour}){
-  return <section className="card replay-introduction" data-tour="replay"><h3>Onboarding & tour</h3><p>Skipped a step? Replay the welcome or take the guided tour of Home, Notes, Calendar, Profile and Settings.</p><div className="experience-actions"><button type="button" className="btn" onClick={onOnboarding}>Start onboarding again</button><button type="button" className="ghost" onClick={onTour}>Start guided tour</button></div></section>;
+  return <section className="card replay-introduction" data-tour="replay"><h3>Onboarding & tour</h3><p>Skipped a step? Replay the welcome or take a guided tour of the workspace.</p><div className="experience-actions"><button type="button" className="btn" onClick={onOnboarding}>Start onboarding again</button><button type="button" className="ghost" onClick={onTour}>Start guided tour</button></div></section>;
 }

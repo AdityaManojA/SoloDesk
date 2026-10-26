@@ -206,7 +206,7 @@ function ProjectPage({ d, mut, open, id, removeItem, user, demo, toast }) {
     {section==='tasks'&&<section aria-label="Project tasks">{tasks.length ? tasks.map(k => <div className="row task-row" data-priority={k.priority || 'None'} key={k.id}><button className="chk" aria-pressed={k.status === 'Done'} aria-label={k.status === 'Done' ? 'Mark not done' : 'Mark complete'} onClick={() => toggleTask(mut, k.id)}>{k.status === 'Done' ? '☑' : '☐'}</button><a className="grow" href={'#/tasks/' + k.id}><b style={{ textDecoration: k.status === 'Done' ? 'line-through' : 'none' }}>{k.title}</b><small>{k.status}{k.due ? ` · due ${k.due}` : ''}{k.priority ? ` · ${k.priority} priority` : ''}</small></a></div>) : <Empty m="No tasks yet for this project." label="Add task" onClick={() => open('task', { project: id, client: p.client })} />}</section>}
     {section==='notes'&&<NoteBoard d={d} mut={mut} toast={toast} scope={{project:id}} onFiles={()=>setSection('files')}/>}
     {section==='files'&&<FilesAndDocs d={d} mut={mut} toast={toast} scope={{kind:'project',id}} user={user} demo={demo}/>}
-    {section==='budget'&&(() => { const u = unbilled(d, id); const bill = () => { const next = structuredClone(d); let invoiceId; try { invoiceId = invoiceUnbilledHours(next, id); } catch (e) { toast(e.message); return; } mut(n => { invoiceUnbilledHours(n, id); }); toast(`Draft invoice created for ${u.billable}h. Check it, then send.`); window.location.hash = '#/invoices/' + invoiceId; };
+    {section==='budget'&&(() => { const u = unbilled(d, id); const bill = () => { const next = structuredClone(d), invoiceId = rid(); try { invoiceUnbilledHours(next, id, undefined, invoiceId); } catch (e) { toast(e.message); return; } mut(n => { invoiceUnbilledHours(n, id, undefined, invoiceId); }); toast(`Draft invoice created for ${u.billable}h. Check it, then send.`); window.location.hash = '#/invoices/' + invoiceId; };
       return <section className="budget-grid" aria-label="Project budget">
         <div className="card"><span className="eyebrow">TIME LOGGED</span><p className="budget-big">{budget.hours.toFixed(1)}h</p><p className="mu" style={{ margin: 0 }}>{budget.budget ? `of ${budget.budget}h budget · ${budget.over ? budget.over.toFixed(1) + 'h over' : budget.remaining.toFixed(1) + 'h left'}` : 'No budget set'}{p.hourlyRate ? ` · ${money(budget.value)} at ${money(p.hourlyRate)}/h` : ''}</p>{budget.budget > 0 && <div className="portal-progress" style={{ marginTop: 12 }}><i style={{ width: Math.min(100, budget.hours / budget.budget * 100) + '%' }} /></div>}</div>
         <div className={'card unbilled-card' + (u.billable > 0 ? ' has' : '')}><span className="eyebrow">NOT INVOICED YET</span><p className="budget-big">{u.billable}h{u.rate > 0 && <small> · {money(u.value)}</small>}</p>
@@ -249,7 +249,7 @@ function Tasks({ d, mut, open, taskflow, removeItem }) {
   const [f, setF] = useViewState('tasks.filters',{ status: '', due: '', client: '', project: '' }),[archived,setArchived]=useViewState('tasks.archived',false),[group,setGroup]=useViewState('tasks.group','list'), t = today();
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const a = d.tasks.filter((k) => (archived || !k.arch) && (!f.status || k.status === f.status) && (!f.client || k.client === f.client) && (!f.project || k.project === f.project)
-    && (!f.due || (f.due === 'none' ? !k.due : f.due === 'over' ? k.due && k.due < t && k.status !== 'Done' : k.due && k.due >= t && k.due <= addDays(t, 7))))
+    && (!f.due || (f.due === 'none' ? !k.due : f.due === 'over' ? k.due && k.due < t && k.status !== 'Done' : k.due && k.due >= t && k.due < addDays(t, 7))))
     .sort((x, y) => (x.status === 'Done') - (y.status === 'Done') || (x.due || '9').localeCompare(y.due || '9'));
   return (<>
     <div className="hd"><h1>Tasks <span className="heading-count">{d.tasks.filter(k => k.status !== 'Done').length} open</span></h1><button className="btn" onClick={() => open('task')}>Add task</button></div>
@@ -347,7 +347,7 @@ function InvoicePage({ d, mut, open, ask, id, removeItem, toast, user, demo }) {
   const c = calc(i), s = status(i), cl = d.clients.find((x) => x.id === i.client) || {};
   const upd = (fn) => mut((n) => fn(n.invoices.find((x) => x.id === id)));
   const pdf = () => { const t = document.title; document.title = i.no + (cl.name ? ' - ' + cl.name : ''); window.print(); setTimeout(() => { document.title = t; }, 1000); };
-  const reissue = () => { let number;try{number=nextInvoiceNumber(d);}catch(error){toast(error.message);return;} const nid = rid(); mut((n) => { n.seq=number.seq; n.invoices.push(L.reissuedInvoice(i,nid,number.no)); }); nav('invoices', nid); };
+  const reissue = () => { let number;try{number=nextInvoiceNumber(d);}catch(error){toast(error.message);return;} const nid = rid(); mut((n) => { n.seq=number.seq; n.invoices.push(L.reissuedInvoice(i,nid,number.no)); for(const s of n.focusSessions||[])if(s.invoiceId===i.id)s.invoiceId=nid; }); nav('invoices', nid); };
   return (<>
     <div className="noprint">
       <Back to="invoices" label="Invoices" />
@@ -645,7 +645,7 @@ export default function App() {
     window.addEventListener('beforeunload',warn);
     return () => window.removeEventListener('beforeunload',warn);
   }, [demo,saving]);
-  useEffect(() => { if (route.page === 'u') return; document.title = !demo && user === null && !['privacy','cookies'].includes(route.page) ? 'Sign in · Terracove' : `${NAV.find(([k]) => k === route.page)?.[1] || ({more: 'More', privacy: 'Privacy Policy', cookies: 'Cookies & storage',portal:'Client portal'})[route.page] || 'Dashboard'} · Terracove`; }, [route.page,user,demo]);
+  useEffect(() => { if (route.page === 'u') return; document.title = !demo && user === null && !['privacy','cookies'].includes(route.page) ? 'Sign in · Terracove' : `${NAV.find(([k]) => k === route.page)?.[1] || ({more: 'More', privacy: 'Privacy Policy', cookies: 'Cookies & storage',portal:'Client portal'})[route.page] || 'Home'} · Terracove`; }, [route.page,user,demo]);
   const apply = (value) => { if(value===null){undoHistory.current=[];setUndoCount(0);routeScrolls.current.clear();} dataRef.current = value; setD(value); };
   const load = async (u) => {
     const request = ++loadVersion.current;

@@ -20,6 +20,9 @@
   --bg:#161412; --sf:#221F1B; --card:#2B2722; --tx:#F8F2E6; --mu:#B9AE9E; --ln:#3A342D; --gridline:#3A342D;
   --ink:#0B0A09; --ink-tx:#F8F2E6; --ink-mu:#8F877B; --hover:#332E28; --focus:#F8F2E6; --lemon:#3A3226;
   --sage:#7E8F66; --sage-deep:#6C7C56; --sand:#B9975A; --sand-deep:#A6844B;
+  --ac:var(--ink-tx); --on:#141414; --action:var(--hero); --action-ink:#141414; --bar:var(--sage);
+  --butter:var(--sand); --priority-medium:var(--sand); --mint:var(--sage); --sky:var(--card); --lav:var(--card);
+  --coral:var(--hero); --orange:var(--hero); --scroll-thumb:#5A5148; --scroll-hover:#6E6458; --scroll-outline:#161412;
 }
 
 html,body{background:var(--bg);color:var(--tx)}
@@ -616,6 +619,14 @@ input[type=radio]{border-radius:50%!important}
 .ob-dots i{width:7px;height:7px;border-radius:50%;background:var(--ln)}
 .ob-dots i.on{background:var(--tx);width:20px;border-radius:4px}
 .tour-spotlight,:root[data-theme=dark] .tour-spotlight{border-color:var(--hero)}
+/* guided tour: no blur, a lighter dim, and the highlight + card glide from step to step */
+.experience-layer.tour-layer,:root[data-theme=dark] .experience-layer.tour-layer{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}
+.tour-spotlight.tour-glide{border:3px solid var(--hero);box-shadow:0 0 0 4px #F8F2E6cc,0 0 0 200vmax #1414146b;transition:left .42s cubic-bezier(.3,.8,.25,1),top .42s cubic-bezier(.3,.8,.25,1),width .42s cubic-bezier(.3,.8,.25,1),height .42s cubic-bezier(.3,.8,.25,1),border-radius .42s}
+:root[data-theme=dark] .tour-spotlight.tour-glide{box-shadow:0 0 0 4px #161412cc,0 0 0 200vmax #00000080}
+.tour-anchored>.experience-card{transition:left .42s cubic-bezier(.3,.8,.25,1),top .42s cubic-bezier(.3,.8,.25,1)}
+.tour-step{animation:tour-step-in .32s ease-out both}
+@keyframes tour-step-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.tour-spotlight.tour-glide,.tour-anchored>.experience-card{transition:none}.tour-step{animation:none}}
 
 .ob-preview{margin:14px 0 0;border:1px solid var(--ln);border-radius:20px;background:var(--card);overflow:hidden;color:var(--tx);font-size:12px;line-height:1.4}
 .ob-preview figcaption{display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--ln);font-size:9px;font-weight:700;letter-spacing:.08em;color:var(--mu)}
@@ -838,6 +849,9 @@ input[type=radio]{border-radius:50%!important}
 .approval-group{display:grid;gap:8px;margin-bottom:22px}
 .approval-group h2{margin:0 0 4px;font-size:20px}
 .approval-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:18px;background:var(--card);color:var(--tx);text-decoration:none;border:1px solid var(--ln)}
+.approval-row-wrap{display:flex;align-items:center;gap:8px}.approval-row-wrap>.approval-row{flex:1;min-width:0}
+.approval-remove{flex-shrink:0;width:40px;height:40px;opacity:.7}.approval-remove:hover,.approval-remove:focus-visible{opacity:1;color:#B3261E}
+.danger-text{color:#B3261E!important}
 .approval-row:hover{border-color:var(--tx)}
 .approval-row .grow{display:grid;min-width:0}
 .approval-row small{color:var(--mu)}
@@ -911,10 +925,10 @@ input[type=radio]{border-radius:50%!important}
 /* sliding timeline: fixed-width days; the client names stay pinned while the dates slide */
 .work-timeline{--wt-name:160px}.work-timeline .block-head{flex-wrap:wrap;gap:8px}
 .wt-nav{display:flex;align-items:center;gap:6px;margin-left:auto}.wt-month{font-family:var(--font-display);font-size:15px;font-weight:600;margin-right:6px;white-space:nowrap}.wt-nav .icon-button{width:34px;height:34px}
-.wt-scroll{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;cursor:grab;margin:0 -4px;padding:0 4px 6px}
+.wt-scroll{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;cursor:grab;margin:0;padding:0 0 6px}
 .wt-scroll.dragging{cursor:grabbing;user-select:none}.wt-scroll:focus-visible{outline:2px solid var(--tx);outline-offset:2px;border-radius:12px}
-.wt-scroll .wt-grid{width:max-content}
-.wt-scroll .wt-name{position:sticky;left:0;z-index:3;background:var(--card);align-self:stretch;margin-right:-12px;padding-right:12px}
+.wt-scroll .wt-grid{width:max-content;gap:0}.wt-scroll .wt-ticks,.wt-scroll .wt-row{column-gap:0}.wt-scroll .wt-row .wt-track{margin-bottom:6px}
+.wt-scroll .wt-name{position:sticky;left:0;z-index:3;background:var(--card);align-self:stretch;padding-right:12px;box-shadow:8px 0 10px -8px #14141433}
 .wt-scroll .wt-days span em{left:4px}
 @media(max-width:760px){.wt-ticks,.wt-row{grid-template-columns:96px minmax(0,1fr)}.work-timeline{--wt-name:96px}.zoom-month:not(.sliding) .wt-days span:not(.first):not(.today) b{visibility:hidden}.wt-bar small{display:none}}
 
@@ -1132,3 +1146,40 @@ input[type=radio]{border-radius:50%!important}
 .approval-card.compact{border-width:1.5px;padding:14px;border-radius:18px;box-shadow:none}
 .approval-card.compact h3,.approval-card.compact .approval-project{display:none}
 .task-open .task-thread{padding:0}
+
+/* ---------- audit fixes (1.17): one calm overlay style, no navy/yellow leftovers in dark mode ---------- */
+/* Dialogs and guides dim the page lightly and never blur it. */
+.ov,:root[data-theme=dark] .ov{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.ov{background:#14141459!important}:root[data-theme=dark] .ov{background:#0000008f!important}
+.experience-layer:not(.tour-layer){backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:#14141459!important}
+:root[data-theme=dark] .experience-layer:not(.tour-layer){background:#0000008f!important}
+:root[data-theme=dark] .dlg,:root[data-theme=dark] .dlg .end{background:var(--bg)!important}
+:root[data-theme=dark] .toast{background:var(--ink)!important;color:var(--ink-tx)!important;border:1px solid var(--ln)!important}
+:root[data-theme=dark] ::selection{background:var(--hero);color:#141414}
+:root[data-theme=dark] input:focus,:root[data-theme=dark] textarea:focus,:root[data-theme=dark] select:focus{box-shadow:0 0 0 3px #E8957A33!important}
+:root[data-theme=dark] .install-notice{background:var(--card)!important;color:var(--tx)!important}
+/* Dropdowns and date pickers in dark mode */
+:root[data-theme=dark] .select-trigger{background:var(--sf)}
+:root[data-theme=dark] .control-panel{background:var(--sf)!important}
+:root[data-theme=dark] .select-option.is-active,:root[data-theme=dark] .select-option:hover{background:var(--hover)!important}
+:root[data-theme=dark] .select-option[aria-selected=true]{background:var(--card)!important;color:var(--tx)!important;font-weight:700}
+:root[data-theme=dark] .date-days button[aria-pressed=true],:root[data-theme=dark] .date-days button[aria-pressed=true]:hover,:root[data-theme=dark] .file-button{background:var(--hero)!important;color:#141414!important;border-color:var(--hero)!important}
+/* Things that were invisible */
+:root[data-theme=dark] .progress-track{background:color-mix(in srgb,var(--tx) 18%,transparent)!important}
+:root[data-theme=dark] .progress-track span{background:var(--tx)!important}
+.project-card .progress-track span{background:#141414!important}.project-card .progress-track{background:color-mix(in srgb,#141414 12%,transparent)!important}
+.file-badge{background:var(--ink)}
+.btn.approve,:root[data-theme=dark] .btn.approve{background:#4F6B35!important;color:#fff!important}
+:root[data-theme=dark] .icon-button,:root[data-theme=dark] .header-link{background:var(--card)!important;color:var(--tx)!important}
+:root[data-theme=dark] .icon-button:hover,:root[data-theme=dark] .header-link:hover{background:var(--hover)!important}
+:root[data-theme=dark] .chk[aria-pressed=true]:after,:root[data-theme=dark] .task-check[aria-pressed=true]:after{border-color:var(--sf)!important;color:var(--sf)!important}
+/* Section tabs that are links (Data & connections) match the button tabs */
+.section-tabs>a{border-radius:999px;padding:8px 16px;font:600 13px var(--font-body);color:var(--tx);text-decoration:none}
+.section-tabs>a[aria-current=page],:root[data-theme=dark] .section-tabs>a[aria-current=page]{background:var(--ink)!important;color:var(--ink-tx)!important}
+/* Invoice sheet: ink and warm greys instead of the old blue */
+.sheet{color:#141414}.sheet small,.sheet .mu{color:#6E675C}.sheet th{color:#6E675C!important;background:transparent}
+:root[data-theme=dark] .sheet th{background:transparent!important}
+/* Calendar dots used an undefined colour */
+.month-dot,.cal-dot{--lavender:var(--sage)}
+/* Toasts sit above the dock only on phones */
+@media(min-width:1024px){.toast{bottom:24px!important}}

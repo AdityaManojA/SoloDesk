@@ -105,3 +105,12 @@ test('TaskFlow repeats: every other day, yearly and chosen weekdays', async () =
   assert.equal(repeatLabel('custom', [5, 1]), 'Every Mon, Fri');
   assert.equal(repeatLabel('alternate'), 'Every other day');
 });
+
+test('the next repeat of a task starts clean: no approval, checklist unticked', () => {
+  const before = { ...fresh(), tasks: [{ id: 't', title: 'Weekly report', status: 'Todo', repeat: 'weekly', due: '2026-10-26', checklist: [{ id: 'a', text: 'Draft', done: true }], approval: { state: 'approved' } }] };
+  const after = structuredClone(before); after.tasks[0].status = 'Done';
+  repeatCompletedTasks(before, after);
+  const copy = after.tasks.find(t => t.repeatFrom === 't');
+  assert.equal(copy.due, '2026-11-02'); assert.equal(copy.approval, undefined); assert.equal(copy.repeatNextId, undefined);
+  assert.equal(copy.checklist[0].done, false);
+});

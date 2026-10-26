@@ -21,3 +21,16 @@ test('unbilled hours become a draft invoice, one line per task, at the hourly ra
   assert.equal(unbilled(w, 'p').billable, 1.75, 'deleting the draft frees the time');
   assert.throws(() => invoiceUnbilledHours(w, 'q'), /hourly rate/);
 });
+
+test('short tasks stay unbilled instead of being lost, and the shown total matches the invoice', () => {
+  const w = { ...fresh(), clients: [{ id: 'c', name: 'C' }], projects: [{ id: 'p', name: 'Site', client: 'c', hourlyRate: 100 }],
+    focusSessions: [{ project: 'p', title: 'A', seconds: 3600 }, { project: 'p', title: 'B', seconds: 300 }] };
+  assert.equal(unbilled(w, 'p').billable, 1);
+  const id = invoiceUnbilledHours(w, 'p', '2026-10-26', 'fixed-id');
+  assert.equal(id, 'fixed-id'); assert.equal(w.invoices[0].id, 'fixed-id');
+  assert.equal(w.focusSessions[1].invoiceId, undefined, 'the 5-minute session is still unbilled');
+  assert.equal(unbilled(w, 'p').hours * 60, 5);
+  const tiny = { ...fresh(), clients: [{ id: 'c', name: 'C' }], projects: [{ id: 'p', name: 'Site', client: 'c', hourlyRate: 100 }],
+    focusSessions: ['A', 'B', 'C'].map(title => ({ project: 'p', title, seconds: 420 })) };
+  assert.equal(unbilled(tiny, 'p').billable, 0, 'no Invoice button for time that would not make a line');
+});

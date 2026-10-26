@@ -84,7 +84,7 @@ export function parseWhen(text, now = new Date()) {
     || take(new RegExp(`${lead}\\b(today|later today)\\b`, 'i'), m => setDue(today, m))
     || take(new RegExp(`${lead}\\bday after tomorrow\\b`, 'i'), m => setDue(addDays(today, 2), m))
     || take(new RegExp(`${lead}\\b(tomorrow|tmrw|tmr)\\b`, 'i'), m => setDue(addDays(today, 1), m))
-    || take(new RegExp(`${lead}\\b(\\d{4})-(\\d{2})-(\\d{2})\\b`), m => { const s = `${m[1]}-${m[2]}-${m[3]}`; if (isNaN(Date.parse(s))) return false; setDue(s, m); })
+    || take(new RegExp(`${lead}\\b(\\d{4})-(\\d{2})-(\\d{2})\\b`), m => { const s = `${m[1]}-${m[2]}-${m[3]}`; if (isNaN(Date.parse(s + 'T12:00:00Z')) || new Date(s + 'T12:00:00Z').toISOString().slice(0, 10) !== s) return false; setDue(s, m); })
     || take(new RegExp(`${lead}\\bin\\s+(\\d+|a|an|one|two|three|four|five|six|seven|eight|nine|ten)\\s+(day|week|month)s?\\b`, 'i'), m => { const n = { a: 1, an: 1 }[m[1].toLowerCase()] ?? numVal(m[1]); const unit = m[2].toLowerCase(); setDue(unit === 'month' ? addMonths(today, n) : addDays(today, n * (unit === 'week' ? 7 : 1)), m); })
     || take(new RegExp(`${lead}\\bin a couple (?:of )?days\\b`, 'i'), m => setDue(addDays(today, 2), m))
     || take(new RegExp(`${lead}\\bin a fortnight\\b|\\bfortnight\\b`, 'i'), m => setDue(addDays(today, 14), m))

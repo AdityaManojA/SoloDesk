@@ -150,10 +150,12 @@ export function NotesPage({ d, mut, toast, id }) {
 
 // A note opened in a dialog, from the Notes page or from Home. Empty new notes are discarded on close.
 export function NoteDialog({ note, d, mut, toast, onClose }) {
+  const box = useRef(null);
   const edit = fn => mut(w => { const n = (w.notes || []).find(x => x.id === note.id); if (n) fn(n); });
-  const close = () => { const n = (d.notes || []).find(x => x.id === note.id); if (n && !n.title && !n.body && !(n.checklist || []).length) mut(w => { w.notes = w.notes.filter(x => x.id !== n.id); }); onClose(); };
+  const close = () => { const n = (d.notes || []).find(x => x.id === note.id); const typed = [...(box.current?.querySelectorAll('input,textarea,[contenteditable=true]') || [])].some(x => (x.value ?? x.textContent ?? '').trim());
+    if (n && !typed && !n.title && !n.body && !(n.checklist || []).length) mut(w => { w.notes = w.notes.filter(x => x.id !== n.id); }); onClose(); };
   useEffect(() => { const k = e => { if (e.key === 'Escape') close(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); });
-  return <div className="ov" onClick={close}><div className="dlg keep-dialog" role="dialog" aria-modal="true" aria-label="Edit note" onClick={e => e.stopPropagation()}>
+  return <div className="ov" onClick={close}><div ref={box} className="dlg keep-dialog" role="dialog" aria-modal="true" aria-label="Edit note" onClick={e => e.stopPropagation()}>
     <NoteEditor note={note} edit={edit} autoFocus onTrash={() => { mut(w => trashReusable(w, 'notes', note.id)); onClose(); toast('Note moved to Trash.'); }}
       labels={<select aria-label="Linked to" className="keep-link" value={note.project ? 'project:' + note.project : note.client ? 'client:' + note.client : ''} onChange={e => { const [k, r] = e.target.value.split(':'); const p = k === 'project' ? d.projects.find(x => x.id === r) : null; edit(n => { n.client = k === 'client' ? r : p?.client || ''; n.project = p?.id || ''; }); }}><option value="">Not linked</option><optgroup label="Clients">{d.clients.map(c => <option key={c.id} value={'client:' + c.id}>{c.name}</option>)}</optgroup><optgroup label="Projects">{d.projects.map(p => <option key={p.id} value={'project:' + p.id}>{p.name}</option>)}</optgroup></select>} />
     <div className="end" style={{ margin: 0, padding: '12px 0 0', border: 0, background: 'none' }}><button type="button" className="btn sm" onClick={close}>Done</button></div>

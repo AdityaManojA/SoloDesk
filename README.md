@@ -2,7 +2,7 @@
 
 ![Terracove Throughline logo](public/brand/solodesk-logo.png)
 
-**Throughline branding:** [Download the logo and app-icon pack](https://terracove.web.app/brand/solodesk-throughline-brand-kit.zip), or open Settings → Appearance. Includes SVGs, transparent PNG wordmarks, light/dark icons and phone/desktop install sizes. [Verification](qa/throughline-brand-2026-10-21.md).
+**Branding:** the Terracove sun logo (since 1.14). Masters live in `design/logo/`; app icons, favicon and share image in `public/brand/terracove-*`. The previous Throughline icons stay in `public/brand/` only for already-installed copies.
 
 ## Original MVP & credit
 
@@ -14,7 +14,11 @@ Big shoutout to her for laying the foundation for this project!
 
 Original contributions by AdityaManojA are available under the [MIT License](LICENSE). The original MVP currently has no published license; inherited code and third-party dependencies are excluded from that grant. See [third-party notices and licensing scope](THIRD_PARTY_NOTICES.md) before reusing the combined application.
 
-A business workspace for independent professionals and studios: clients, projects, tasks, invoices, payments and reports. **Current version: 1.16** ([release notes](CHANGELOG.md), also in the app under Settings → What's new). The interface uses the 1.02 design: a black sidebar, the Terracotta palette (sage, sand, cream) with a per-workspace action colour, Bricolage Grotesque and Figtree type, and a floating dock on phones. The original React/Firebase data model and hash routes are retained. Calendar exports turn project timelines and dated tasks into scheduler events.
+A business workspace for independent professionals and studios: clients, projects, tasks, invoices, payments and reports. **Current version: 1.17** ([release notes](CHANGELOG.md), also in the app under Settings → What's new). The interface uses the 1.02 design: a black sidebar, the Terracotta palette (sage, sand, cream) with a per-workspace action colour, Bricolage Grotesque and Figtree type, and a floating dock on phones. The original React/Firebase data model and hash routes are retained. Calendar exports turn project timelines and dated tasks into scheduler events.
+
+## What's new in 1.17
+
+Whole-app audit release: approval requests can be deleted; calendar pills, date picking and the sliding timeline fixed; the guided tour and all dialogs no longer blur; dark mode cleared of the old navy/yellow/pink; a set of logic fixes (recurring invoice validation, impossible dates, billing rounding and reissue, note loss, portal update and approval re-send races, repeating tasks) with regression tests. See CHANGELOG.md.
 
 ## What's new in 1.16
 
@@ -82,7 +86,7 @@ A rebuilt calendar with Year/Month/Week/Day zoom and a client-by-client project 
 
 Deploying 1.02 needs the updated `firestore.rules` (public profiles and Excel sync status). Copy it to TaskFlow's rules file first so both stay identical, then deploy rules before Hosting.
 
-**Status:** frontend deployed to https://terracove.web.app (the old address, taskflow-solodesk.web.app, now redirects there) in `taskflow-dailytracker`, separately from TaskFlow’s Hosting site. Version 1.16 (26 October 2026) passes all **164 automated tests** and the production build. TaskFlow quests and its shared Google events are read-only in Terracove. Live sign-in/cloud-save round trips still need an account-level check. The standalone integration API and background server functions are not deployed on the Spark plan.
+**Status:** frontend deployed to https://terracove.web.app (the old address, taskflow-solodesk.web.app, now redirects there) in `taskflow-dailytracker`, separately from TaskFlow’s Hosting site. Version 1.17 (26 October 2026) passes all **164 automated tests** and the production build. TaskFlow quests and its shared Google events are read-only in Terracove. Live sign-in/cloud-save round trips still need an account-level check. The standalone integration API and background server functions are not deployed on the Spark plan.
 
 ## Shared calendar markers
 

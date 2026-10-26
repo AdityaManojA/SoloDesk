@@ -23,5 +23,5 @@ export function useScrollMemory(ref,key,initial=0){
 export function SectionNav({label,items,current}){
   return <nav className="section-tabs" aria-label={label}>{items.map(([key,title])=><a key={key} href={'#/'+key} aria-current={key===current?'page':undefined}>{title}</a>)}</nav>;
 }
-export const PlanningNav=({current})=><SectionNav label="Planning" current={current} items={[["calendar","Calendar"],["planner","Daily plan"]]}/>;
+export const PlanningNav=({current})=><SectionNav label="Planning" current={current} items={[["calendar","Calendar"],["planner","Daily planner"]]}/>;
 export const DataNav=({current})=><SectionNav label="Data & connections" current={current} items={[["integrations","Connections"],["backups","Backup & restore"]]}/>;

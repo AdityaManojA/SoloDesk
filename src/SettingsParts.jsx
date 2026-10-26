@@ -15,7 +15,7 @@ export function AppearanceSettings({ d, mut, theme, setTheme }) {
     <div className="two-col">
       <div className="card" style={{ display: 'grid', gap: 14 }}>
         <div className="block-head" style={{ margin: 0 }}><h2 id="action-colour">Action colour</h2><button className="chip dashed" style={{ cursor: 'pointer' }} onClick={() => pick(DEFAULT_ACTION)}>Reset to Terracotta</button></div>
-        <p style={{ margin: 0, color: 'var(--mu)' }}>Used for highlights: the active menu item, today in the calendar, featured cards and selected tags. Buttons stay black.</p>
+        <p style={{ margin: 0, color: 'var(--mu)' }}>Used for highlights: the active menu item, today in the calendar, featured cards and selected tags. Buttons stay ink.</p>
         <div className="swatches" role="radiogroup" aria-labelledby="action-colour">{ACTION_COLOURS.map((c, i) => <button key={c.id} id={'swatch-' + c.id} type="button" role="radio" className="swatch" aria-checked={current === c.id} tabIndex={current === c.id ? 0 : -1} onKeyDown={e => move(e, i)} onClick={() => pick(c.id)}><i style={{ background: c.hex }}>{current === c.id && <Icon name="check" size={18} />}</i><span><b>{c.name}</b><small>{c.hex}</small></span></button>)}</div>
         <p className="notice soft" style={{ margin: 0 }}>Every colour keeps text readable in light and dark mode. Your choice is saved to this workspace and shows on every device.</p>
       </div>
@@ -24,7 +24,7 @@ export function AppearanceSettings({ d, mut, theme, setTheme }) {
         <div style={{ background: 'var(--ink)', color: 'var(--ink-tx)', borderRadius: 18, padding: '12px 16px', display: 'grid', gap: 6 }}><span style={{ borderLeft: '2px solid var(--hero)', paddingLeft: 10, color: 'var(--hero)', fontWeight: 600 }}>Home</span><span>Clients</span></div>
         <div className="tag-row" style={{ marginTop: 0 }}><span className="avatar-xl" style={{ width: 40, height: 40, fontSize: 14 }}>25</span><span className="chip hero">October</span><span className="chip hero">Brand</span></div>
         <div className="tile hero" style={{ minHeight: 0 }}><Shape kind="heart" size={90} style={{ position: 'absolute', right: -16, bottom: -20 }} /><span className="tile-top">Project</span><span className="tile-title">Featured card</span></div>
-        <button type="button" className="btn wide-btn">Buttons stay black</button>
+        <button type="button" className="btn wide-btn">Buttons stay ink</button>
       </aside>
     </div>
     <div className="card" style={{ display: 'grid', gap: 10 }}>

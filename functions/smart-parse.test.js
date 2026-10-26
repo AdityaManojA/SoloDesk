@@ -81,3 +81,9 @@ test('a distinctive first word of a client name is enough', () => {
   assert.deepEqual([t.client, t.title], ['c1', 'Call Whisky about the logo']);
   assert.equal(parseTask('Call the team', W, NOW).client, '');
 });
+
+test('impossible ISO dates are not taken as due dates', () => {
+  assert.equal(parseTask('Call Ava 2026-02-30').due, '');
+  assert.equal(parseTask('Call Ava 2026-04-31').due, '');
+  assert.equal(parseTask('Call Ava 2026-02-28').due, '2026-02-28');
+});

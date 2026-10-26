@@ -2,6 +2,23 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
+  {version:'1.17',released:true,date:'2026-10-26',title:'A calmer, sturdier Terracove',highlights:[
+    ['Delete approval requests','Remove any approval request from Approvals, even an answered one (Undo brings it back). Client requests can be deleted too.'],
+    ['Calendar, clearer','Day counts read “8 items” instead of “8 · 3c”. Picking a date no longer drops you to the bottom of the page, and the timeline’s client names stay neatly pinned while you slide.'],
+    ['A smoother guided tour','No blur, a gentle dim, and Back/Next glide to the next spot instead of flashing. Leaving the page ends the tour.'],
+    ['Calmer dialogs and dark mode','Dialogs dim the page without blurring it. Dark mode no longer shows leftover navy, yellow or pink: menus, date pickers, toasts, scrollbars and progress bars all use the Terracotta palette.'],
+  ],fixes:[
+    'A recurring invoice set to repeat every other day or yearly could stop the workspace from loading. It now loads, and “On days I choose” is no longer offered for invoices.',
+    'Typing an impossible date such as 2026-02-30 in quick add no longer saves it as a due date.',
+    'Invoicing logged time no longer loses short tasks: under 8 minutes stays unbilled and adds up. The hours shown match the invoice, and the new draft opens straight away.',
+    'Reissuing a void invoice keeps what was already paid and drops the old approval; payments are counted once in Reports.',
+    'A new note closed quickly after typing is kept instead of being thrown away.',
+    'A client’s link or file update is only cleared once your workspace has saved it.',
+    'Sending something for approval again can no longer be answered by the client’s previous reply.',
+    'The next copy of a repeating task starts with its checklist unticked and no approval.',
+    'Calendar export shows ongoing projects on their start day, not as 10-year events. “Next 7 days” covers 7 days.',
+    'Approve buttons are green again, link badges in the client portal are visible, and dark-mode ticks and progress bars show.',
+  ]},
   {version:'1.16',released:true,date:'2026-10-26',title:'A new address: terracove.web.app',highlights:[
     ['terracove.web.app','Terracove now lives at terracove.web.app. The old address sends you, and your clients’ portal links, to the same page there. Sign in once on the new address; your workspace and portals are unchanged.'],
     ['A cleaner desktop icon','The installed app icon on computers has no background tile now, just the logo.'],

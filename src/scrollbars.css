@@ -1,9 +1,9 @@
 /* Theme the browser's own scrollbars, preserving wheel, touch and keyboard input. */
 :root {
   --scroll-track:var(--bg);
-  --scroll-thumb:#ffd66b;
-  --scroll-hover:#f9b77e;
-  --scroll-outline:#1e1b18;
+  --scroll-thumb:#DED4C3;
+  --scroll-hover:#CDBFA9;
+  --scroll-outline:#14141433;
 }
 :root[data-theme=dark] {
   --scroll-thumb:#f3cc71;
