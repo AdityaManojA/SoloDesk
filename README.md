@@ -16,6 +16,8 @@ Original contributions by AdityaManojA are available under the [MIT License](LIC
 
 A business workspace for independent professionals and studios: clients, projects, tasks, invoices, payments and reports. **Current version: 1.20** ([release notes](CHANGELOG.md), also in the app under Settings → What's new). The interface uses the 1.02 design: a black sidebar, the Terracotta palette (sage, sand, cream) with a per-workspace action colour, Bricolage Grotesque and Figtree type, and a floating dock on phones. The original React/Firebase data model and hash routes are retained. Calendar exports turn project timelines and dated tasks into scheduler events.
 
+> **Picking this project up?** Start with [docs/CONTEXT-HISTORY.md](docs/CONTEXT-HISTORY.md): current state, release checklist, standing decisions and open items.
+
 ## What's new in 1.20
 
 Projects show in sections (recent, then by client or ongoing/completed); invoices moved under Reports (“Reports & invoices”); click a timeline date to open the day; no blur anywhere in the production build; Settings tabs, note linking/deleting and the task tick fixed. See CHANGELOG.md.

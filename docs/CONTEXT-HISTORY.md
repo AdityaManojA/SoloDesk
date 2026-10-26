@@ -1,48 +1,58 @@
 # Terracove (formerly SoloDesk) — context history, October 2026
 
-A record of this chapter of work: what was built, what was tried and dropped, what broke and how it was fixed,
-the decisions that now constrain the codebase, and what is still open. It covers 25–26 October 2026, from the
-1.01 mobile fixes to the 1.13 rename. Release-by-release notes for users live in [CHANGELOG.md](../CHANGELOG.md)
-and in the app (Settings → What's new); this file is the working history behind them.
+The working history behind the app: what was built, what was tried and dropped, what broke and how it was fixed,
+the decisions that now constrain the codebase, and what is still open. It covers 25–27 October 2026, from the
+1.01 mobile fixes to 1.20. Release-by-release notes for users live in [CHANGELOG.md](../CHANGELOG.md) and in the
+app (Settings → What's new). **Read §1, §2 and §7 first if you are picking this project up cold.**
 
 ---
 
-## 1. Where things stand (26 Oct 2026)
+## 1. Where things stand (27 Oct 2026)
 
 | | |
 |---|---|
 | **Name** | **Terracove** (renamed from SoloDesk in 1.13) |
-| **Live version** | 1.13 — https://taskflow-solodesk.web.app |
-| **Repo** | `D:\Projects\Solodesk-MVP`, branch `main`, tags `v1.02`…`v1.13` |
-| **Stack** | React 18 + Vite, Firebase Auth / Firestore / Hosting, hash routes |
-| **Firebase** | Project `taskflow-dailytracker` (shared with TaskFlow), Hosting target `solodesk`, **Spark plan** (Blaze expected ~mid-Nov 2026) |
-| **Tests** | 164 passing (`npm run check` = tests + production build) |
-| **Rules** | Shared with TaskFlow; TaskFlow's copy at `D:\Projects\TaskFlow-controls\firestore.rules` must stay identical |
+| **Live** | **1.20** — https://terracove.web.app (the old address https://taskflow-solodesk.web.app redirects there) |
+| **Repo** | `D:\Projects\Solodesk-MVP`, branch `main`, GitHub `AdityaManojA/SoloDesk`, tags `v1.02`…`v1.20` |
+| **Stack** | React 18 + Vite (Lightning CSS minifier), Firebase Auth / Firestore / Hosting, hash routes |
+| **Firebase** | Project `taskflow-dailytracker` (shared with TaskFlow). Hosting targets in `.firebaserc`: **`terracove` → site `terracove` (the app)**, `solodesk` → site `taskflow-solodesk` (serves only `legacy/`, a redirect). **Spark plan** (Blaze expected ~mid-Nov 2026) |
+| **Auth** | Sign-in through `taskflow-dailytracker.firebaseapp.com` (authDomain). Authorized domains include `terracove.web.app`, `localhost`, the TaskFlow domains; `taskflow-solodesk.web.app` was removed |
+| **Tests** | 172 passing — `npm test` (node --test functions/*.test.js); `npm run check` = tests + build |
+| **Rules** | `firestore.rules`, shared with TaskFlow; TaskFlow's copy `D:\Projects\TaskFlow-controls\firestore.rules` must stay identical |
+| **Design** | Figma file `bnt8lsuv1xdCg4xHFitxvZ`, page 68:234 (see §9) |
 
-Deploy commands (the user allowed these for this project):
-
+**Release checklist** (every user-facing change):
+1. Entry in `src/changelog.js` (newest first; `released:false` while building, then `released:true` + date).
+2. `functions/changelog.test.js`: bump `currentVersion()` and the `shouldShowUpdate` lines.
+3. `package.json` version (1.20 → `1.2.0`), `CHANGELOG.md`, README "Current version" + "What's new in …".
+4. `npm test`, `npm run build`, then **check the built CSS** for things the minifier may have changed (see §5, blur).
+5. Commit everything except `firestore.rules` (unless rules changed) and `.claude/`; tag `vX.YY`; `git push origin main --follow-tags`.
+6. Deploy (allowed by the user for this project, when they ask for it):
 ```
-firebase deploy --only firestore:rules  --project taskflow-dailytracker --account aditya.dev.org@gmail.com
-firebase deploy --only hosting:solodesk --project taskflow-dailytracker --account aditya.dev.org@gmail.com
+firebase deploy --only hosting:terracove --project taskflow-dailytracker --account aditya.dev.org@gmail.com
+firebase deploy --only firestore:rules   --project taskflow-dailytracker --account aditya.dev.org@gmail.com   # only when rules change, first
 ```
-
-Rules go first whenever both change. Never deploy Hosting for TaskFlow's site or functions from here.
+Never deploy the app to `hosting:solodesk` again (it is the redirect), and never deploy TaskFlow's Hosting or functions from here.
+7. Verify live: fetch the JS chunks and grep for `` version:`X.YY`,released:!0 `` and a string from the change.
 
 ---
 
 ## 2. Standing decisions and constraints
 
-These came out of this chapter and should be kept unless the user says otherwise.
+Keep these unless the user says otherwise.
 
-- **Design direction B, Terracotta palette**: sage `#A7B98B`, sand `#EFCB8A`, cream `#F8F2E6`, ink `#141414`, hero/action terracotta `#E8957A`. Type: Bricolage Grotesque (display) + Figtree (body), via `--font-display` / `--font-body`. Buttons stay black; the action colour is for highlights.
-- **Never pink, never lime.** Pink was removed entirely (an NDA with a previous black-and-pink client). Lime was rejected.
-- **Action colour = 16 presets only.** A custom colour picker was added (1.05) and then **removed** (1.10) because a dark custom colour makes black text unreadable. Old custom values still load but show as Terracotta.
-- **UI changes need approval.** Design first (Figma file `bnt8lsuv1xdCg4xHFitxvZ`, page 68:234) or show it in chat; a direct request from the user counts as approval.
-- **Every user-facing change goes in `src/changelog.js`** (Settings → What's new), mirrored in `CHANGELOG.md` and the README, released as a version with a git tag. `functions/changelog.test.js` pins the current version.
-- **Data names are frozen.** After the rename, Firestore collections stay `solodeskWorkspaces`, `solodeskPortals`, `solodeskProfiles`, `solodeskSync*`; browser keys stay `sd_*`; cache names, the `SOLODESK_URL` function parameter and the Hosting site `taskflow-solodesk` stay. Renaming any of these would orphan user data and client links.
-- **Don't commit `.claude/`** (local `launch.json` for the preview server).
-- **Gmail, not Outlook**, for anything that drafts email (meeting requests open Gmail compose; "use my email app" is the secondary link).
-- **No "Live" badges** — the user found the pulsing indicator noisy; it now says "Shared".
+- **Design direction B, Terracotta palette**: cream `#F8F2E6` (surface `#FFFDF8`, card `#EFE7D8`), terracotta `#E8957A` / deep `#D27556`, ink `#141414`, sand `#EFCB8A`, sage `#A7B98B`. Type: Bricolage Grotesque (display) + Figtree (body). **Buttons stay ink**; the action colour is for highlights. Dark mode: `#161412` / `#221F1B` / `#2B2722`, cream text.
+- **Never pink, never lime.** Client colours in the calendar come from the palette only (`CLIENT_TONES` in `src/Calendar.jsx`).
+- **Action colour = 16 presets only** (custom colour removed in 1.10).
+- **No blur anywhere.** Dialogs, onboarding and the guided tour dim the page lightly (ink ~35%) and never use `backdrop-filter: blur`. The user found blur disorienting.
+- **UI changes need approval.** Design first (Figma) or show it in chat; a direct request from the user counts as approval.
+- **Changelog every user-facing change** (see §1).
+- **Data names are frozen.** Firestore `solodeskWorkspaces`, `solodeskPortals`, `solodeskProfiles`, `solodeskSync*`; browser keys `sd_*`; SW cache `solodesk-shell-*`; the `SOLODESK_URL` function parameter name (its default is now `https://terracove.web.app`). Renaming any of these orphans user data or links.
+- **Logo**: the "Terracove sun" (since 1.14) — terracotta tile, sun in the top half, sea below; ink sun/sea on light, cream on dark; float-up motion on load (off for reduced motion). Rendered inline by `src/BrandLogo.jsx` (`BrandMark`, `BrandLogo`). Masters in `design/logo/`. Desktop app icons are transparent with the cream sun (`terracove-app-192/512.png`); iPhone/Android icons keep a cream tile.
+- **Gmail first** for anything that drafts email (meetings, payment reminders); "Use my email app" is the secondary link.
+- **Don't commit `.claude/`** (local `launch.json`: `solodesk-dev` on 5173 and `terracove-prod` = `vite preview` on 4173).
+- **`firestore.rules` has an uncommitted TaskFlow edit** (leaderboard refill `15 *` → `60 *` in `tfBoardGrowth`) owned by the TaskFlow session. Keep that line; never revert it; leave the file out of Terracove commits unless rules change.
+- **Things hidden until they can work** (Spark plan): API keys (`VITE_API=on` to show), live Excel sync (`VITE_EXCEL_SYNC=on`).
 
 ---
 
@@ -51,97 +61,77 @@ These came out of this chapter and should be kept unless the user says otherwise
 | Version | When | Headline |
 |---|---|---|
 | 1.01 | 25 Oct | Calendar on phones; Throughline identity |
-| 1.02 | 25 Oct | New design (Terracotta), recent work, notes, profiles, invoice editing, Excel sync (as "coming soon") |
-| 1.03 | 25 Oct | Rebuilt calendar (Year/Month/Week/Day zoom), Keep-style notes, tidier workspace |
-| 1.04 | 25 Oct | Home edits recent work in place, Apple-Notes-style nested checklists, two-pane Notes |
-| 1.05 | 25 Oct | Free/busy calendar, client approvals, new client portal, smart typing (from TaskFlow) |
-| 1.06 | 25 Oct | Client portals publish themselves (no "Update portal" button) |
-| 1.07 | 25 Oct | Client's name in the portal header |
-| 1.08 | 25 Oct | Jump back in opens the record; revenue off Home; clearer project timeline |
+| 1.02 | 25 Oct | New design (Terracotta), recent work, notes, profiles, invoice editing |
+| 1.03 | 25 Oct | Calendar zoom (Year/Month/Week/Day), Keep-style notes |
+| 1.04 | 25 Oct | Edit recent work on Home, nested checklists, two-pane Notes |
+| 1.05 | 25 Oct | Free/busy calendar, client approvals, new portal, smart typing (from TaskFlow) |
+| 1.06–1.08 | 25 Oct | Portals publish themselves; client name in portal; Jump back in opens records |
 | 1.09 | 25 Oct | Approvals for PRDs/files/quotes, billable hours, split storage, notifications, client requests, quick add |
 | 1.10 | 25 Oct | Settings search; custom colour removed; stale tabs can't overwrite portals |
-| 1.11 | 26 Oct | Client requests actually save (rules bug); Gmail meeting link; password behind a button |
-| 1.12 | 26 Oct | Open a task in the portal; clients can change an approval answer |
+| 1.11–1.12 | 26 Oct | Client requests save (rules bug); open a task in the portal; clients change answers |
 | 1.13 | 26 Oct | **SoloDesk is now Terracove** |
+| 1.14 | 26 Oct | **New logo (Terracove sun)**; fluid phone tab bar |
+| 1.15 | 26 Oct | Sliding timeline; What's new folded; update note once per version and per sign-in |
+| 1.16 | 26 Oct | **New address terracove.web.app** (old one redirects); transparent desktop icon |
+| 1.17 | 26 Oct | Whole-app audit: delete approval requests, calendar fixes, calmer tour/dialogs, dark-mode palette, logic fixes |
+| 1.18 | 26 Oct | Log time on tasks; payment reminders; tidy-up (dead CSS, menus, hide undeployable features) |
+| 1.19 | 27 Oct | Clients as cards (with List); install-tab highlight; icon refresh |
+| 1.20 | 27 Oct | Projects in sections; invoices under Reports; click timeline dates; no blur in production; notes/tabs/tick fixes |
 
 ---
 
 ## 4. What was built, by area
 
-### 4.1 Design and app shell
-- Full UI revamp to Direction B / Terracotta, designed in Figma first, then built (1.02–1.04).
-- Clickable breadcrumb (Workspace → section → record name) (1.05).
-- Onboarding and guided tour redone in the new style: six welcome steps (Home, Notes, Clients, Calendar, Profile, Make it yours), nine tour stops (1.05).
-- Radio buttons and checkboxes fixed (were stretching full width under a global `input` rule) (1.05).
-- Logo-download section removed from Settings → Appearance (1.05).
-- Shorter sidebar: Daily planner opens from Calendar ("Plan your day"), Reports from the top bar (1.09).
-- Dark-mode contrast fixes for calendar chips, day counts, timeline captions, delete buttons (1.09).
-- Note editor: title/body are plain text on the note's colour, not white form boxes (1.09).
+### 4.1 Design, shell and navigation
+- Direction B / Terracotta UI, designed in Figma first (1.02–1.04). Clickable breadcrumb (1.05).
+- Sidebar (desktop): General = Home, Clients, Projects, Tasks, Calendar; Tools = All work, Approvals, Notes, **Reports & invoices**, Data & connections; Account = Profile, Settings (1.18, 1.20). Phone dock: Home, Tasks, +, Calendar, More; More lists All work, Clients, Projects, Approvals, Notes, Reports, Daily planner, Focus timer, Data & connections, Profile, Settings.
+- **Fluid dock** (1.14, `src/FluidDock.jsx`): one terracotta blob stretches between tabs like liquid. The cream ring around + is unchanged; four alternatives were sketched (cradle notch, liquid bridge, flush tile, thin halo) — not chosen yet.
+- Header: quick add, search, bell, settings, theme toggle (Reports icon removed in 1.18).
+- Update note (pop-up on opening): once per new version and once per sign-in (`shouldShowUpdate` in `src/changelog.js`, keys `sd_seen_version`, `sd_seen_login` = `uid|lastSignInTime`); single "Got it" button (1.18). Settings → What's new shows the current release with "Review earlier updates" folding older ones (1.15).
+- Guided tour (`src/Experience.jsx` Tour): one spotlight element whose huge box-shadow dims the page; it glides between steps; the card slides; leaving the step's page ends the tour (1.17). No blur (1.20 for real — see §5).
 
-### 4.2 Home
-- "Jump back in": three latest edits (notes, tasks, projects, clients), editable in place; TaskFlow quests as a small pill (1.04).
-- Clicking a task/project/client tile now **opens its page** instead of the edit form; notes still open in place (1.08).
-- Revenue card removed from Home ("dont need this here"); Needs attention is full width; revenue lives in Reports (1.08).
-- Requested changes from clients appear in Needs attention (1.09).
+### 4.2 Logo and brand (1.14)
+- Process: the `logo-design-skill` method (brief → longlist → concepts in black → size tests → checkpoint). ~30 concepts across rounds (Alcove, Tile cove, Harbour, Shoreline, Sun cove, monogram, keystone…), then the user combined W's layout with R3's motion. Copyright/trademark notes: shapes drawn from scratch (no copying); sun-over-sea is a common motif (weak to protect, not infringing); a US application **99786184** (sun with rays over waves in a rectangle, filed Apr 2026) should be shown to an attorney; a scallop-shell idea was dropped (Shell plc).
+- Files: `src/BrandLogo.jsx` (inline SVG, `--brand-ink` var, `.brand-anim` float-up), `public/brand/terracove-*` (favicon follows the browser theme, app icons, maskable, share image), `design/logo/` (SVG masters, share.html), `design/logo-motion/index.html` (motion explorations).
 
-### 4.3 Calendar
-- Year/Month/Week/Day zoom with buttons, Ctrl/⌘ + scroll and pinch (1.03–1.04).
-- Free / light / busy / packed colouring per day, with item and client counts; year view as a heatmap (1.05).
-- Project bars span every day they cover; ongoing projects (no end date) run on (1.05).
-- "What you're working on" timeline rebuilt: a column per day with weekday + date, month label on the 1st, weekend shading, a today line in each row, non-overlapping projects share a lane, square/›/fade bar ends for projects that continue or are ongoing (1.08).
+### 4.3 Home
+- Jump back in (3 latest edits, editable in place), Needs attention (overdue invoices show "reminded <date>"), today's timeline, notes composer.
 
-### 4.4 Tasks and projects
-- Project form: add a client inline, effort budget behind a checkbox, optional end date (= ongoing) (1.05).
-- Completed projects tucked into a collapsed "Completed projects" group in project pickers (1.05).
-- TaskFlow repeats: every other day, yearly, and on chosen weekdays (day buttons in the form) (1.09).
-- Invoice unbilled hours: a project's Budget tab shows logged vs not-yet-invoiced time; one click makes a draft invoice, one line per task at the hourly rate, rounded to 15 min; deleting the draft frees the time (1.09).
-- Task page redesigned: status switch (Todo / In progress / Done), details panel, client conversation, approval box, focus timer (1.09).
-- Tasks list: priority, due, approval and project chips; a "By project" grouped view (1.09).
+### 4.4 Clients (1.19)
+- **Cards by default**: initials tile (palette tones), name, contact, active projects, open tasks, amount owed, next due task, "Overdue invoice" chip. **Cards | List** switch (`clients.layout` view state). Initials skip symbols.
 
-### 4.5 Smart typing (ported from TaskFlow)
-- `src/smart-parse.js` ports TaskFlow's `parseQuest` (`TaskFlow-controls/app/js/parse.js`) and adds clients/projects: "Call Ava tomorrow 7pm for Website" fills date, time, client, project, priority, repeat (1.05).
-- `src/SmartField.jsx`: suggestions as you type (names and date words), Tab/Enter to pick, chips showing what was understood.
-- Used in the task form, project form ("from Nov 3 to Dec 20"), search (by day: "tomorrow", "next Friday") and checklist items ("Call Ava tomorrow" → reminder) (1.05).
-- A distinctive first word matches a client ("Northstar" → Northstar Studio; "The" is skipped) (1.09).
-- **Quick add from anywhere**: press **N** or Ctrl/⌘ J (or the bolt) → one line → Enter adds the task (1.09).
+### 4.5 Projects (1.20)
+- Sections: **Recently edited** (2 most recently updated), then **by client** (alphabetical, "No client" last) or **Ongoing / Completed** (`projects.group` view state). Cards say "No tasks yet" instead of "0 of 0".
 
-### 4.6 Search
-- Day-aware search (1.05).
-- Settings and pages are searchable by the words people use ("bank", "IFSC", "GST", "dark mode", "backup"); picking one opens the section, highlights it and focuses the field (`src/settings-index.js`) (1.10).
+### 4.6 Tasks and time
+- Task page: status switch, details, client thread, approval box, checklist, **Time card** (1.18): log "1h 30m" / "90" / "1:30" with a day and note; entries are `focusSessions` with `manual:true`; invoiced entries locked (`src/time-log.js`, `src/TimeLog.jsx`). Focus timer below it.
+- Billing (`src/billing.js`): per-task lines rounded to the quarter hour; tasks under ~8 min stay unbilled and accumulate; the shown "billable" equals the invoice (1.17).
+- Repeats: copies start clean (no approval, checklist unticked) (1.17).
 
-### 4.7 Clients, documents, invoices
-- Client links (website, socials) with bare-domain entry ("acme.com") (1.05).
-- Client summary card on Overview: portal status + Copy portal link, approvals waiting, links (1.09).
-- Documents: clearer "Link a file" / "New PRD" buttons (1.05); the Excel "Coming soon" card shrank to one line (1.09).
-- Confirm-password field when creating a portal login (1.05).
+### 4.7 Calendar
+- Year/Month/Week/Day zoom; day load pills read "N items" (1.17).
+- **"What you're working on" timeline** slides without end (60-day chunks at each edge, pinned client names, month label, ‹ › and Today, drag with the mouse) (1.15); clicking a header date opens that day (1.20); task counts hidden when a project has no tasks (1.20).
+- Picking a date scrolls back to the calendar heading (1.17). ICS export keeps ongoing projects to their start day (1.17).
 
-### 4.8 Client portal (`src/ClientPortal.jsx`)
-- Redesign: dark hero with the owner's action colour, stat tiles, tabs (Approvals, Projects & tasks, Links & documents, Requests, Invoices, Settings) (1.05–1.09).
-- Shares project tasks, the client's links, chosen documents/PRDs and sent invoices (1.05).
-- **Auto-publishing**: no "Update portal" button; the portal republishes a couple of seconds after any shared change (1.06).
-- Client's name and initials in the header (1.07).
-- Clients can comment on tasks, send "💪 You got this", request a change, add/update their links and shared file addresses, and request a meeting (1.09).
-- **Requests**: clients ask for something new; the owner answers from Approvals with Feature scope / We'll start right away / Can be implemented / In progress / Custom timing, optionally adding it as a task (1.09; made to actually save in 1.11).
-- Settings tab with account details; password change behind a "Change password" button (1.09, 1.11).
-- Click a task card to open its steps, approval and comments; **change an approval answer** later (1.12).
-- `#/portal-preview` shows the portal with sample data (no login).
+### 4.8 Invoices and reports
+- **Invoices live under Reports** ("Reports & invoices"): charts, then the invoice list; `#/invoices` opens Reports scrolled to it; invoice pages unchanged (1.20).
+- **Payment reminders** (1.18, `src/reminders.js`): "Send reminder" on sent, unpaid invoices (filled when overdue) → Gmail draft with amount due, days late, how to pay; "Use my email app instead"; history in `invoice.reminders[]`.
+- Void & reissue keeps payments, drops approval/schedule link, moves logged time; void invoices are excluded from revenue (1.17).
 
-### 4.9 Approvals
-- Send tasks for approval; client approves or requests changes in the portal; the answer syncs back (1.05).
-- Extended to PRDs (approval marks the PRD Approved), linked files, and draft invoices as quotes (1.09).
-- Approvals page with counts, "Ready to send?", and client requests (1.05, 1.09).
-- Clients can change their answer; the newest answer wins (1.12).
-- Approval emails written as Firebase functions (`functions/approval-functions.js`, `approval-mail.js`) for the Trigger Email extension — **not deployed** (needs Blaze). Setup: [approval-emails-setup.md](approval-emails-setup.md).
+### 4.9 Notes
+- Two-pane Notes; link a note to a client or project with the app's own dropdown (headings for Clients/Projects) (1.20); **Delete** button (moves to Trash, Undo) (1.20); tags wrap (1.20). A new note closed quickly keeps its text (1.17).
 
-### 4.10 Notifications
-- Bell in the top bar: approvals answered, comments, cheers, change requests, new client requests, link updates, overdue invoices, reminders, tasks due today. Read state syncs (`settings.notificationsSeenAt`).
-- Count on the Approvals menu item for new answers and unanswered requests (1.09).
+### 4.10 Client portal, approvals, requests
+- Portal (`src/ClientPortal.jsx`): dark hero, tabs (Approvals, Projects & tasks, Links & documents, Requests, Invoices, Settings), comments, cheers, meeting requests (Gmail), client requests with labelled replies, change an approval answer.
+- Approvals page: **remove any request** (×, Undo) and **delete client requests** (asks first) (1.17). Re-sending or withdrawing deletes the client's old `responses/{id}` so clock skew can't pre-answer.
+- Portal publishing: only after this tab's own edits, with a never-decreasing `wsStamp` (rules enforce it).
 
-### 4.11 Storage
-- Workspaces were one Firestore document (1 MB cap). Since 1.09, notes, docs, activity, focus history and trash live in `solodeskWorkspaces/{uid}/parts/{list}.{n}` (~900 KB each); the main document keeps `core`, `parts`, `v: 2`, and a `json` marker that old app versions refuse to load (so they can't save a partial workspace). Saves are a transaction that checks a canonical baseline, writes only changed parts and deletes unused ones (`src/workspace-store.js`). Verified live on the owner's workspace.
+### 4.11 Storage and safety
+- Split storage v2 (`src/workspace-store.js`); validation on load (`src/workspace-upgrades.js`) — anything saved must pass it or the workspace won't load (two such lock-outs were fixed in 1.17: recurring-invoice repeats and impossible ISO dates).
+- Client link/file updates are deleted from Firestore only after the workspace save resolves (1.17).
 
-### 4.12 Rename
-- 1.13: every visible "SoloDesk" became "Terracove" (app name, wordmark, titles, manifest, emails, downloads, legal pages, docs). Data names unchanged (see §2).
+### 4.12 Address move (1.16)
+- New Hosting site `terracove`; `legacy/` on the old site: `index.html` + `move.js` (redirect keeping path, query and `#route`, so portal links work) and a kill-switch `sw.js` (clears caches, unregisters, navigates open tabs). Browser storage is per origin, so people sign in again and see onboarding again on the new address.
 
 ---
 
@@ -149,63 +139,60 @@ These came out of this chapter and should be kept unless the user says otherwise
 
 | What happened | Cause | Resolution |
 |---|---|---|
-| Heredocs with quotes broke in the Bash tool | Shell quoting | Write Python/CSS to the scratchpad and run it |
-| Browser-pane screenshots were cropped/zoomed or stale | Pane device pixel ratio / hidden pane | Verify by measuring the DOM (bounding boxes, computed styles, contrast ratios) instead of screenshots |
-| Dev preview kept serving old code for the portal | Browser module cache in the pane | Verified on the live build instead |
-| Custom action colour | User worried about black/unreadable colours | Removed (1.10); presets only |
-| Pink / lime palettes | User preference and NDA | Removed / rejected |
-| Squashed task titles (one letter per line) in portal cards | Chips took the row width | Row wraps; title keeps ≥140 px (1.10) |
-| Link editor cramped in narrow cards | Four controls on one line | Stacked fields, buttons below (1.10) |
-| **Portal flickered / jumped** | Every tab republished on any portal change; a stale tab (old code) kept overwriting the new one | Publish only after a tab's own edits; publishes carry `wsStamp` (newest change) and an older copy never overwrites a newer one (1.10); **rules now require the stamp and forbid it going backwards**, which blocked the old tab server-side |
-| A rules deploy was blocked once by the auto-mode permission check | Rules deploy is shared/production | Asked the user; they approved, then deployed |
-| **Client requests appeared then vanished** | The rule's wildcard was named `{request}`, hiding Firestore's built-in `request`, so every create was denied | Renamed to `{requestId}` (1.11) |
-| `ERR_BLOCKED_BY_CLIENT` in the client's console | An ad blocker blocking Firestore channels | Not an app bug; noted for testing |
-| Meeting request opened Outlook | `mailto:` uses the OS default | Gmail compose link first; "Use my email app" second (1.11) |
-| A test link update never arrived | Not confirmed whether it was sent or blocked by the ad blocker | Still to re-test (§7) |
-| Hook added after an early return in `ClientPortal` | Code placement | Moved the state up with the others |
-| Escaped quotes left in JSX by a regex edit | Edit script | Fixed; build check caught it |
-| Quick-add Ctrl+J may be taken by Chrome (Downloads) | Browser shortcut | Added **N** as a second shortcut |
+| **Blur stayed on the live site after 1.17's "no blur" fix** | Lightning CSS (Vite's minifier) drops the unprefixed `backdrop-filter:none` when the same rule also has `-webkit-backdrop-filter:none` — so overrides vanished in production while the dev server looked fine | 1.20 removed the blur values at the source (`theme.css`, `styles.css`, `experience.css`, `dark.css`). **Always check `dist/assets/*.css` (or run `terracove-prod`) for CSS fixes**; don't trust the dev server alone |
+| Dead-CSS removal could break styling | ~37 KB of unused rules across many files | Removed only rules whose classes appear nowhere in JS/JSX/HTML (dynamic prefixes kept), then compared computed styles of every element on 24 pages before/after (desktop light, phone dark): only hover noise and one improvement |
+| Old portal answer counted for a new request | Owner device clock vs server time | Delete `responses/{id}` on re-send/withdraw |
+| Workspace could stop loading | UI saved values the loader's validator rejects | Validator widened / parser fixed; regression tests added |
+| Sliding timeline snapped back | A new callback ref every render | `useCallback` |
+| Tour left a stray outline after navigating | Tour kept running on another page | Leaving the step's page ends the tour |
+| Settings tab didn't stay selected | Scroll-spy overrode the click mid-scroll | Spy paused ~1.2 s after a click |
+| Tick off-centre | Text glyph "☑" plus a translated `:after` tick | One centred SVG icon |
+| Desktop app kept the old icon | Installed PWAs cache icons; Chrome checks rarely | Renamed icon files (`terracove-app-*`); fastest fix is uninstall + reinstall from terracove.web.app |
+| Browser-pane screenshots cropped/stale; rAF not running when the pane is hidden | Pane quirks | Verify with DOM measurements; computed styles can lag right after a toggle — re-read after a delay |
+| Justia trademark pages blocked automated fetches | Cloudflare | Left for the attorney |
+| Figma MCP hit its call limit (View seat) on 27 Oct | Seat limit | Page cleanup not done — see §7 |
+| Heredocs with quotes broke in the Bash tool | Shell quoting | Write Python to the scratchpad and run it |
+| (Earlier chapter) portal flicker, `{request}` rules wildcard, Outlook links, ad-blocker console errors | — | See git history / CHANGELOG 1.10–1.11 |
 
 ---
 
 ## 6. Testing done
 
-- **Automated**: 164 tests across parsing, approvals, billing, storage (including a fake-Firestore transaction test: stale tab rejected, old single-document workspace upgrades), notifications, client updates, settings search, changelog, rules-adjacent logic.
-- **Signed-in end-to-end (live, owner's real workspace, in the user's Chrome)**:
-  - Backup exported by the user first.
-  - Workspace loaded on 1.09: 4 clients, 9 projects, 3 open tasks, 4 invoices, 2 notes.
-  - Saved a test note, cleared the tab cache, reloaded — note persisted, counts matched; Firestore showed `v: 2` with `notes.0`, `docs.0`, `activity.0` parts. Test note moved to Trash.
-  - Portal for client **hytz** (`hytz@gmail.com`): auto-publish confirmed; a test task "E2E portal test, safe to delete" sent for approval.
-  - From the client side (private window): change request ("Need more options") synced to the task; three cheers arrived; bell showed 5 new; Approvals count 2; meeting draft and Settings tab checked.
-  - Not yet confirmed: a client request after the 1.11 rules fix, and a client link update.
-- **Dark mode / phone**: contrast measured on seven pages (fixed what failed); no sideways scrolling at 375 px.
+- **Automated**: 172 tests (parsing, approvals, billing incl. short sessions and fixed ids, storage, notifications, time log, reminders, reissue/revenue, repeats, smart-parse dates, validator coverage of every recurring-invoice repeat, changelog/update-note rules).
+- **Live checks after each release**: version string and a feature string in the deployed JS; no `blur(` in the live CSS (1.20); new icons served; old-address redirect keeps `#/portal/...`.
+- **Preview checks**: every page on desktop and phone in light and dark (no sideways overflow), tour steps across pages with no frame missing the dim, client cards/list, project sections, invoices under Reports, note picker/delete, time log, reminders (Gmail URL), timeline date click.
+- **Earlier chapter**: signed-in end-to-end on the owner's workspace (1.09) — see git history.
 
 ---
 
 ## 7. Open items and next steps
 
-**Testing**
-- Re-test from the client window on 1.12+: send a request, add `example.com` under Links & documents, then reply to the request from Approvals and check the label appears in the portal.
-- Clean up test data: task "E2E portal test, safe to delete", the test comments/cheers, and any test request.
-- An old SoloDesk tab or installed app was still running pre-1.09 code somewhere; it is blocked by the rules now, but should be reloaded/closed.
+**Figma (blocked by the MCP limit on 27 Oct)** — on page 68:234 keep **"Direction B · Terracotta + choose your action colour"** (current design system) and **"Terracove · FINAL logo (sun)"**; delete the old blue SoloDesk screens 01–10, "Components", the old "Read me", "Direction B · Playful professional (for comparison)", and the logo exploration boards ("Logo concepts (checkpoint)", "Logos in Terracotta + motion", "Logos round 3", "Shoreline + sun options", "Horizon sun pop-up motion"). Then rename the page "Terracove · Design (current)" and add a short read-me.
 
-**Name (Terracove)**
-- Trademark checks done: USPTO, WIPO Global Brand Database, and India's register (classes 9, 35, 42, exact and phonetic, with a calibration search that proved hits are returned). No "Terracove" in software/SaaS/business classes in India or the US.
-- Near-marks to show an attorney: **TERRA CORE** (India, class 35, Prime Woods Global LLP, application 7624901, under examination); **Teracove** (Korea, class 35, registered); **Terracov** (Indonesia, class 35, pending); TERRACODE (US, class 42, farming SaaS, pending). Unrelated-goods "Terracove" registrations exist in the US (furniture, artificial flowers) and Germany (machines/appliances/furniture).
-- Domains: terracove.com, .io, .co, .in taken; **terracove.app, getterracove.com, terracovehq.com, terracove.co.in looked free** on 25 Oct.
-- To do (user): buy terracove.app, get an attorney's clearance, file "Terracove" in India (classes 9, 42, optionally 35), later Madrid.
-- To do (code): move Hosting to the new domain once bought; consider a separate Firebase project for Terracove.
+**Known logic issues not fixed yet** (from the 1.17 audit)
+- Two open tabs: listener-driven changes (client approvals, updates) are saved by every tab, so one tab can go into conflict. Fix: one leader tab (BroadcastChannel/Web Locks) or reload-and-retry for listener changes.
+- A stale tab can still publish an older portal copy after a failed save; publish only after this tab's save succeeds.
+- A publish already in flight skips the newest change with no retry.
+- Undo doesn't reach the portal (its stamp goes backwards); stamp undo/restore.
+- Recovery after a reload mid-save can report a false conflict.
+- Deleting the workspace leaves portal subcollections (responses, comments, requests, updates).
+- `calc` doesn't round to cents (rare 0.01 "partially paid").
 
-**Platform**
-- Move to **Blaze** (~mid-Nov 2026), then: deploy approval emails (Trigger Email extension + `functions:approvals`), Excel live sync, daily Firestore backups, error tracking.
-- Limit client posting (Firebase App Check and per-client limits) to prevent comment/request spam.
-- Update the Privacy Policy for portal data (comments, requests, client links); add Terms of Service before charging.
-- Decide whether to keep `#/portal-preview` public.
-- An uncommitted TaskFlow leaderboard edit sits in `firestore.rules` (EXP refill 15 → 60 per hour); it was not made in this chapter and was left out of every commit. It needs a decision, then a commit, the same edit in TaskFlow's copy, and a rules deploy.
+**Design/product suggestions not done**
+- Merge the old stylesheets (`styles.css`, `taskflow.css`, `dark.css`) into `theme.css`.
+- Expenses (profit in Reports), quote → invoice in one click, default payment terms (Net 7/14/30) and late fees, retainers, contracts/sign-off docs, client intake form in the portal, tax/income export, keyboard-shortcut sheet, Firestore offline persistence.
+- Fold Daily planner into Calendar's day view and All work into Tasks; one "Data & connections" place.
+- A choice for the ring around the + button (four sketches made).
 
-**Suggestions not yet done**
-- Separate Firebase project for Terracove (rules coupling and billing isolation with TaskFlow).
-- Server-side portal publishing once Blaze is on, so it no longer depends on an open tab.
+**Testing / data**
+- Re-test from a client window: send a request, add a link, reply from Approvals.
+- Clean up test data: task "E2E portal test, safe to delete", test comments/cheers.
+- Sign in once on terracove.web.app in a normal browser to confirm Google sign-in end-to-end.
+
+**Name and platform**
+- Trademark: no "Terracove" in classes 9/35/42 (US, WIPO, India). Near-marks for the attorney: TERRA CORE (India 35, 7624901), Teracove (Korea 35), Terracov (Indonesia 35), TERRACODE (US 42); logo: US 99786184. User to-do: buy terracove.app, attorney clearance, file in India (9, 42, optionally 35).
+- Move to Blaze (~mid-Nov 2026), then approval emails, Excel sync, API keys (flip the build flags), backups, error tracking; App Check / per-client limits; Privacy Policy + Terms.
+- Consider a separate Firebase project for Terracove.
 
 ---
 
@@ -213,17 +200,24 @@ These came out of this chapter and should be kept unless the user says otherwise
 
 | Area | Files |
 |---|---|
-| App shell, pages, forms | `src/App.jsx` |
-| Client portal (owner + client) | `src/ClientPortal.jsx`, `src/portal-sync.js`, `src/client-feed.js` |
-| Approvals | `src/approvals.js`, `src/Approvals.jsx` |
-| Notifications | `src/notifications.js`, `src/Notifications.jsx` |
-| Smart typing, quick add | `src/smart-parse.js`, `src/SmartField.jsx`, `src/CommandMenu.jsx` |
-| Search | `src/ProductivityUI.jsx` (WorkspaceSearch), `src/settings-index.js` |
-| Storage | `src/workspace-store.js`, `src/workspace-upgrades.js` (validation, `publishablePortal`, `workspaceStamp`, `portalUpdate`) |
-| Billing | `src/billing.js` |
-| Calendar | `src/Calendar.jsx`, `src/calendar-view.js` |
+| App shell, pages, forms, routing, nav | `src/App.jsx` |
+| Logo | `src/BrandLogo.jsx`, `src/brand.css`, `public/brand/terracove-*`, `design/logo/` |
+| Phone dock | `src/FluidDock.jsx` |
+| Onboarding, tour, update note | `src/Experience.jsx`, `src/experience-state.js`, `src/tour-geometry.js`, `src/SettingsParts.jsx` (WhatsNew, UpdateNotice), `src/changelog.js` |
+| Calendar | `src/Calendar.jsx` (WorkTimeline, useSlidingWindow), `src/calendar-view.js` |
+| Time and billing | `src/time-log.js`, `src/TimeLog.jsx`, `src/billing.js` |
+| Reminders | `src/reminders.js` |
 | Notes | `src/NotesKeep.jsx`, `src/checklist.js` |
-| Styles | `src/theme.css` (loaded last; overrides older CSS) |
+| Client portal, approvals | `src/ClientPortal.jsx`, `src/portal-sync.js`, `src/client-feed.js`, `src/approvals.js`, `src/Approvals.jsx` |
+| Storage and validation | `src/workspace-store.js`, `src/workspace-upgrades.js` |
+| Styles | `src/theme.css` (last; current palette + all newer rules), older `styles.css` / `taskflow.css` / `dark.css` |
+| Hosting | `firebase.json`, `.firebaserc`, `legacy/` (old-address redirect), `vite.config.js` (service worker precache list) |
 | Release notes | `src/changelog.js`, `CHANGELOG.md`, `README.md` |
 | Rules | `firestore.rules` (+ TaskFlow copy) |
-| Server code (not deployed) | `functions/approval-*.js`, `functions/excel-*.js` |
+| Server code (not deployed) | `functions/approval-*.js`, `functions/excel-*.js`, `functions/index.js` (api) |
+
+---
+
+## 9. Figma
+
+File `bnt8lsuv1xdCg4xHFitxvZ` (TaskFlow file). Page 68:234 holds Terracove's design; the other pages are TaskFlow's. What to keep is listed in §7 (cleanup pending). Note the Figma MCP **View seat** has a call limit; heavy board-building can exhaust it.
