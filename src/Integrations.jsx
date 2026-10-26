@@ -7,6 +7,8 @@ import TaskflowPanel from './TaskflowPanel';
 import { eventsInLocalRange } from './calendar-view';
 
 const BASE = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '');
+// API keys need the `api` Cloud Function (Blaze plan). Hidden until it is deployed: build with VITE_API=on.
+const API_ON = import.meta.env.VITE_API === 'on' || !!import.meta.env.VITE_API_BASE_URL;
 const resources = ['calendar', 'calendar.ics', 'workspace', 'clients', 'projects', 'tasks', 'invoices', 'payments', 'summary'];
 
 export default function Integrations({ d, user, demo, toast, ask, taskflow }) {
@@ -61,7 +63,7 @@ export default function Integrations({ d, user, demo, toast, ask, taskflow }) {
       <p className="calendar-note">{unscheduled > 0 ? `${unscheduled} open ${unscheduled === 1 ? 'task has' : 'tasks have'} no date and won’t appear in your calendar. ` : ''}Completed work is excluded. Timed blocks use your device’s timezone; the API returns UTC. Project end dates are inclusive in the form and exclusive in exported events.</p>
     </section>
     <details className="card provider-guide"><summary>Import into Google or Apple Calendar</summary><div className="grid2"><div><h4>Add one event at a time</h4><ol><li>Open <a href="#/calendar">Calendar</a> and click a task or project.</li><li>Choose <b>Export this event · ICS</b>.</li><li>In Google Calendar on a computer, open <b>Settings → Import & export</b>, select the file and choose the destination calendar.</li><li>In Apple Calendar on Mac, choose <b>File → Import</b>, select the file and choose a calendar.</li></ol><p>Importing creates a copy. Edits here do not update that copy. Avoid repeatedly importing the same event.</p></div><div><h4>Keep a whole calendar updated</h4><ol><li>Deploy the Terracove API and sign in to your real workspace.</li><li>Create a <b>Calendar events only</b> key below and save its private subscription URL.</li><li>Google Calendar: <b>Other calendars → + → From URL</b>.</li><li>Apple Calendar on Mac: <b>File → New Calendar Subscription</b>. On iPhone: <b>Calendars → Add Calendar → Add Subscription Calendar</b>.</li></ol><p>Subscriptions are read-only. Your provider controls refresh timing. A localhost address will not work on another device or Google’s servers; use your deployed HTTPS URL.</p></div></div><p><a href="https://support.google.com/calendar/answer/37118?hl=en" target="_blank" rel="noreferrer">Google import instructions</a> · <a href="https://support.apple.com/guide/calendar/import-or-export-calendars-icl1023/mac" target="_blank" rel="noreferrer">Apple import instructions</a> · <a href="https://support.apple.com/en-us/102301" target="_blank" rel="noreferrer">Apple subscription instructions</a></p></details>
-    <details className="advanced-connections" onToggle={e=>{setAdvanced(e.currentTarget.open);if(!e.currentTarget.open)setSecret('');}}><summary>Advanced API connections</summary><p className="mu">Optional developer tools. These require a deployed backend; TaskFlow sharing and local exports work independently.</p>
+    {API_ON && <details className="advanced-connections" onToggle={e=>{setAdvanced(e.currentTarget.open);if(!e.currentTarget.open)setSecret('');}}><summary>Advanced API connections</summary><p className="mu">Optional developer tools. These require a deployed backend; TaskFlow sharing and local exports work independently.</p>
     <div className="integration-grid">
       <section className="card"><div className="connection-icon"><Icon name="integrations" /></div><h3>Connect your calendar app</h3><p>Use a calendar-only key for scheduling. It can read event titles, dates, and client/project context. Use a workspace key only for applications that need financial and contact records too.</p>
         {demo ? <div className="connection-notice">You’re exploring sample data. Sign in to your real workspace to create API keys and a calendar subscription. Local calendar and data exports work in the demo.</div> : <>
@@ -78,6 +80,6 @@ export default function Integrations({ d, user, demo, toast, ask, taskflow }) {
       <h3>Available endpoints</h3>{resources.map(k => <div className="endpoint-row" key={k}><span className="method">GET</span><code>/api/v1/{k}</code><span className="mu">{k === 'calendar' ? 'Scheduler events · JSON' : k === 'calendar.ics' ? 'Calendar subscription · ICS' : k === 'workspace' ? 'Complete workspace snapshot' : k === 'summary' ? 'Financial and work totals' : `Your ${k}`}</span></div>)}
       <p style={{ marginTop: 18 }}>JSON lists accept <code>?limit=100&amp;offset=0</code> (up to 500). Calendar-only keys can access only the two calendar endpoints. Workspace keys access all data endpoints. Keys expire after 90 days and can be revoked at any time.</p><div className="connection-notice">The calendar file is a snapshot for importing. A subscription refreshes from Terracove on your calendar provider’s schedule. Live API access and subscriptions require the included Firebase function to be deployed and your Hosting origin configured.</div>
     </section>
-    </details>
+    </details>}
   </>;
 }

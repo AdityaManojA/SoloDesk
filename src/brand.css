@@ -12,5 +12,3 @@
 @media (prefers-reduced-motion:reduce){.brand-anim .bm-block,.brand-anim .bm-sea,.brand-anim .bm-sun{animation:none}}
 .brand-lockup>span{font-family:var(--font-display);font-weight:700;letter-spacing:-.03em}
 .sidebar .brand-lockup{gap:10px}.sidebar .brand-lockup>.brand-mark{width:36px;height:36px}
-.brand-downloads{margin-top:24px}.brand-downloads>h3{margin:0 0 12px}.brand-downloads .context-actions{gap:8px}.brand-downloads .ghost{min-height:44px}.brand-downloads p{font-size:12px;color:var(--mu)}
-.brand-downloads .brand-lockup{font-size:24px;font-weight:800;margin:6px 0 12px}

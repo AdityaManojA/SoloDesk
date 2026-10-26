@@ -77,7 +77,7 @@ export function WhatsNew() {
 
 export function UpdateNotice({ Modal, onClose }) {
   const r = changelog.find(x => x.released);
-  return <Modal title={'Terracove updated to ' + r.version} label="Got it" onClose={onClose} onSubmit={onClose}>
+  return <Modal title={'Terracove updated to ' + r.version} label="Got it" noCancel onClose={onClose} onSubmit={onClose}>
     <div className="update-hero"><Shape kind="star" color="var(--hero-deep)" size={110} style={{ position: 'absolute', right: -24, top: -24 }} /><b style={{ fontSize: 18 }}>{r.title}</b><p style={{ margin: '4px 0 0' }}>Here is what changed.</p></div>
     <ul style={{ margin: '16px 0', paddingLeft: 18, display: 'grid', gap: 8 }}>{r.highlights.slice(0, 6).map(([t, x]) => <li key={t}><b>{t}.</b> {x}</li>)}</ul>
     <a className="text-link" href="#/settings/whats-new" onClick={onClose}>See all release notes →</a>

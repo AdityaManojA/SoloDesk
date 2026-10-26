@@ -104,7 +104,7 @@ export function FilesAndDocs({ d, mut, toast, scope, user, demo }) {
   const open = items.find(x => x.id === openId && x.kind === 'prd');
   const excelOn = import.meta.env.VITE_EXCEL_SYNC === 'on';
   return <div className={excelOn ? 'two-col' : 'docs-only'}>
-    {excelOn ? <ExcelSync scope={scope} user={user} demo={demo} toast={toast} /> : <p className="excel-soon"><span className="chip sand">Coming soon</span>Live Excel sync for this {scope.kind}. Until then, link the workbook under Documents.</p>}
+    {excelOn && <ExcelSync scope={scope} user={user} demo={demo} toast={toast} />}
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div className="docs-head"><h3>Documents</h3><div className="doc-actions"><button type="button" className={'doc-action' + (adding ? ' on' : '')} aria-expanded={adding} onClick={() => setAdding(!adding)}><span className="doc-action-icon link"><Icon name="link" size={16} /></span><span><b>Link a file</b><small>Drive, Figma, Notion…</small></span></button><button type="button" className="doc-action" onClick={newPrd}><span className="doc-action-icon prd"><Icon name="plus" size={16} /></span><span><b>New PRD</b><small>Write requirements</small></span></button></div></div>

@@ -2,6 +2,12 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.18 — 26 October 2026 · Log time and chase payments
+
+- **Log time on tasks.** A Time card on each task (`src/TimeLog.jsx`, `src/time-log.js`): durations like `1h 30m`, `90`, `1:30`; today or an earlier day; optional note. Entries are focus sessions (`manual: true`), so project billing picks them up; invoiced entries are locked.
+- **Payment reminders.** Sent, unpaid invoices get Send reminder (`src/reminders.js`): a Gmail draft (or mailto) with amount due, days late and payment details; `i.reminders[]` records when, shown on the invoice and Home.
+- **Tidy-up.** About 37 KB of unused CSS removed (verified by before/after computed-style fingerprints on every page); Reports moved into the sidebar; phone More gains Approvals and Daily planner; API keys (`VITE_API=on`) and Excel “Coming soon” hidden until deployable; the update note has a single Got it button; dark-mode phone top-bar icons visible.
+
 ## 1.17 — 26 October 2026 · A calmer, sturdier Terracove
 
 From a whole-app audit (UI leftovers, logic, what to cut).

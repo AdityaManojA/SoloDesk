@@ -2,6 +2,11 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
+  {version:'1.18',released:true,date:'2026-10-26',title:'Log time and chase payments',highlights:[
+    ['Log time on tasks','Each task has a Time card: type “1h 30m”, “90” or “1:30”, pick the day and add a note. Logged time joins the focus timer’s, so Invoice unbilled hours on the project bills it. Entries can be removed until they are invoiced.'],
+    ['Payment reminders','Unpaid invoices have Send reminder: it opens a ready-to-send Gmail message with the amount due, how late it is and how to pay (or use your own email app). The invoice and Home show when you last reminded.'],
+    ['A tidier app','Reports sits in the sidebar instead of the top bar, and Approvals and Daily planner are in the phone’s More menu. Things that can’t work yet (API keys, live Excel sync) are hidden until they can.'],
+  ],fixes:['The update note has just one button, Got it.','In dark mode on phones, the top bar icons are clearly visible.']},
   {version:'1.17',released:true,date:'2026-10-26',title:'A calmer, sturdier Terracove',highlights:[
     ['Delete approval requests','Remove any approval request from Approvals, even an answered one (Undo brings it back). Client requests can be deleted too.'],
     ['Calendar, clearer','Day counts read “8 items” instead of “8 · 3c”. Picking a date no longer drops you to the bottom of the page, and the timeline’s client names stay neatly pinned while you slide.'],

@@ -22,26 +22,16 @@
 :root[data-theme=dark] .card,
 :root[data-theme=dark] .project-card,
 :root[data-theme=dark] .project-preview,
-:root[data-theme=dark] .row,
-:root[data-theme=dark] .attention-panel,
-:root[data-theme=dark] .calendar-board {border-width:1.5px}
-:root[data-theme=dark] .metric {border-width:1.5px!important}
-:root[data-theme=dark] .metric small,
+:root[data-theme=dark] .row{border-width:1.5px}
+
 :root[data-theme=dark] .row small,
 :root[data-theme=dark] .project-card small,
 :root[data-theme=dark] .project-preview small,
-:root[data-theme=dark] .project-card-bottom,
-:root[data-theme=dark] .calendar-agenda-item small {color:#c4cbd5}
-:root[data-theme=dark] .metric-label {color:#e0e6ee}
-:root[data-theme=dark] .metric-label .icon {color:#afc5da}
-:root[data-theme=dark] .attention-panel .eyebrow,
-:root[data-theme=dark] .attention-invoice small {color:#e8d4a7}
-:root[data-theme=dark] .attention-invoice {border-top-color:#736747}
+:root[data-theme=dark] .project-card-bottom{color:#c4cbd5}
 :root[data-theme=dark] .demo-badge {background:#353122;color:#f6d98e;border-color:#8c7846}
 :root[data-theme=dark] .chart-bar {fill:var(--bar);stroke:#aed2e6;stroke-width:1}
 :root[data-theme=dark] .chart-bar:last-child {fill:#91c6aa;stroke:#b3dcc7}
 :root[data-theme=dark] .chart-bar:hover {fill:var(--action);stroke:var(--action)}
-:root[data-theme=dark] .chart-foot i {background:var(--bar)}
 :root[data-theme=dark] .b {background:#292f38;color:#e2e7ef;border-color:#657487}
 :root[data-theme=dark] .b-Overdue {background:#442c31;color:#ffc1b8;border-color:#ad7376}
 :root[data-theme=dark] .b-Paid {background:#263d34;color:#b9e7c7;border-color:#719a83}
@@ -81,14 +71,6 @@
 :root[data-theme=dark] .dock-add {background:var(--action);color:var(--action-ink)}
 :root[data-theme=dark] .dock-add:focus-visible {outline-color:var(--focus)}
 :root[data-theme=dark] .weekdays {background:#252c34;color:#d5dce5;border-color:var(--gridline)}
-:root[data-theme=dark] .selected-day {background:#27323f;box-shadow:inset 0 0 0 2px var(--focus)}
-:root[data-theme=dark] .day-number.is-today {background:var(--action);color:var(--action-ink)}
-:root[data-theme=dark] .day-number:hover {border-color:var(--focus)}
-:root[data-theme=dark] .view-switch button[aria-pressed=true] {background:var(--action);color:var(--action-ink)}
-:root[data-theme=dark] .month-chip {border-color:#7398b0;color:#e4f3fd}
-:root[data-theme=dark] .month-chip.event-project {border-color:#9a87b6;color:#e7dcfa}
-:root[data-theme=dark] .month-chip:hover,
-:root[data-theme=dark] .calendar-agenda-item:hover {background:var(--hover);color:var(--tx)}
 :root[data-theme=dark] .event-inspector {box-shadow:0 14px 60px #0009}
 :root[data-theme=dark] .event-inspector:focus {outline-color:var(--focus)}
 :root[data-theme=dark] .login-story {background:#20313f;color:var(--tx);border-color:var(--ln)}
