@@ -2,6 +2,11 @@
 
 The same notes appear in the app under **Settings → What's new**, and people who used an earlier version see a short "SoloDesk updated" note the first time they open a new one. The source of truth is [`src/changelog.js`](src/changelog.js); keep this file in step with it.
 
+## 1.19 — 27 October 2026 · Clients as cards
+
+- **Clients as cards.** The Clients page defaults to cards (active projects, open tasks, amount owed, next due task, overdue flag) with a Cards | List switch remembered per workspace view (`clients.layout`).
+- **Fixes.** The install guide highlights the chosen device. App icons renamed to `terracove-app-192/512.png` so installed desktop apps notice the change and fetch the transparent icon. “1 project” grammar; initials skip symbols.
+
 ## 1.18 — 26 October 2026 · Log time and chase payments
 
 - **Log time on tasks.** A Time card on each task (`src/TimeLog.jsx`, `src/time-log.js`): durations like `1h 30m`, `90`, `1:30`; today or an earlier day; optional note. Entries are focus sessions (`manual: true`), so project billing picks them up; invoiced entries are locked.

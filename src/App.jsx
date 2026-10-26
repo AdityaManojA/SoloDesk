@@ -147,17 +147,41 @@ function Login({ onDemo }) {
 
 /* ---------- clients ---------- */
 function Clients({ d, open }) {
-  const [q, setQ] = useViewState('clients.query',''), [arch, setArch] = useViewState('clients.archived',false);
+  const [q, setQ] = useViewState('clients.query',''), [arch, setArch] = useViewState('clients.archived',false), [layout, setLayout] = useViewState('clients.layout','cards');
   const a = d.clients.filter((c) => (arch || !c.arch) && ((c.name || '') + (c.email || '')).toLowerCase().includes(q.toLowerCase()));
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const initials = name => (name || '?').trim().split(/\s+/).filter(w => /^[\p{L}\p{N}]/u.test(w)).map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+  // What each card shows: active projects, open tasks, money still owed, and the next thing due.
+  const facts = c => {
+    const projects = d.projects.filter(p => p.client === c.id && !p.arch), ids = new Set(projects.map(p => p.id));
+    const openTasks = d.tasks.filter(t => !t.arch && t.status !== 'Done' && (t.client === c.id || ids.has(t.project)));
+    const owed = d.invoices.filter(i => i.client === c.id && ['Sent', 'Partially paid', 'Overdue'].includes(status(i))).reduce((n, i) => n + calc(i).bal, 0);
+    const overdue = d.invoices.some(i => i.client === c.id && status(i) === 'Overdue');
+    const next = openTasks.filter(t => t.due).sort((x, y) => x.due.localeCompare(y.due))[0];
+    return { projects, active: projects.filter(p => p.status !== 'Complete').length, open: openTasks.length, owed, overdue, next };
+  };
   return (<>
     <div className="hd"><h1>Clients <span className="heading-count">{d.clients.filter(c => !c.arch).length}</span></h1><button className="btn" onClick={() => open('client')}>Add client</button></div>
-    <div className="list-toolbar"><div className="search-field"><Icon name="search" size={17} /><input placeholder="Find a name or email…" aria-label="Search clients" value={q} onChange={(e) => setQ(e.target.value)} /></div><span className="mu">{a.length} {a.length === 1 ? 'client' : 'clients'}</span></div>
+    <div className="list-toolbar"><div className="search-field"><Icon name="search" size={17} /><input placeholder="Find a name or email…" aria-label="Search clients" value={q} onChange={(e) => setQ(e.target.value)} /></div><span className="mu">{plural(a.length, 'client', 'clients')}</span>
+      <div className="layout-toggle" role="group" aria-label="Show clients as"><button type="button" aria-pressed={layout === 'cards'} onClick={() => setLayout('cards')}>Cards</button><button type="button" aria-pressed={layout === 'list'} onClick={() => setLayout('list')}>List</button></div></div>
     <label><input type="checkbox" style={{ width: 'auto' }} checked={arch} onChange={(e) => setArch(e.target.checked)} /> Show archived</label>
-    {a.length ? a.map((c) => (
+    {!a.length ? <Empty m={d.clients.length ? 'No clients match.' : 'No clients yet. Add your first client to get started.'} label={d.clients.length ? '' : 'Add client'} onClick={() => open('client')} />
+    : layout === 'list' ? a.map((c) => (
       <a className="row" key={c.id} href={'#/clients/' + c.id}>
-        <span className="client-avatar">{c.name.slice(0,1)}</span><div className="grow"><b>{c.name} {c.arch && <span className="b">Archived</span>}</b><small>{c.email || c.phone || 'No contact details yet'}</small></div><span className="client-project-count">{d.projects.filter(p => p.client === c.id).length} projects</span><Icon name="arrow" size={17} />
+        <span className="client-avatar">{initials(c.name)}</span><div className="grow"><b>{c.name} {c.arch && <span className="b">Archived</span>}</b><small>{c.email || c.phone || 'No contact details yet'}</small></div><span className="client-project-count">{plural(d.projects.filter(p => p.client === c.id).length, 'project', 'projects')}</span><Icon name="arrow" size={17} />
       </a>
-    )) : <Empty m={d.clients.length ? 'No clients match.' : 'No clients yet. Add your first client to get started.'} label={d.clients.length ? '' : 'Add client'} onClick={() => open('client')} />}
+    )) : <div className="client-cards">{a.map((c, n) => { const f = facts(c); return (
+      <a className={'client-card tone-' + (n % 3)} key={c.id} href={'#/clients/' + c.id}>
+        <div className="client-card-top"><span className="client-avatar">{initials(c.name)}</span>{c.arch ? <span className="chip white">Archived</span> : f.overdue ? <span className="chip hero">Overdue invoice</span> : null}</div>
+        <b className="client-card-name">{c.name}</b>
+        <small className="client-card-contact">{c.email || c.phone || 'No contact details yet'}</small>
+        <dl className="client-card-stats">
+          <div><dt>Projects</dt><dd>{f.active}{f.projects.length > f.active ? <small> / {f.projects.length}</small> : null}</dd></div>
+          <div><dt>Open tasks</dt><dd>{f.open}</dd></div>
+          <div><dt>Owed</dt><dd>{f.owed >= 0.005 ? money(f.owed) : '—'}</dd></div>
+        </dl>
+        <small className="client-card-next">{f.next ? <>Next: <b>{f.next.title}</b> · {new Date(f.next.due + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</> : 'Nothing due'}</small>
+      </a>); })}</div>}
   </>);
 }
 

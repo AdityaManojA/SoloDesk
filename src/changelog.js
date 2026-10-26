@@ -2,6 +2,9 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
+  {version:'1.19',released:true,date:'2026-10-27',title:'Clients as cards',highlights:[
+    ['Clients as cards','Clients show as cards with what matters at a glance: active projects, open tasks, what they still owe and the next thing due, plus an overdue flag. Prefer the old view? Switch to List; Terracove remembers your choice.'],
+  ],fixes:['In the install guide, the device you pick (iPhone / iPad, Android, Desktop) is now highlighted.','Installed desktop apps pick up the new transparent icon.','“1 projects” now reads “1 project”, and initials skip symbols (Form & Field → FF).']},
   {version:'1.18',released:true,date:'2026-10-26',title:'Log time and chase payments',highlights:[
     ['Log time on tasks','Each task has a Time card: type “1h 30m”, “90” or “1:30”, pick the day and add a note. Logged time joins the focus timer’s, so Invoice unbilled hours on the project bills it. Entries can be removed until they are invoiced.'],
     ['Payment reminders','Unpaid invoices have Send reminder: it opens a ready-to-send Gmail message with the amount due, how late it is and how to pay (or use your own email app). The invoice and Home show when you last reminded.'],
