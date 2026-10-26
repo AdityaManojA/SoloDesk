@@ -2,6 +2,9 @@
 // Newest first. Add an entry for every user-facing change: put it in the unreleased version while it is
 // being built, and set released + date when it ships.
 export const changelog=[
+  {version:'1.22',released:true,date:'2026-10-27',title:'Link projects and clients any time',highlights:[
+    ['Link projects and clients','A client’s Work tab lists its linked projects, with Unlink, and a picker to link an existing project (one without a client, or move one from another client). A project page shows its client with Change, or Link a client if it has none. The project’s tasks move with it.'],
+  ],fixes:[]},
   {version:'1.21',released:true,date:'2026-10-27',title:'Small things, in style',highlights:[
     ['Checkboxes and scrollbars match','Every checkbox is the same rounded ink box with a tick, and scrollbars are slim and quiet everywhere, in light and dark.'],
     ['Notes under Tasks','Notes sits right below Tasks in the sidebar.'],

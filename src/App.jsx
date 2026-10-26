@@ -12,6 +12,7 @@ import { deletionInfo, deleteRecord } from './record-actions';
 import BrandLogo from './BrandLogo';
 import {DockBlob} from './FluidDock';
 import TimeLog from './TimeLog';
+import {linkProject,linkableProjects} from './linking';
 import {canRemind,reminderDraft,gmailUrl,mailtoUrl,recordReminder,lastReminded,daysLate} from './reminders';
 import InstallApp from './InstallApp';
 import Experience, { InstallNotice, ReplayIntroduction } from './Experience';
@@ -185,6 +186,33 @@ function Clients({ d, open }) {
   </>);
 }
 
+// Link an existing project to this client (from the client's Work tab).
+function LinkProjectPicker({ d, mut, clientId, toast }) {
+  const [pick, setPick] = useState(''), { unassigned, others } = linkableProjects(d, clientId);
+  if (!unassigned.length && !others.length) return null;
+  const link = () => { const p = d.projects.find(x => x.id === pick); if (!p) return; mut(n => { linkProject(n, pick, clientId); }); setPick(''); toast(`“${p.name}” is now linked to ${L.cname(d, clientId)}.${p.client && p.client !== clientId ? ` It was with ${L.cname(d, p.client)}.` : ''}`); };
+  return <div className="link-picker"><Select aria-label="Link an existing project" value={pick} onChange={e => setPick(e.target.value)}>
+    <option value="">Link an existing project…</option>
+    {unassigned.length > 0 && <option value="h:none" disabled>Without a client</option>}
+    {unassigned.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+    {others.length > 0 && <option value="h:other" disabled>Move from another client</option>}
+    {others.map(p => <option key={p.id} value={p.id}>{p.name} · {L.cname(d, p.client)}</option>)}
+  </Select><button type="button" className="btn sm" disabled={!pick} onClick={link}>Link</button></div>;
+}
+
+// The client a project belongs to, with a way to link one (or change / unlink) from the project page.
+function ProjectClientLink({ d, mut, project, toast }) {
+  const [editing, setEditing] = useState(false), [pick, setPick] = useState(project.client || '');
+  const clients = d.clients.filter(c => !c.arch || c.id === project.client);
+  const save = () => { mut(n => { linkProject(n, project.id, pick); }); setEditing(false); toast(pick ? `Linked to ${L.cname(d, pick)}.` : 'Unlinked from its client.'); };
+  if (!editing) return project.client
+    ? <span className="client-link-chip"><a href={'#/clients/' + project.client}>{L.cname(d, project.client)}</a><button type="button" className="text-link" onClick={() => { setPick(project.client); setEditing(true); }}>Change</button></span>
+    : <button type="button" className="ghost sm" onClick={() => { setPick(''); setEditing(true); }}><Icon name="clients" size={15} /> Link a client</button>;
+  return <span className="link-picker inline"><Select aria-label="Client for this project" value={pick} onChange={e => setPick(e.target.value)}>
+    <option value="">No client</option>{clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+  </Select><button type="button" className="btn sm" onClick={save}>Save</button><button type="button" className="ghost sm" onClick={() => setEditing(false)}>Cancel</button></span>;
+}
+
 function ClientPage({ d, mut, open, id, removeItem, user, demo, toast, shares }) {
   const [section,setSection]=useViewState('client.'+id+'.section','overview');
   const c = d.clients.find((x) => x.id === id);
@@ -202,8 +230,9 @@ function ClientPage({ d, mut, open, id, removeItem, user, demo, toast, shares })
 <div className="client-summary-grid">{[['Projects',d.projects.filter(p=>p.client===id).length,'work'],['Open tasks',d.tasks.filter(t=>t.client===id&&t.status!=='Done'&&!t.arch).length,'work'],['Invoices',d.invoices.filter(i=>i.client===id).length,'invoices']].map(([label,count,target])=><button className="card client-summary" key={label} onClick={()=>setSection(target)}><strong>{count}</strong><span>{label}</span></button>)}</div><details className="card"><summary>Activity timeline</summary><Timeline d={d} client={id}/></details>
       <div className="end" style={{ justifyContent: 'flex-start', margin: 0 }}><button className="ghost sm" onClick={() => mut((n) => { const x = n.clients.find((y) => y.id === id); x.arch = !x.arch; })}>{c.arch ? 'Restore client' : 'Archive client'}</button><button className="ghost danger sm" onClick={() => removeItem('clients',id)}>Delete client</button></div></section>}
     {section==='work'&&<section aria-label="Client work">    <div className="hd" style={{ marginTop: 16 }}><h3 style={{ margin: 0 }}>Projects</h3><button className="ghost sm" onClick={() => open('project', { client: id })}>+ Project</button></div>
-    {d.projects.filter((p) => p.client === id).map((p) => <a className="row project-row" key={p.id} href={'#/projects/' + p.id}><b>{p.name}</b><span className="b">{p.status}</span></a>)}
-    {!d.projects.some((p) => p.client === id) && <p className="mu">No projects yet.</p>}
+    {d.projects.filter((p) => p.client === id).map((p) => <div className="linked-row" key={p.id}><a className="row project-row" href={'#/projects/' + p.id}><b>{p.name}</b><span className="b">{p.status}</span></a><button type="button" className="ghost sm" aria-label={'Unlink ' + p.name + ' from this client'} onClick={() => { mut(n => { linkProject(n, p.id, ''); }); toast(`“${p.name}” is no longer linked to this client. Undo brings it back.`); }}>Unlink</button></div>)}
+    {!d.projects.some((p) => p.client === id) && <p className="mu">No projects linked to this client yet.</p>}
+    <LinkProjectPicker d={d} mut={mut} clientId={id} toast={toast} />
     <div className="hd" style={{ marginTop: 16 }}><h3 style={{ margin: 0 }}>Tasks</h3><button className="ghost sm" onClick={() => open('task', { client: id })}>+ Task</button></div>
     {d.tasks.filter((k) => k.client === id).map((k) => <a className="row" key={k.id} href={'#/tasks/' + k.id}><div><b>{k.title}</b><small>{k.status}{blockers(d,k).length?' · Blocked':''}{k.due ? ` · due ${k.due}` : ''}</small></div><span aria-hidden="true">›</span></a>)}
     {!d.tasks.some((k) => k.client === id) && <p className="mu">No tasks yet.</p>}
@@ -226,7 +255,7 @@ function ProjectPage({ d, mut, open, id, removeItem, user, demo, toast }) {
   const tasks = d.tasks.filter(t => t.project === id && !t.arch), done = tasks.filter(t => t.status === 'Done').length, budget = projectBudget(d,p);
   return <>
     <Back to="projects" label="Projects" />
-    <div className="page-head"><div className="grow"><h1>{p.name}</h1><div className="tag-row"><span className={'chip ' + (p.status === 'Active' ? 'hero' : p.status === 'Complete' ? 'sage' : 'sand')}>{p.status}</span>{p.client && <a href={'#/clients/' + p.client}>{L.cname(d,p.client)}</a>}{p.start && <span>· {p.start}{p.end ? ' – ' + p.end : ' · ongoing'}</span>}<span>· {done} of {tasks.length} tasks complete</span></div></div>
+    <div className="page-head"><div className="grow"><h1>{p.name}</h1><div className="tag-row"><span className={'chip ' + (p.status === 'Active' ? 'hero' : p.status === 'Complete' ? 'sage' : 'sand')}>{p.status}</span><ProjectClientLink d={d} mut={mut} project={p} toast={toast} />{p.start && <span>· {p.start}{p.end ? ' – ' + p.end : ' · ongoing'}</span>}<span>· {done} of {tasks.length} tasks complete</span></div></div>
       <button className="ghost" onClick={() => open('project', p)}>Edit</button><button className="btn" onClick={() => open('task', { project: id, client: p.client })}>+ Task</button></div>
     <div className="section-tabs" role="group" aria-label="Project sections">{[['tasks','Tasks ' + tasks.length],['notes','Notes'],['files','Files & docs'],['budget','Budget']].map(([key,title])=><button type="button" key={key} aria-pressed={section===key} onClick={()=>setSection(key)}>{title}</button>)}</div>
     {section==='tasks'&&<section aria-label="Project tasks">{tasks.length ? tasks.map(k => <div className="row task-row" data-priority={k.priority || 'None'} key={k.id}><button className="chk" aria-pressed={k.status === 'Done'} aria-label={k.status === 'Done' ? 'Mark not done' : 'Mark complete'} onClick={() => toggleTask(mut, k.id)}>{k.status === 'Done' && <Icon name="check" size={16} />}</button><a className="grow" href={'#/tasks/' + k.id}><b style={{ textDecoration: k.status === 'Done' ? 'line-through' : 'none' }}>{k.title}</b><small>{k.status}{k.due ? ` · due ${k.due}` : ''}{k.priority ? ` · ${k.priority} priority` : ''}</small></a></div>) : <Empty m="No tasks yet for this project." label="Add task" onClick={() => open('task', { project: id, client: p.client })} />}</section>}

@@ -2,7 +2,7 @@
 
 The working history behind the app: what was built, what was tried and dropped, what broke and how it was fixed,
 the decisions that now constrain the codebase, and what is still open. It covers 25–27 October 2026, from the
-1.01 mobile fixes to 1.21. Release-by-release notes for users live in [CHANGELOG.md](../CHANGELOG.md) and in the
+1.01 mobile fixes to 1.22. Release-by-release notes for users live in [CHANGELOG.md](../CHANGELOG.md) and in the
 app (Settings → What's new). **Read §1, §2 and §7 first if you are picking this project up cold.**
 
 ---
@@ -12,12 +12,12 @@ app (Settings → What's new). **Read §1, §2 and §7 first if you are picking 
 | | |
 |---|---|
 | **Name** | **Terracove** (renamed from SoloDesk in 1.13) |
-| **Live** | **1.21** — https://terracove.web.app (the old address https://taskflow-solodesk.web.app redirects there) |
+| **Live** | **1.22** — https://terracove.web.app (the old address https://taskflow-solodesk.web.app redirects there) |
 | **Repo** | `D:\Projects\Solodesk-MVP`, branch `main`, GitHub `AdityaManojA/SoloDesk`, tags `v1.02`…`v1.20` |
 | **Stack** | React 18 + Vite (Lightning CSS minifier), Firebase Auth / Firestore / Hosting, hash routes |
 | **Firebase** | Project `taskflow-dailytracker` (shared with TaskFlow). Hosting targets in `.firebaserc`: **`terracove` → site `terracove` (the app)**, `solodesk` → site `taskflow-solodesk` (serves only `legacy/`, a redirect). **Spark plan** (Blaze expected ~mid-Nov 2026) |
 | **Auth** | Sign-in through `taskflow-dailytracker.firebaseapp.com` (authDomain). Authorized domains include `terracove.web.app`, `localhost`, the TaskFlow domains; `taskflow-solodesk.web.app` was removed |
-| **Tests** | 172 passing — `npm test` (node --test functions/*.test.js); `npm run check` = tests + build |
+| **Tests** | 175 passing — `npm test` (node --test functions/*.test.js); `npm run check` = tests + build |
 | **Rules** | `firestore.rules`, shared with TaskFlow; TaskFlow's copy `D:\Projects\TaskFlow-controls\firestore.rules` must stay identical |
 | **Design** | Figma file `bnt8lsuv1xdCg4xHFitxvZ`, page 68:234 (see §9) |
 
@@ -78,6 +78,7 @@ Keep these unless the user says otherwise.
 | 1.19 | 27 Oct | Clients as cards (with List); install-tab highlight; icon refresh |
 | 1.20 | 27 Oct | Projects in sections; invoices under Reports; click timeline dates; no blur in production; notes/tabs/tick fixes |
 | 1.21 | 27 Oct | Themed checkboxes and scrollbars; Notes under Tasks; round client icons; trimmed Data & connections |
+| 1.22 | 27 Oct | Link projects and clients any time (client Work tab and project page) |
 
 ---
 
@@ -101,8 +102,9 @@ Keep these unless the user says otherwise.
 ### 4.4 Clients (1.19)
 - **Cards by default**: initials tile (palette tones), name, contact, active projects, open tasks, amount owed, next due task, "Overdue invoice" chip. **Cards | List** switch (`clients.layout` view state). Initials skip symbols.
 
-### 4.5 Projects (1.20)
+### 4.5 Projects (1.20, 1.22)
 - Sections: **Recently edited** (2 most recently updated), then **by client** (alphabetical, "No client" last) or **Ongoing / Completed** (`projects.group` view state). Cards say "No tasks yet" instead of "0 of 0".
+- **Linking (1.22)**: a client's Work tab lists linked projects (Unlink) and a picker to link an existing project (unassigned first, then "Move from another client"); a project page shows its client with Change, or "Link a client". `src/linking.js`: tasks with no client or the previous client follow the project.
 
 ### 4.6 Tasks and time
 - Task page: status switch, details, client thread, approval box, checklist, **Time card** (1.18): log "1h 30m" / "90" / "1:30" with a day and note; entries are `focusSessions` with `manual:true`; invoiced entries locked (`src/time-log.js`, `src/TimeLog.jsx`). Focus timer below it.
