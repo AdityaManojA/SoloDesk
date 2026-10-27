@@ -2,7 +2,7 @@ import {useEffect,useState} from 'react';
 import {initializeApp,deleteApp} from 'firebase/app';
 import {getAuth,setPersistence,inMemoryPersistence,createUserWithEmailAndPassword,signOut,signInWithEmailAndPassword,signInWithPopup,sendPasswordResetEmail,updatePassword,onAuthStateChanged,EmailAuthProvider,reauthenticateWithCredential,reauthenticateWithPopup,sendSignInLinkToEmail,isSignInWithEmailLink,signInWithEmailLink} from 'firebase/auth';
 import {doc,getDoc,setDoc,deleteDoc,onSnapshot,collection,serverTimestamp,addDoc} from 'firebase/firestore';
-import {CHEER,meetingMailto,meetingGmail,REPLY_TONE,replyLabel} from './client-feed';
+import {meetingMailto,meetingGmail,REPLY_TONE,replyLabel} from './client-feed';
 import {auth,db,firebaseOptions,provider} from './firebase';
 import {publishablePortal} from './workspace-upgrades';
 import {APPROVAL_LABEL,KIND_LABEL} from './approvals';
@@ -136,16 +136,24 @@ const timeAgo=iso=>{if(!iso)return 'just now';const m=Math.round((Date.now()-Dat
 function TaskThread({task,comments,owner,shareId,user,onMessage,business}){
   const [text,setText]=useState(''),[busy,setBusy]=useState(false),[asChange,setAsChange]=useState(false);
   const post=async(kind,body)=>{
-    if(kind!=='cheer'&&!body.trim()){onMessage(kind==='change'?'Say what you would like changed.':'Write a comment first.');return;}
+    if(!body.trim()){onMessage(kind==='change'?'Say what you would like changed.':'Write a comment first.');return;}
     if(!owner){onMessage('This is a preview, so comments are not sent.');return;}
     setBusy(true);
-    try{await addDoc(collection(db,'solodeskPortals',owner,'shares',shareId,'comments'),{itemId:task.id,kind,text:(kind==='cheer'?CHEER:body).trim().slice(0,1000),at:serverTimestamp(),email:(user.email||'').toLowerCase(),from:'client'});setText('');setAsChange(false);onMessage(kind==='cheer'?'Sent. That will make their day!':kind==='change'?'Change request sent.':'Comment sent.');}
+    try{await addDoc(collection(db,'solodeskPortals',owner,'shares',shareId,'comments'),{itemId:task.id,kind,text:body.trim().slice(0,1000),at:serverTimestamp(),email:(user.email||'').toLowerCase(),from:'client'});setText('');setAsChange(false);onMessage(kind==='change'?'Change request sent.':'Comment sent.');}
     catch{onMessage('That could not be sent. Check your connection and try again.');}finally{setBusy(false);}
   };
   return <div className="task-thread">
     {comments.length>0&&<ul className="thread-list">{comments.map(c=><li key={c.id} className={'thread-msg '+c.from+' '+c.kind}><span className="thread-who">{c.from==='owner'?business:'You'}{c.kind==='change'&&<span className="chip sand">Change request</span>}<small>{timeAgo(c.at)}</small></span><p>{c.text}</p></li>)}</ul>}
-    <div className="thread-quick"><button type="button" className="cheer-btn" disabled={busy} onClick={()=>post('cheer','')}>💪 You got this</button><button type="button" className={'ghost sm'+(asChange?' on':'')} aria-pressed={asChange} onClick={()=>setAsChange(!asChange)}>Request a change</button></div>
-    <form className="thread-form" onSubmit={e=>{e.preventDefault();post(asChange?'change':'comment',text);}}><textarea rows="2" maxLength={1000} aria-label={asChange?'What should change?':'Comment'} placeholder={asChange?'What would you like changed?':'Write a comment…'} value={text} onChange={e=>setText(e.target.value)}/><button className="btn sm" disabled={busy}>{asChange?'Send change request':'Send'}</button></form>
+    <form className="thread-composer" onSubmit={e=>{e.preventDefault();post(asChange?'change':'comment',text);}}>
+      <textarea rows="2" maxLength={1000} aria-label={asChange?'What should change?':'Comment'} placeholder={asChange?'What would you like changed?':'Write a comment or ask a question…'} value={text} onChange={e=>setText(e.target.value)}/>
+      <div className="thread-composer-actions">
+        <button type="button" className={'change-toggle-pill'+(asChange?' on':'')} aria-pressed={asChange} onClick={()=>setAsChange(!asChange)}>
+          <Icon name={asChange?'check':'notes'} size={13}/>
+          <span>{asChange?'Change request flagged':'Request a change'}</span>
+        </button>
+        <button type="submit" className="btn sm" disabled={busy||!text.trim()}>{busy?'Sending…':asChange?'Send change request':'Send'}</button>
+      </div>
+    </form>
   </div>;
 }
 
