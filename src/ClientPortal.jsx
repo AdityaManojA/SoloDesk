@@ -277,7 +277,7 @@ function PortalShare({share,owner,user,onMessage,settings}){
       <div className="approval-head"><span className={'chip '+(p.status==='Complete'?'sage':p.status==='On hold'?'sand':'hero')}>{p.status}</span><small>{p.start?day(p.start)+' → '+(p.end?day(p.end):'ongoing'):''}</small></div>
       <h3>{p.name}</h3>
       <div className="portal-progress" role="img" aria-label={`${done} of ${list.length} tasks done`}><i style={{width:(list.length?done/list.length*100:0)+'%'}}/></div><small>{done} of {list.length} tasks done</small>
-      <ul className="portal-tasks">{list.map(t=>{const mine=comments.filter(c=>c.itemId===t.id),open=thread===t.id;return <li key={t.id} className={open?'open':''}><div className="portal-task-row" role="button" tabIndex={0} aria-expanded={open} aria-label={(open?'Close ':'Open ')+t.title} onClick={()=>setThread(open?null:t.id)} onKeyDown={e=>{if((e.key==='Enter'||e.key===' ')&&e.target===e.currentTarget){e.preventDefault();setThread(open?null:t.id);}}}><span className={'dot '+(STATUS_CHIP[t.status]||'white')}/><span className="grow"><b>{t.title}</b>{t.due&&<small>Due {day(t.due)}</small>}{(t.checklist||[]).length>0&&<small>{t.checklist.filter(c=>c.done).length}/{t.checklist.length} steps</small>}</span>{t.approval&&<span className={'chip '+APPROVAL_CHIP[t.approval.state]}>{t.approval.state==='pending'?'Needs your approval':APPROVAL_LABEL[t.approval.state]}</span>}<span className={'chip '+(STATUS_CHIP[t.status]||'white')}>{t.status}</span><button type="button" className={'comment-toggle'+(mine.length?' has':'')} aria-expanded={open} aria-label={'Comments on '+t.title} onClick={e=>{e.stopPropagation();setThread(open?null:t.id);}}><Icon name="notes" size={15}/>{mine.length||''}</button></div>{open&&<div className="task-open">{t.due&&<p className="task-open-meta">Due {day(t.due)}</p>}{(t.checklist||[]).length>0&&<ul className="portal-checks">{t.checklist.map((c,i)=><li key={i} className={c.done?'done':''}><i/>{c.title}</li>)}</ul>}{t.approval&&<ApprovalCard compact task={t} response={responses[t.id]} project={null} owner={owner} shareId={share.id} user={user} onMessage={onMessage} currency={currency}/>}<TaskThread task={t} comments={mine} owner={owner} shareId={share.id} user={user} onMessage={onMessage} business={data.business}/></div>}</li>;})}{!list.length&&<li className="empty-note">No tasks yet.</li>}</ul>
+      <ul className="portal-tasks">{list.map(t=>{const mine=comments.filter(c=>c.itemId===t.id),open=thread===t.id;return <li key={t.id} className={open?'open':''}><div className="portal-task-row" role="button" tabIndex={0} aria-expanded={open} aria-label={(open?'Close ':'Open ')+t.title} onClick={()=>setThread(open?null:t.id)} onKeyDown={e=>{if((e.key==='Enter'||e.key===' ')&&e.target===e.currentTarget){e.preventDefault();setThread(open?null:t.id);}}}><span className={'dot '+(STATUS_CHIP[t.status]||'white')}/><span className="grow"><b>{t.title}</b>{t.due&&<small>Due {day(t.due)}</small>}{(t.checklist||[]).length>0&&<small>{t.checklist.filter(c=>c.done).length}/{t.checklist.length} steps</small>}</span>{t.approval&&<span className={'chip '+APPROVAL_CHIP[t.approval.state]}>{t.approval.state==='pending'?'Needs your approval':APPROVAL_LABEL[t.approval.state]}</span>}<span className={'chip '+(STATUS_CHIP[t.status]||'white')}>{t.status}</span><button type="button" className={'comment-toggle'+(mine.length?' has':'')} aria-expanded={open} aria-label={'Comments on '+t.title} onClick={e=>{e.stopPropagation();setThread(open?null:t.id);}}><Icon name="notes" size={15}/>{mine.length||''}</button></div>{open&&<div className="task-open">{(t.checklist||[]).length>0&&<ul className="portal-checks">{t.checklist.map((c,i)=><li key={i} className={c.done?'done':''}><i/>{c.title}</li>)}</ul>}{t.approval&&<ApprovalCard compact task={t} response={responses[t.id]} project={null} owner={owner} shareId={share.id} user={user} onMessage={onMessage} currency={currency}/>}<TaskThread task={t} comments={mine} owner={owner} shareId={share.id} user={user} onMessage={onMessage} business={data.business}/></div>}</li>;})}{!list.length&&<li className="empty-note">No tasks yet.</li>}</ul>
     </article>;})}{!projects.length&&<p className="portal-empty">No projects have been shared yet.</p>}</div>}
     {tab==='docs'&&<div className="portal-grid">
       <article className="portal-project"><div className="approval-head"><h3>Your links</h3><button type="button" className="ghost sm" onClick={()=>setEditing({kind:'link'})}>+ Add a link</button></div>
@@ -299,13 +299,47 @@ function PortalShare({share,owner,user,onMessage,settings}){
 }
 
 const initials=name=>name.split(/\s+/).filter(Boolean).map(w=>w[0]).join('').slice(0,2).toUpperCase();
-function PortalUser({name,email,onSignOut}){
+function PortalUser({name,email,isOwner,onSignOut}){
   const shown=name||email||'';
-  return <span className="portal-user"><span className="avatar-xl">{initials(shown)||'?'}</span><span className="portal-user-name"><b>{shown}</b>{name&&email&&<small>{email}</small>}</span><button className="ghost sm" onClick={onSignOut}>Sign out</button></span>;
+  return <div className="portal-user-wrap">
+    <div className="portal-user-badge">
+      <span className="avatar-xl">{initials(shown)||'?'}</span>
+      <div className="portal-user-meta">
+        <span className="portal-user-name">{shown}</span>
+        {isOwner&&<span className="chip hero sm-chip">Owner</span>}
+      </div>
+    </div>
+    <button type="button" className="ghost sm" onClick={onSignOut}>Sign out</button>
+  </div>;
+}
+
+function PortalEmptyState({user,owner,onRefresh}){
+  const isOwner=user?.uid===owner;
+  return <div className="portal-empty-card">
+    <div className="portal-empty-icon">
+      <Icon name={isOwner?'clients':'projects'} size={28}/>
+    </div>
+    <h3>{isOwner?'Workspace Owner View':'No shared work yet'}</h3>
+    <p>
+      {isOwner
+        ?'You are signed in with your workspace owner account. When you publish projects, documents, or invoices from a client’s card in your workspace, they will appear here.'
+        :`No projects or documents have been shared with ${user?.email||'this account'} at this portal link yet. If you were expecting shared work, reach out to your project lead.`}
+    </p>
+    <div className="portal-empty-actions">
+      {isOwner?(
+        <>
+          <a href="#/" className="btn sm">Go to workspace</a>
+          <a href="#/portal-preview" className="ghost sm">Preview sample portal ↗</a>
+        </>
+      ):(
+        <button type="button" className="ghost sm" onClick={onRefresh}>Refresh</button>
+      )}
+    </div>
+  </div>;
 }
 
 export function ClientPortal({owner}){
-  const [user,setUser]=useState(auth?.currentUser),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[nextPassword,setNextPassword]=useState(''),[confirmNext,setConfirmNext]=useState(''),[currentPassword,setCurrentPassword]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[shares,setShares]=useState([]),[loaded,setLoaded]=useState(false),[showPassword,setShowPassword]=useState(false);
+  const [user,setUser]=useState(auth?.currentUser),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[nextPassword,setNextPassword]=useState(''),[confirmNext,setConfirmNext]=useState(''),[currentPassword,setCurrentPassword]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[shares,setShares]=useState([]),[selectedShareId,setSelectedShareId]=useState(''),[loaded,setLoaded]=useState(false),[showPassword,setShowPassword]=useState(false);
   useEffect(()=>{if(auth)return onAuthStateChanged(auth,setUser);},[]);
   useEffect(()=>{
     if(!auth)return;
@@ -332,9 +366,11 @@ export function ClientPortal({owner}){
     let stopped=false,unsub=[];import('firebase/firestore').then(({collection,query,where})=>{
       if(stopped)return;const feeds=new Map();
       const listen=(field,value)=>onSnapshot(query(collection(db,'solodeskPortals',owner,'shares'),where(field,'==',value)),snap=>{feeds.set(field,snap.docs.map(d=>({id:d.id,...d.data()})));setShares([...new Map([...feeds.values()].flat().map(d=>[d.id,d])).values()]);setLoaded(true);},()=>{setLoaded(true);setMessage('No shared access could be loaded. Ask your project owner to check this account and portal link.');});
-      unsub.push(listen('recipientUid',user.uid));if(user.emailVerified)unsub.push(listen('recipientEmail',user.email.toLowerCase()));
+      unsub.push(listen('recipientUid',user.uid));
+      if(user.email)unsub.push(listen('recipientEmail',user.email.toLowerCase()));
+      if(user.uid===owner)unsub.push(listen('ownerUid',user.uid));
     });return()=>{stopped=true;unsub.forEach(f=>f());};
-  },[owner,user?.uid,user?.emailVerified]);
+  },[owner,user?.uid,user?.email]);
   const action=async fn=>{setBusy(true);setMessage('');try{await fn();}catch(e){setMessage(authMessage(e));}finally{setBusy(false);setPassword('');setNextPassword('');setConfirmNext('');setCurrentPassword('');}};
   const sendMagicLink=async()=>{
     const target=email.trim().toLowerCase();
@@ -348,23 +384,44 @@ export function ClientPortal({owner}){
   };
   if(!auth)return <div className="mid">Client sign-in is not configured.</div>;
   const hasPassword=user?.providerData.some(x=>x.providerId==='password');
-  const settings=user&&<div className="portal-grid portal-settings">
-    <article className="portal-project"><h3>Your account</h3><p className="invoice-line"><span>Name</span><b>{shares[0]?.data?.clientName||'—'}</b></p><p className="invoice-line"><span>Login email</span><b>{user.email}</b></p><p className="invoice-line"><span>Signed in with</span><b>{hasPassword?'Email and password':'Passwordless / Google'}</b></p><button type="button" className="ghost sm" style={{justifySelf:'start'}} onClick={()=>action(()=>signOut(auth))}>Sign out</button></article>
-    <article className="portal-project"><h3>Password</h3>{!showPassword?<><p className="empty-note" style={{margin:0}}>{hasPassword?'Change the password you use to sign in to this portal.':'You sign in with Google or magic link. You can also set a password.'}</p><button type="button" className="ghost sm" style={{justifySelf:'start'}} onClick={()=>setShowPassword(true)}>Change password</button></>:<>
-      <form className="portal-password-form" onSubmit={e=>{e.preventDefault();if(nextPassword!==confirmNext){setMessage('The two passwords don’t match. Type the same password in both fields.');return;}if(nextPassword===currentPassword){setMessage('Choose a new password that is different from your current one.');return;}action(async()=>{
-        if(hasPassword)await reauthenticateWithCredential(user,EmailAuthProvider.credential(user.email,currentPassword));else await reauthenticateWithPopup(user,provider);
-        await updatePassword(user,nextPassword);setMessage('Password updated.');setShowPassword(false);});}}>
-        {hasPassword?<label>Current password<input required type="password" autoComplete="current-password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)}/></label>:<p className="mu">You’ll confirm before the new password is saved.</p>}
-        <label>New password<input required type="password" minLength={12} autoComplete="new-password" value={nextPassword} onChange={e=>setNextPassword(e.target.value)}/></label>
-        <label>Re-enter new password<input required type="password" minLength={12} autoComplete="new-password" value={confirmNext} aria-invalid={!!confirmNext&&confirmNext!==nextPassword} onChange={e=>setConfirmNext(e.target.value)}/>{confirmNext&&<small className={confirmNext===nextPassword?'match-ok':'match-bad'}>{confirmNext===nextPassword?'Passwords match':'Passwords don’t match yet'}</small>}</label>
-        <div className="context-actions" style={{margin:0}}><button className="btn" disabled={busy}>Update password</button><button type="button" className="ghost" onClick={()=>{setShowPassword(false);setCurrentPassword('');setNextPassword('');setConfirmNext('');}}>Cancel</button></div></form></>}</article>
+  const isOwner=user?.uid===owner;
+  const settings=user&&<div className="portal-settings-grid">
+    <article className="portal-account-card">
+      <h3>Your account</h3>
+      <div className="account-meta-list">
+        <div className="account-meta-row"><span className="account-meta-label">Account name</span><span className="account-meta-value">{shares[0]?.data?.clientName||(isOwner?'Workspace Owner':'—')}</span></div>
+        <div className="account-meta-row"><span className="account-meta-label">Login email</span><span className="account-meta-value">{user.email}</span></div>
+        <div className="account-meta-row"><span className="account-meta-label">Sign-in method</span><span className="account-meta-value"><span className="chip white">{hasPassword?'Password':'Passwordless / Google'}</span></span></div>
+        <div className="account-meta-row"><span className="account-meta-label">Role</span><span className="account-meta-value"><span className={'chip '+(isOwner?'hero':'sage')}>{isOwner?'Workspace Owner':'Client'}</span></span></div>
+      </div>
+    </article>
+    <article className="portal-account-card">
+      <h3>Password & Security</h3>
+      {!showPassword?<><p className="empty-note" style={{margin:0}}>{hasPassword?'You have a password configured. You can update it anytime below.':'You sign in with Google or a magic link. You can set a password if you prefer.'}</p><button type="button" className="ghost sm" style={{justifySelf:'start'}} onClick={()=>setShowPassword(true)}>{hasPassword?'Change password':'Set a password'}</button></>:<>
+        <form className="portal-password-form" onSubmit={e=>{e.preventDefault();if(nextPassword!==confirmNext){setMessage('The two passwords don’t match. Type the same password in both fields.');return;}if(nextPassword===currentPassword){setMessage('Choose a new password that is different from your current one.');return;}action(async()=>{
+          if(hasPassword)await reauthenticateWithCredential(user,EmailAuthProvider.credential(user.email,currentPassword));else await reauthenticateWithPopup(user,provider);
+          await updatePassword(user,nextPassword);setMessage('Password updated.');setShowPassword(false);});}}>
+          {hasPassword?<label>Current password<input required type="password" autoComplete="current-password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)}/></label>:<p className="mu" style={{margin:0,fontSize:13}}>You’ll confirm before your new password is saved.</p>}
+          <label>New password<input required type="password" minLength={12} autoComplete="new-password" value={nextPassword} onChange={e=>setNextPassword(e.target.value)}/></label>
+          <label>Re-enter new password<input required type="password" minLength={12} autoComplete="new-password" value={confirmNext} aria-invalid={!!confirmNext&&confirmNext!==nextPassword} onChange={e=>setConfirmNext(e.target.value)}/>{confirmNext&&<small className={confirmNext===nextPassword?'match-ok':'match-bad'}>{confirmNext===nextPassword?'Passwords match':'Passwords don’t match yet'}</small>}</label>
+          <div className="context-actions" style={{margin:0}}><button className="btn sm" disabled={busy}>{hasPassword?'Update password':'Set password'}</button><button type="button" className="ghost sm" onClick={()=>{setShowPassword(false);setCurrentPassword('');setNextPassword('');setConfirmNext('');}}>Cancel</button></div></form></>}
+    </article>
   </div>;
+  const activeShare=shares.find(s=>s.id===selectedShareId)||shares[0];
   return <main className="portal-shell portal-v2">
-    <header className="portal-top"><BrandLogo/>{user&&<PortalUser name={shares[0]?.data?.clientName} email={user.email} onSignOut={()=>action(()=>signOut(auth))}/>}</header>
+    <header className="portal-top"><BrandLogo/>{user&&<PortalUser name={activeShare?.data?.clientName} email={user.email} isOwner={user.uid===owner} onSignOut={()=>action(()=>signOut(auth))}/>}</header>
     {message&&<p role="status" className="notice soft portal-message">{message}</p>}
     {!user?<section className="portal-signin"><span className="eyebrow">CLIENT PORTAL</span><h1>Welcome back</h1><p>Sign in to see your projects, approve work and open shared documents.</p><form onSubmit={e=>{e.preventDefault();action(()=>signInWithEmailAndPassword(auth,email.trim(),password));}}><label>Email<input required type="email" autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)}/></label><label>Password<input required type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label><button className="btn" disabled={busy}>Sign in</button></form><div className="portal-signin-alt"><button type="button" className="ghost" disabled={busy} onClick={sendMagicLink}>Email me a sign-in link (no password)</button><button type="button" className="ghost" disabled={busy} onClick={()=>action(()=>signInWithPopup(auth,provider))}>Continue with Google</button><button type="button" className="ghost" disabled={busy||!email.trim()} onClick={()=>action(async()=>{await sendPasswordResetEmail(auth,email.trim());setMessage('If this email has an eligible account, password reset instructions have been sent.');})}>Forgot password</button></div></section>
-    :<>{!loaded?<p className="portal-empty">Loading your shared work…</p>:!shares.length?<><p className="portal-empty">No work has been shared with this account at this portal link yet.</p>{settings}</>:shares.map(share=><PortalShare key={share.id} share={share} owner={owner} user={user} onMessage={setMessage} settings={settings}/>)}
-</>}
+    :<>{!loaded?<div className="portal-empty-card"><p>Loading your shared work…</p></div>
+      :!shares.length?<><PortalEmptyState user={user} owner={owner} onRefresh={()=>window.location.reload()}/>{settings}</>
+      :<>
+        {shares.length>1&&<div className="portal-share-switcher">
+          <span className="mu" style={{fontSize:13,fontWeight:600}}>Viewing client:</span>
+          <div className="tabs-pill">{shares.map(s=><button type="button" key={s.id} aria-pressed={activeShare.id===s.id} onClick={()=>setSelectedShareId(s.id)}>{s.data?.clientName||s.id}</button>)}</div>
+        </div>}
+        <PortalShare key={activeShare.id} share={activeShare} owner={owner} user={user} onMessage={setMessage} settings={settings}/>
+      </>}
+    </>}
   </main>;
 }
 
@@ -378,5 +435,5 @@ export function PortalPreview(){
     docs:[{id:'d',kind:'prd',title:'Website PRD',status:'In review',problem:'The current site is slow and hard to update.',goals:'Loads in under 2 seconds on 4G.',outOfScope:'',requirements:[{title:'Editors can publish pages',done:true},{title:'Homepage loads under 2s',done:false}]},{id:'b1',kind:'brief',title:'Client Project Questionnaire',questions:[{id:'q1',question:'What is your primary launch goal?',answer:'',required:true},{id:'q2',question:'Any reference websites you admire?',answer:'',required:false}],submittedAt:''},{id:'e',kind:'link',title:'Content inventory',url:'https://drive.google.com/'}],
     approvals:[{id:'q',kind:'quote',title:'INV-0008 · Phase 2',projectId:'p',approval:{state:'pending',note:'Quote for phase 2. Happy to go ahead?',requestedAt:today},quote:{no:'INV-0008',items:[{desc:'Blog templates',qty:1,price:18000},{desc:'Content migration',qty:10,price:1200}],tax:18,total:35400}},{id:'d2',kind:'prd',title:'Website PRD',projectId:'p',approval:{state:'pending',note:'',requestedAt:today},prd:{problem:'The current site is slow and hard to update.',goals:'Loads in under 2 seconds on 4G.',outOfScope:'',requirements:[{title:'Editors can publish pages'},{title:'Homepage loads under 2s'}]}}],
     invoices:[{id:'i',no:'INV-0007',issue:'2026-10-20',due:'2026-11-03',items:[{desc:'Website design',qty:1,price:12000}],total:12000,paid:0,balance:12000,paymentLink:'https://checkout.stripe.com/pay/test'}]}};
-  return <main className="portal-shell portal-v2"><header className="portal-top"><BrandLogo/><span className="chip sand">Preview · sample data</span><PortalUser name={share.data.clientName} email="studio@example.com" onSignOut={()=>{}}/></header><PortalShare share={share} owner="" user={{email:''}} onMessage={()=>{}} settings={<div className="portal-grid portal-settings"><article className="portal-project"><h3>Your account</h3><p className="invoice-line"><span>Name</span><b>Ava Studio</b></p><p className="invoice-line"><span>Login email</span><b>studio@example.com</b></p><p className="invoice-line"><span>Signed in with</span><b>Email and password</b></p></article><article className="portal-project"><h3>Change your password</h3><form className="portal-password-form" onSubmit={e=>e.preventDefault()}><label>Current password<input type="password" disabled/></label><label>New password<input type="password" disabled/></label><label>Re-enter new password<input type="password" disabled/></label><button className="btn" disabled>Update password</button></form></article></div>}/></main>;
+  return <main className="portal-shell portal-v2"><header className="portal-top"><BrandLogo/><span className="chip sand">Preview · sample data</span><PortalUser name={share.data.clientName} email="studio@example.com" isOwner={false} onSignOut={()=>{}}/></header><PortalShare share={share} owner="" user={{email:''}} onMessage={()=>{}} settings={<div className="portal-settings-grid"><article className="portal-account-card"><h3>Your account</h3><div className="account-meta-list"><div className="account-meta-row"><span className="account-meta-label">Account name</span><span className="account-meta-value">Ava Studio</span></div><div className="account-meta-row"><span className="account-meta-label">Login email</span><span className="account-meta-value">studio@example.com</span></div><div className="account-meta-row"><span className="account-meta-label">Sign-in method</span><span className="account-meta-value"><span className="chip white">Password</span></span></div><div className="account-meta-row"><span className="account-meta-label">Role</span><span className="account-meta-value"><span className="chip sage">Client</span></span></div></div></article><article className="portal-account-card"><h3>Password & Security</h3><form className="portal-password-form" onSubmit={e=>e.preventDefault()}><label>Current password<input type="password" disabled/></label><label>New password<input type="password" disabled/></label><label>Re-enter new password<input type="password" disabled/></label><button className="btn sm" disabled>Update password</button></form></article></div>}/></main>;
 }
