@@ -749,9 +749,13 @@ input[type=radio]{border-radius:50%!important}
 .portal-stat strong{font-family:var(--font-display);font-size:30px;line-height:1}
 .portal-stat span{font-size:13px;font-weight:600}
 .portal-stat.hero{background:var(--hero)}.portal-stat.sand{background:var(--sand,#EFCB8A)}.portal-stat.sage{background:var(--sage,#A7B98B)}.portal-stat.ink{background:#fff}
-.portal-tabs{margin:22px 0 18px;display:flex;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;max-width:100%;width:fit-content;gap:4px;padding:5px;border-radius:999px;background:var(--card);border:1px solid var(--ln)}
-.portal-tabs::-webkit-scrollbar{display:none}
-.portal-tabs button{white-space:nowrap;flex-shrink:0}
+.portal-tabs{margin:20px 0 16px;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;overflow-x:auto!important;scrollbar-width:none!important;-webkit-overflow-scrolling:touch;max-width:100%!important;width:100%!important;box-sizing:border-box;gap:5px;padding:5px;border-radius:999px;background:var(--card);border:1px solid var(--ln);scroll-snap-type:x proximity}
+@media(min-width:960px){.portal-tabs{width:fit-content!important}}
+.portal-tabs::-webkit-scrollbar{display:none!important}
+.portal-tabs button{white-space:nowrap!important;flex-shrink:0!important;scroll-snap-align:start;border:0;background:transparent;color:var(--tx);border-radius:999px;padding:8px 16px;font:600 13px var(--font-body);cursor:pointer;display:inline-flex;align-items:center;text-decoration:none;transition:all .15s ease;-webkit-tap-highlight-color:transparent}
+.portal-tabs button[aria-pressed=true]{background:var(--ink);color:var(--ink-tx);box-shadow:0 2px 8px rgba(0,0,0,0.12)}
+.portal-tabs button:hover:not([aria-pressed=true]){background:color-mix(in srgb,var(--tx) 8%,transparent)}
+.portal-tabs button:focus-visible{outline:2px solid var(--tx);outline-offset:-2px}
 .portal-share-switcher{display:flex;align-items:center;gap:12px;margin:12px 0 16px;padding:6px 12px;background:var(--card);border-radius:999px;border:1px solid var(--ln);width:fit-content}
 .portal-empty-card{background:var(--sf);border:1px solid var(--ln);border-radius:28px;padding:44px 32px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;margin:20px 0 28px;box-shadow:0 4px 20px rgba(30,20,10,0.04);width:100%;box-sizing:border-box}
 .portal-empty-icon{width:56px;height:56px;border-radius:20px;background:color-mix(in srgb,var(--hero) 15%,var(--card));color:var(--hero);display:grid;place-items:center;margin-bottom:4px}
@@ -816,7 +820,24 @@ input[type=radio]{border-radius:50%!important}
 .portal-signin-alt{display:flex;gap:8px;flex-wrap:wrap}.portal-signin-alt .ghost{margin:0!important}
 .portal-password{margin-top:24px!important}
 .portal-password form{display:grid;gap:10px;margin-top:12px}
-@media(max-width:600px){.portal-v2{padding:12px 16px 48px}.portal-hero{padding:26px 22px;border-radius:26px}.portal-hero::before{display:none}.portal-hero::after{width:180px;height:180px;right:-70px;top:-70px}.portal-grid{grid-template-columns:1fr}.portal-stats{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){
+  .portal-v2{padding:12px 14px 48px}
+  .portal-top{gap:10px;padding:6px 0 14px}
+  .portal-user-wrap{max-width:100%;gap:8px;padding:4px 6px 4px 8px}
+  .portal-user-name{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+  .portal-user-wrap .avatar-xl{width:28px;height:28px;font-size:11px}
+  .portal-user-wrap .ghost{font-size:12px;padding:4px 8px}
+  .portal-hero{padding:22px 18px;border-radius:22px}
+  .portal-hero h1{font-size:28px}
+  .portal-hero p{font-size:13px}
+  .portal-stats{grid-template-columns:1fr 1fr;gap:8px}
+  .portal-stat{padding:12px 14px;border-radius:16px}
+  .portal-stat strong{font-size:24px}
+  .portal-stat span{font-size:12px}
+  .portal-tabs{margin:14px 0 14px;padding:4px;gap:4px}
+  .portal-tabs button{padding:7px 13px;font-size:12px}
+  .portal-grid{grid-template-columns:1fr}
+}
 
 /* owner side: client access */
 .portal-manager{display:grid;gap:14px}

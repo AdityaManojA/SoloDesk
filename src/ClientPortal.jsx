@@ -279,7 +279,7 @@ function PortalShare({share,owner,user,onMessage,settings}){
         {invoices.length>0&&<button type="button" className="portal-stat ink" onClick={()=>setTab('invoices')}><strong>{currency.format(balance)}</strong><span>Balance due</span></button>}
       </div>
     </div>
-    <nav className="tabs-pill portal-tabs" aria-label="Portal sections">{tabs.map(([k,l,n])=><button type="button" key={k} aria-pressed={tab===k} onClick={()=>setTab(k)}>{l}{n>0&&<span className="tab-count">{n}</span>}</button>)}</nav>
+    <nav className="portal-tabs" aria-label="Portal sections">{tabs.map(([k,l,n])=><button type="button" key={k} aria-pressed={tab===k} onClick={()=>setTab(k)}>{l}{n>0&&<span className="tab-count">{n}</span>}</button>)}</nav>
     {tab==='approvals'&&<div className="portal-grid">{approvals.length?[...approvals].sort((a,b)=>(pending.includes(b)-pending.includes(a))||b.approval.requestedAt.localeCompare(a.approval.requestedAt)).map(t=><ApprovalCard key={t.id} task={t} response={responses[t.id]} project={projects.find(p=>p.id===t.projectId)} owner={owner} shareId={share.id} user={user} onMessage={onMessage} currency={currency}/>):<p className="portal-empty">Nothing to approve right now. When {data.business} sends you work to check, it appears here.</p>}</div>}
     {tab==='work'&&<div className="portal-grid">{projects.map(p=>{const list=tasks.filter(t=>t.projectId===p.id),done=list.filter(t=>t.status==='Done').length;return <article className="portal-project" key={p.id}>
       <div className="approval-head"><span className={'chip '+(p.status==='Complete'?'sage':p.status==='On hold'?'sand':'hero')}>{p.status}</span><small>{p.start?day(p.start)+' → '+(p.end?day(p.end):'ongoing'):''}</small></div>
