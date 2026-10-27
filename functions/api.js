@@ -6,10 +6,12 @@ const fail = (status, message) => Object.assign(new Error(message), { status });
 const amount = value => Number.isFinite(Number(value)) ? Number(value) : 0;
 
 export function invoiceTotals(invoice, date) {
-  const subtotal = (invoice.items || []).reduce((sum, item) => sum + amount(item.qty) * amount(item.price), 0);
-  const tax = subtotal * amount(invoice.tax) / 100;
-  const total = subtotal + tax, paid = (invoice.pays || []).reduce((sum, p) => sum + amount(p.amt), 0);
-  const balance = Math.max(0, total - paid);
+  const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+  const subtotal = round2((invoice.items || []).reduce((sum, item) => sum + amount(item.qty) * amount(item.price), 0));
+  const tax = round2(subtotal * amount(invoice.tax) / 100);
+  const total = round2(subtotal + tax);
+  const paid = round2((invoice.pays || []).reduce((sum, p) => sum + amount(p.amt), 0));
+  const balance = Math.max(0, round2(total - paid));
   const status = invoice.state === 'void' ? 'Void' : invoice.state === 'draft' ? 'Draft' : balance < .005 ? 'Paid' : invoice.due < date ? 'Overdue' : paid > 0 ? 'Partially paid' : 'Sent';
   return { subtotal, tax, total, paid, balance, status };
 }

@@ -6,6 +6,7 @@ import { REPLIES, REPLY_TONE, replyLabel } from './client-feed';
 import { replyToRequest, deleteRequest, clearResponse } from './portal-sync';
 import { rid } from './lib';
 import { APPROVAL_LABEL, KIND_LABEL, approvalClient, approvalItems, applyResponses, requestApproval, withdrawApproval, findItem } from './approvals';
+import { quoteToInvoice } from './billing';
 
 const CHIP = { pending: 'hero', approved: 'sage', changes: 'sand' };
 const when = iso => iso ? new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '';
@@ -50,7 +51,25 @@ export function ApprovalBox({ d, mut, user, demo, item, kind = 'task', toast, co
     {!client ? <p className="empty-note" style={{ margin: 0 }}>Give this {what} a client (or a project with a client) to send it for approval.</p>
       : a ? <>
         <p style={{ margin: 0 }}>Sent to <b>{client.name}</b> on {when(a.requestedAt)}{a.note ? <> with “{a.note}”</> : ''}.</p>
-        {a.state !== 'pending' && <p className="approval-result" style={{ margin: 0 }}>{a.state === 'approved' ? 'Approved' : 'Changes requested'} on {when(a.decidedAt)}{a.comment && <><br /><span>“{a.comment}”</span></>}</p>}
+        {a.state !== 'pending' && <p className="approval-result" style={{ margin: 0 }}>{a.state === 'approved' ? 'Approved' : 'Changes requested'} on {when(a.decidedAt)}{a.comment && <><br /><span>“{a.comment}”</span></>}{a.signOff && <><br /><small style={{ color: 'var(--sage-dark, #2b6e4e)', fontWeight: 600 }}>✓ Formally signed by {a.signOff.name}{a.signOff.email ? ` (${a.signOff.email})` : ''}</small></>}</p>}
+        {kind === 'quote' && a.state === 'approved' && <div className="context-actions" style={{ marginTop: 8 }}>
+          <button type="button" className="btn sm" onClick={() => {
+            let invId;
+            try {
+              mut(n => { invId = quoteToInvoice(n, item.id); });
+              toast('Invoice generated from approved quote!');
+              window.location.hash = '#/invoices/' + invId;
+            } catch (e) { toast(e.message); }
+          }}>Generate Invoice (100%)</button>
+          <button type="button" className="ghost sm" onClick={() => {
+            let invId;
+            try {
+              mut(n => { invId = quoteToInvoice(n, item.id, { depositPercent: 50 }); });
+              toast('50% deposit invoice generated from approved quote!');
+              window.location.hash = '#/invoices/' + invId;
+            } catch (e) { toast(e.message); }
+          }}>50% Upfront Deposit Invoice</button>
+        </div>}
         <div className="context-actions">{a.state !== 'pending' && <button className="btn sm" onClick={() => setOpen(true)}>Send again</button>}<button className="ghost sm" onClick={withdraw}>{a.state === 'pending' ? 'Withdraw request' : 'Delete request'}</button></div>
       </> : !open && <><p style={{ margin: 0 }}>{kind === 'quote' ? <>Send this draft to <b>{client.name}</b> as a quote. They accept it or ask for changes in their portal.</> : <>Ask <b>{client.name}</b> to approve this {what} in their client portal. You’ll see their answer here.</>}</p><button className="btn sm approve" style={{ justifySelf: 'start' }} onClick={() => setOpen(true)}><Icon name="check" size={16} />{kind === 'quote' ? 'Send as quote' : 'Send for approval'}</button></>}
     {open && client && <div className="approval-send"><label>Message to {client.name} (optional)<textarea rows="2" maxLength={1000} value={note} onChange={e => setNote(e.target.value)} placeholder={kind === 'quote' ? 'Here’s the quote for the website. Happy to go ahead?' : 'Here it is. Happy for it to go ahead?'} /></label><div className="context-actions"><button className="btn sm approve" onClick={send}>{kind === 'quote' ? 'Send as quote' : 'Send for approval'}</button><button className="ghost sm" onClick={() => setOpen(false)}>Cancel</button></div></div>}
@@ -97,7 +116,7 @@ export function ApprovalsPage({ d, mut, requests = [], user, demo, toast }) {
       {requests.length ? <div className="request-grid">{[...requests].sort((a, b) => (!!a.reply - !!b.reply) || b.at.localeCompare(a.at)).map(r => <RequestRow key={r.clientId + r.id} r={r} d={d} mut={mut} user={user} toast={toast} />)}</div> : <p className="empty-note">When a client asks for something in their portal (“Can you also add a blog?”), it shows here so you can reply.</p>}</section>}
     <div className="approval-stats">{groups.map(([k, l]) => <button key={k} type="button" className={'approval-stat ' + k + (filter === k ? ' on' : '')} onClick={() => setFilter(filter === k ? 'all' : k)}><strong>{all.filter(x => x.row.approval.state === k).length}</strong><span>{l}</span></button>)}</div>
     {groups.filter(([k]) => filter === 'all' || filter === k).map(([k, l]) => { const list = all.filter(x => x.row.approval.state === k); return list.length > 0 && <section key={k} className="approval-group"><h2>{l}</h2>{list.map(({ kind, row, title, href }) => { const client = d.clients.find(c => c.id === approvalClient(d, row)), project = d.projects.find(p => p.id === row.project); return <div key={row.id} className="approval-row-wrap"><a className={'approval-row state-' + k} href={href}>
-      <span className={'approval-dot ' + k} /><span className="grow"><b>{title}</b><small><span className={'kind-tag ' + kind}>{KIND_LABEL[kind]}</span> {[client?.name, project?.name].filter(Boolean).join(' · ')} · sent {when(row.approval.requestedAt)}{row.approval.decidedAt ? ' · answered ' + when(row.approval.decidedAt) : ''}</small>{row.approval.comment && <span className="approval-comment">“{row.approval.comment}”</span>}</span><span className={'chip ' + CHIP[k]}>{APPROVAL_LABEL[k]}</span><span aria-hidden="true">›</span></a><button type="button" className="icon-button approval-remove" aria-label={'Remove the approval request for ' + title} title="Remove request" onClick={() => remove(row, title)}><Icon name="close" size={16} /></button></div>; })}</section>; })}
+      <span className={'approval-dot ' + k} /><span className="grow"><b>{title}</b><small><span className={'kind-tag ' + kind}>{KIND_LABEL[kind]}</span> {[client?.name, project?.name].filter(Boolean).join(' · ')} · sent {when(row.approval.requestedAt)}{row.approval.decidedAt ? ' · answered ' + when(row.approval.decidedAt) : ''}{row.approval.signOff ? ' · ✓ Signed by ' + row.approval.signOff.name : ''}</small>{row.approval.comment && <span className="approval-comment">“{row.approval.comment}”</span>}</span><span className={'chip ' + CHIP[k]}>{APPROVAL_LABEL[k]}</span><span aria-hidden="true">›</span></a>{k === 'approved' && kind === 'quote' && <div className="approval-inline-actions" style={{ display: 'inline-flex', gap: 6, margin: '0 8px' }}><button type="button" className="btn sm" style={{ padding: '2px 8px', fontSize: 11 }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); let invId; try { mut(n => { invId = quoteToInvoice(n, row.id); }); toast('Invoice generated from approved quote!'); window.location.hash = '#/invoices/' + invId; } catch (err) { toast(err.message); } }}>Invoice (100%)</button><button type="button" className="ghost sm" style={{ padding: '2px 8px', fontSize: 11 }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); let invId; try { mut(n => { invId = quoteToInvoice(n, row.id, { depositPercent: 50 }); }); toast('50% deposit invoice generated from approved quote!'); window.location.hash = '#/invoices/' + invId; } catch (err) { toast(err.message); } }}>50% Deposit</button></div>}<button type="button" className="icon-button approval-remove" aria-label={'Remove the approval request for ' + title} title="Remove request" onClick={() => remove(row, title)}><Icon name="close" size={16} /></button></div>; })}</section>; })}
     {!all.length && <div className="card approval-empty"><h3>Nothing out for approval</h3><p>Open a task, a PRD or file under Files & docs, or a draft invoice, and choose <b>Send for approval</b>. Your client sees it in their portal and can approve it or ask for changes.</p></div>}
     {ready.length > 0 && <section className="approval-group"><h2>Ready to send?</h2><p className="empty-note">Open tasks with a client. Open one to send it for approval.</p>{ready.map(t => <a key={t.id} className="approval-row" href={'#/tasks/' + t.id}><span className="approval-dot" /><span className="grow"><b>{t.title}</b><small>{d.clients.find(c => c.id === approvalClient(d, t))?.name} · {t.status}</small></span><span aria-hidden="true">›</span></a>)}</section>}
   </>;

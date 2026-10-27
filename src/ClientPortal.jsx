@@ -1,11 +1,12 @@
 import {useEffect,useState} from 'react';
 import {initializeApp,deleteApp} from 'firebase/app';
-import {getAuth,setPersistence,inMemoryPersistence,createUserWithEmailAndPassword,signOut,signInWithEmailAndPassword,signInWithPopup,sendPasswordResetEmail,updatePassword,onAuthStateChanged,EmailAuthProvider,reauthenticateWithCredential,reauthenticateWithPopup} from 'firebase/auth';
+import {getAuth,setPersistence,inMemoryPersistence,createUserWithEmailAndPassword,signOut,signInWithEmailAndPassword,signInWithPopup,sendPasswordResetEmail,updatePassword,onAuthStateChanged,EmailAuthProvider,reauthenticateWithCredential,reauthenticateWithPopup,sendSignInLinkToEmail,isSignInWithEmailLink,signInWithEmailLink} from 'firebase/auth';
 import {doc,getDoc,setDoc,deleteDoc,onSnapshot,collection,serverTimestamp,addDoc} from 'firebase/firestore';
 import {CHEER,meetingMailto,meetingGmail,REPLY_TONE,replyLabel} from './client-feed';
 import {auth,db,firebaseOptions,provider} from './firebase';
 import {publishablePortal} from './workspace-upgrades';
 import {APPROVAL_LABEL,KIND_LABEL} from './approvals';
+import {deletePortalShare} from './portal-sync';
 import BrandLogo from './BrandLogo';
 import Icon from './Icon';
 
@@ -46,29 +47,38 @@ export function PortalManager({d,user,demo,client,toast}){
       }
       if(grant&&normalized!==grant.recipientEmail){setError('Revoke the existing share before changing its login email.');return;}
       await setDoc(doc(db,'solodeskPortals',user.uid,'shares',client.id),{ownerUid:user.uid,clientId:client.id,recipientUid,recipientEmail:normalized,projectIds:projects,invoiceIds:invoices,docIds:docs,data:publishablePortal(d,client.id,projects,invoices,docs,user.email||'')});
-      toast(grant?'Client portal updated.':'Client portal published. Share the portal link and initial password privately.');
+      toast(grant?'Client portal updated.':'Client portal published. Share the portal link and password or send a magic sign-in link.');
     }catch(err){setError(authMessage(err));}finally{setPassword('');setConfirm('');setBusy(false);if(secondary)await deleteApp(secondary);}
+  };
+  const sendMagicInvite=async()=>{
+    const normalized=email.trim().toLowerCase();
+    if(!normalized){setError('Enter client email address first.');return;}
+    setBusy(true);setError('');
+    try{
+      await sendSignInLinkToEmail(auth,normalized,{url:portalUrl(user.uid),handleCodeInApp:true});
+      toast(`Passwordless magic sign-in link emailed to ${normalized}!`);
+    }catch(err){setError(authMessage(err));}finally{setBusy(false);}
   };
   const pick=(title,items,chosen,set,label,empty,key)=><fieldset className="share-picks"><legend>{title}</legend>{items.length?items.map(x=><label key={x.id} className={'share-pick'+(chosen.includes(x.id)?' on':'')}><input type="checkbox" checked={chosen.includes(x.id)} onChange={()=>toggle(x.id,chosen,set,key)}/><span>{label(x)}</span></label>):<p className="empty-note">{empty}</p>}</fieldset>;
   const approvals=d.tasks.filter(t=>t.approval&&(t.client===client.id||projectsOf.some(p=>p.id===t.project)));
   return <section className="card portal-manager">
     <div className="block-head" style={{margin:0}}><h3>Client portal</h3>{grant?<span className="chip sage">Shared</span>:<span className="chip white">Not shared yet</span>}</div>
-    <p style={{marginTop:0}}>Your client signs in to see what you pick below, plus their links and any task you send them for approval. Internal notes, other clients and payment instructions stay private. The portal updates by itself a moment after you change shared work.</p>
+    <p style={{marginTop:0}}>Your client signs in to see what you pick below, plus their links, brief questionnaires and any task you send them for approval. Internal notes, other clients and private workspace details stay private. The portal updates by itself a moment after you change shared work.</p>
     {error&&<p role="alert" className="inline-error">{error}</p>}
-    {grant&&<div className="portal-link-box"><Icon name="link" size={18}/><input readOnly aria-label="Portal link" value={portalUrl(user.uid)} onFocus={e=>e.target.select()}/><button type="button" className="btn sm" onClick={async()=>{try{await navigator.clipboard.writeText(portalUrl(user.uid));toast('Portal link copied.');}catch{toast('Select the link and copy it.');}}}>Copy link</button><a className="ghost sm" href={'#/portal/'+user.uid} target="_blank" rel="noopener noreferrer">Preview ↗</a></div>}
+    {grant&&<div className="portal-link-box"><Icon name="link" size={18}/><input readOnly aria-label="Portal link" value={portalUrl(user.uid)} onFocus={e=>e.target.select()}/><button type="button" className="btn sm" onClick={async()=>{try{await navigator.clipboard.writeText(portalUrl(user.uid));toast('Portal link copied.');}catch{toast('Select the link and copy it.');}}}>Copy link</button><button type="button" className="ghost sm" disabled={busy} onClick={sendMagicInvite} title="Email client a passwordless sign-in link">Send magic link</button><a className="ghost sm" href={'#/portal/'+user.uid} target="_blank" rel="noopener noreferrer">Preview ↗</a></div>}
     {approvals.length>0&&<p className="notice soft" style={{margin:0}}>{approvals.filter(t=>t.approval.state==='pending').length} waiting for {client.name} · {approvals.filter(t=>t.approval.state==='approved').length} approved · <a href="#/approvals">Open approvals</a></p>}
     <form onSubmit={publish} className="portal-form">
       <label>Client login email<input type="email" aria-label="Portal email" autoComplete="off" required disabled={!!grant||!!provisioned} value={email} onChange={e=>setEmail(e.target.value)}/></label>
       {!grant&&<><label className="check-row"><input type="checkbox" checked={existing} onChange={e=>{setExisting(e.target.checked);setPassword('');setConfirm('');}}/> Link existing account (keeps its current password; verified email required)</label>
         {!existing&&!provisioned&&<div className="grid2"><label>Initial password<input type="password" aria-label="Portal initial password" minLength={12} autoComplete="new-password" required value={password} onChange={e=>setPassword(e.target.value)}/></label><label>Re-enter password<input type="password" aria-label="Re-enter portal initial password" minLength={12} autoComplete="new-password" required value={confirm} aria-invalid={!!confirm&&confirm!==password} onChange={e=>setConfirm(e.target.value)}/>{confirm&&<small className={confirm===password?'match-ok':'match-bad'}>{confirm===password?'Passwords match':'Passwords don’t match yet'}</small>}</label></div>}
-        <p className="mu" style={{margin:0}}>Passwords go straight to Firebase Auth and are never saved in your workspace. Clients can change their password or reset it from the portal.</p></>}
+        <p className="mu" style={{margin:0}}>Passwords go straight to Firebase Auth and are never saved in your workspace. Clients can sign in with a password or passwordless magic link.</p></>}
       {pick('Projects and their tasks',projectsOf,projects,setProjects,p=><>{p.name}<small>{d.tasks.filter(t=>t.project===p.id).length} tasks · {p.status}</small></>,'No projects for this client yet.','projectIds')}
-      {pick('Documents and PRDs',docsOf,docs,setDocs,x=><>{x.title}<small>{x.kind==='prd'?'PRD · '+(x.status||'Draft'):'Linked file'}</small></>,'No documents yet. Add them under Files & docs.','docIds')}
+      {pick('Documents, PRDs & Briefs',docsOf,docs,setDocs,x=><>{x.title}<small>{x.kind==='prd'?'PRD · '+(x.status||'Draft'):x.kind==='brief'?'Client Intake Brief':'Linked file'}</small></>,'No documents yet. Add them under Files & docs.','docIds')}
       {pick('Sent invoices',d.invoices.filter(i=>i.client===client.id&&i.state==='sent'),invoices,setInvoices,i=><>{i.no}<small>Due {i.due}</small></>,'No sent invoices.','invoiceIds')}
-      {grant?<p className="portal-live-note">Updates automatically{grant.data?.updatedAt?' · last published '+new Date(grant.data.updatedAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}):''}</p>:<button className="btn" disabled={busy||demo}>{busy?'Working…':'Set up client access'}</button>}
+      {grant?<p className="portal-live-note">Updates automatically{grant.data?.updatedAt?' · last published '+new Date(grant.data.updatedAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}):''}</p>:<div style={{display:'flex',gap:8,alignItems:'center'}}><button className="btn" disabled={busy||demo}>{busy?'Working…':'Set up client access'}</button><button type="button" className="ghost" disabled={busy||demo||!email.trim()} onClick={sendMagicInvite}>Send magic link invite</button></div>}
     </form>
     {demo&&<p className="mu">Sign in to publish a portal. Account creation is disabled in the demo.</p>}
-    {grant&&<button className="ghost danger sm" style={{justifySelf:'start'}} disabled={busy} onClick={async()=>{setBusy(true);try{await deleteDoc(doc(db,'solodeskPortals',user.uid,'shares',client.id));toast('Portal access revoked. The client’s Firebase account is kept.');}catch(e){setError(authMessage(e));}finally{setBusy(false);}}}>Revoke portal access</button>}
+    {grant&&<button className="ghost danger sm" style={{justifySelf:'start'}} disabled={busy} onClick={async()=>{setBusy(true);try{await deletePortalShare(db,user.uid,client.id);toast('Portal access revoked. The client’s Firebase account is kept.');}catch(e){setError(authMessage(e));}finally{setBusy(false);}}}>Revoke portal access</button>}
   </section>;
 }
 
@@ -79,14 +89,28 @@ const host=url=>{try{return new URL(url).hostname.replace(/^www\./,'');}catch{re
 
 function ApprovalCard({task,response,project,owner,shareId,user,onMessage,currency,compact=false}){
   const kind=task.kind||'task';
-  const [comment,setComment]=useState(''),[busy,setBusy]=useState(false),[changing,setChanging]=useState(false);
-  // Their own answer shows straight away; the published state catches up once the owner opens Terracove.
+  const [comment,setComment]=useState(''),[signerName,setSignerName]=useState(''),[busy,setBusy]=useState(false),[changing,setChanging]=useState(false);
   const fresh=response&&response.atIso>=task.approval.requestedAt;
   const state=fresh?response.decision:task.approval.state,said=fresh?response.comment:task.approval.comment;
+  const signOff=fresh?(response.signerName?{name:response.signerName,email:response.email,signedAt:response.atIso}:null):task.approval.signOff;
   const answer=async decision=>{
     if(decision==='changes'&&!comment.trim()){onMessage('Say what should change, so it can be fixed.');return;}
     setBusy(true);
-    try{await setDoc(doc(db,'solodeskPortals',owner,'shares',shareId,'responses',task.id),{taskId:task.id,decision,comment:comment.trim().slice(0,1000),at:serverTimestamp(),email:(user.email||'').toLowerCase()});setChanging(false);onMessage(decision==='approved'?'Approved. Thank you!':'Your changes were sent.');setComment('');}
+    try{
+      await setDoc(doc(db,'solodeskPortals',owner,'shares',shareId,'responses',task.id),{
+        taskId:task.id,
+        decision,
+        comment:comment.trim().slice(0,1000),
+        signerName:signerName.trim().slice(0,100),
+        userAgent:navigator.userAgent||'',
+        at:serverTimestamp(),
+        email:(user.email||'').toLowerCase()
+      });
+      setChanging(false);
+      onMessage(decision==='approved'?(signerName.trim()?'Formally signed and approved. Thank you!':'Approved. Thank you!'):'Your changes were sent.');
+      setComment('');
+      setSignerName('');
+    }
     catch{onMessage('Your answer could not be saved. Check your connection and try again.');}finally{setBusy(false);}
   };
   return <article className={'approval-card state-'+state+(compact?' compact':'')}>
@@ -96,15 +120,19 @@ function ApprovalCard({task,response,project,owner,shareId,user,onMessage,curren
     {task.approval.note&&<p className="approval-note">“{task.approval.note}”</p>}
     {(task.checklist||[]).length>0&&<ul className="portal-checks">{task.checklist.map((c,i)=><li key={i} className={c.done?'done':''}><i/>{c.title}</li>)}</ul>}
     {kind==='link'&&<a className="portal-file" href={task.url} target="_blank" rel="noopener noreferrer"><span className="file-badge"><Icon name="link" size={16}/></span><span className="grow"><b>Open the file</b><small>{host(task.url)}</small></span><span aria-hidden="true">↗</span></a>}
-    {kind==='prd'&&<details className="approval-prd"><summary>Read the PRD</summary>{[['Problem',task.prd.problem],['Goals and success measures',task.prd.goals],['Out of scope',task.prd.outOfScope]].filter(([,v])=>v).map(([k,v])=><div key={k}><small>{k}</small><p>{v}</p></div>)}{task.prd.requirements.length>0&&<><small>Requirements</small><ul className="portal-checks">{task.prd.requirements.map((r,i)=><li key={i}><i/>R{i+1} · {r.title}</li>)}</ul></>}</details>}
+    {kind==='prd'&&<details className="approval-prd"><summary>Read the PRD / Proposal</summary>{[['Problem',task.prd.problem],['Goals and success measures',task.prd.goals],['Out of scope',task.prd.outOfScope]].filter(([,v])=>v).map(([k,v])=><div key={k}><small>{k}</small><p>{v}</p></div>)}{task.prd.requirements.length>0&&<><small>Requirements</small><ul className="portal-checks">{task.prd.requirements.map((r,i)=><li key={i}><i/>R{i+1} · {r.title}</li>)}</ul></>}</details>}
     {kind==='quote'&&<div className="approval-quote">{task.quote.items.map((l,n)=><p key={n} className="invoice-line"><span>{l.desc}</span><span>{l.qty} × {currency.format(l.price)}</span></p>)}{task.quote.tax>0&&<p className="invoice-line"><span>Tax</span><span>{task.quote.tax}%</span></p>}<p className="invoice-line total"><span>Total</span><b>{currency.format(task.quote.total)}</b></p></div>}
-    {state==='pending'||changing?<div className="approval-actions"><label>{kind==='quote'?'Comment (needed if you want changes)':'Comment (needed for changes)'}<textarea rows="2" maxLength={1000} value={comment} onChange={e=>setComment(e.target.value)} placeholder="Looks great, or: please make the logo bigger…"/></label><div><button type="button" className="btn approve" disabled={busy} onClick={()=>answer('approved')}><Icon name="check" size={16}/>{kind==='quote'?'Accept quote':'Approve'}</button><button type="button" className="ghost" disabled={busy} onClick={()=>answer('changes')}>Request changes</button></div></div>
-      :<><p className="approval-result">{state==='approved'?'You approved this':'You asked for changes'}{(fresh?response.atIso:task.approval.decidedAt)?' on '+day(fresh?response.atIso:task.approval.decidedAt):''}.{said&&<><br/><span>“{said}”</span></>}</p><button type="button" className="ghost sm" style={{justifySelf:'start'}} onClick={()=>setChanging(true)}>Change my answer</button></>}
+    {state==='pending'||changing?<div className="approval-actions">
+      {(kind==='prd'||kind==='task')&&<label>Signer legal name (formal proposal sign-off)<input maxLength={100} placeholder="e.g. Elena Rostova" value={signerName} onChange={e=>setSignerName(e.target.value)}/></label>}
+      <label>{kind==='quote'?'Comment (needed if you want changes)':'Comment (needed for changes)'}<textarea rows="2" maxLength={1000} value={comment} onChange={e=>setComment(e.target.value)} placeholder="Looks great, or: please make the logo bigger…"/></label>
+      <div><button type="button" className="btn approve" disabled={busy} onClick={()=>answer('approved')}><Icon name="check" size={16}/>{kind==='quote'?'Accept quote':signerName.trim()?'Sign & approve':'Approve'}</button><button type="button" className="ghost" disabled={busy} onClick={()=>answer('changes')}>Request changes</button></div>
+    </div>
+      :<><p className="approval-result">{state==='approved'?'You approved this':'You asked for changes'}{(fresh?response.atIso:task.approval.decidedAt)?' on '+day(fresh?response.atIso:task.approval.decidedAt):''}.{said&&<><br/><span>“{said}”</span></>}{signOff&&<><br/><small style={{color:'var(--sage-dark, #2b6e4e)',fontWeight:600}}>✓ Formally signed by {signOff.name}{signOff.email?` (${signOff.email})`:''}</small></>}</p><button type="button" className="ghost sm" style={{justifySelf:'start'}} onClick={()=>setChanging(true)}>Change my answer</button></>}
   </article>;
 }
 
 const timeAgo=iso=>{if(!iso)return 'just now';const m=Math.round((Date.now()-Date.parse(iso))/60000);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':day(iso);};
-// Comments on one task: the client and the studio talk here. Quick "You got this" and "Request a change".
+
 function TaskThread({task,comments,owner,shareId,user,onMessage,business}){
   const [text,setText]=useState(''),[busy,setBusy]=useState(false),[asChange,setAsChange]=useState(false);
   const post=async(kind,body)=>{
@@ -120,7 +148,7 @@ function TaskThread({task,comments,owner,shareId,user,onMessage,business}){
     <form className="thread-form" onSubmit={e=>{e.preventDefault();post(asChange?'change':'comment',text);}}><textarea rows="2" maxLength={1000} aria-label={asChange?'What should change?':'Comment'} placeholder={asChange?'What would you like changed?':'Write a comment…'} value={text} onChange={e=>setText(e.target.value)}/><button className="btn sm" disabled={busy}>{asChange?'Send change request':'Send'}</button></form>
   </div>;
 }
-// Add or change a link (the client's own links, or the address of a shared file).
+
 function LinkEditor({initial,kind,docId='',owner,shareId,user,onMessage,onDone}){
   const [label,setLabel]=useState(initial?.label||''),[url,setUrl]=useState(initial?.url||''),[busy,setBusy]=useState(false);
   const save=async e=>{e.preventDefault();
@@ -133,7 +161,74 @@ function LinkEditor({initial,kind,docId='',owner,shareId,user,onMessage,onDone})
   return <form className="link-editor" onSubmit={save}><input aria-label="Name" placeholder={kind==='file'?'File name':'Name (optional)'} maxLength={60} value={label} onChange={e=>setLabel(e.target.value)}/><input aria-label="Web address" placeholder="acme.com" inputMode="url" value={url} onChange={e=>setUrl(e.target.value)} autoFocus/><button className="btn sm" disabled={busy}>Save</button><button type="button" className="ghost sm" onClick={onDone}>Cancel</button></form>;
 }
 
-// Ask the studio for something new; their answer comes back as a label (or a timing).
+function BriefCard({doc: bDoc, owner, shareId, user, onMessage}){
+  const [answers, setAnswers] = useState(() => Object.fromEntries((bDoc.questions || []).map(q => [q.id, q.answer || ''])));
+  const [busy, setBusy] = useState(false);
+  const [submitted, setSubmitted] = useState(!!bDoc.submittedAt);
+  const submit = async e => {
+    e.preventDefault();
+    if (!owner) { onMessage('This is a preview, so answers are not sent.'); setSubmitted(true); return; }
+    for (const q of (bDoc.questions || [])) {
+      if (q.required && !answers[q.id]?.trim()) {
+        onMessage(`Please answer: "${q.question}"`);
+        return;
+      }
+    }
+    setBusy(true);
+    try {
+      const updatedQuestions = (bDoc.questions || []).map(q => ({
+        ...q,
+        answer: (answers[q.id] || '').trim().slice(0, 5000)
+      }));
+      await addDoc(collection(db, 'solodeskPortals', owner, 'shares', shareId, 'updates'), {
+        kind: 'brief',
+        docId: bDoc.id,
+        questions: updatedQuestions,
+        at: serverTimestamp(),
+        email: (user.email || '').toLowerCase()
+      });
+      setSubmitted(true);
+      onMessage('Intake questionnaire submitted! Thank you.');
+    } catch {
+      onMessage('Could not submit answers. Check your connection and try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return <article className="portal-project portal-brief">
+    <div className="approval-head">
+      <span className={'chip ' + (submitted ? 'sage' : 'hero')}>{submitted ? 'Submitted' : 'Needs your input'}</span>
+      <small>{bDoc.submittedAt ? 'Answered ' + day(bDoc.submittedAt) : (bDoc.questions || []).length + ' questions'}</small>
+    </div>
+    <h3><span className="kind-tag prd">Brief</span> {bDoc.title}</h3>
+    <form onSubmit={submit} style={{ display: 'grid', gap: 12, marginTop: 12 }}>
+      {(bDoc.questions || []).map((q, idx) => (
+        <label key={q.id || idx} style={{ display: 'grid', gap: 4 }}>
+          <span style={{ fontWeight: 600, fontSize: 13 }}>
+            {idx + 1}. {q.question} {q.required && <span style={{ color: 'var(--hero, #c2593f)' }}>*</span>}
+          </span>
+          <textarea
+            rows="3"
+            required={q.required}
+            placeholder="Your answer…"
+            value={answers[q.id] || ''}
+            onChange={e => {
+              const val = e.target.value;
+              setAnswers(a => ({ ...a, [q.id]: val }));
+            }}
+          />
+        </label>
+      ))}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
+        <button type="submit" className="btn sm" disabled={busy}>
+          {busy ? 'Submitting…' : submitted ? 'Update answers' : 'Submit questionnaire'}
+        </button>
+        {submitted && <small className="mu">Submitted. You can update your answers anytime.</small>}
+      </div>
+    </form>
+  </article>;
+}
+
 function RequestsTab({data,requests,owner,shareId,user,onMessage}){
   const [title,setTitle]=useState(''),[details,setDetails]=useState(''),[projectId,setProjectId]=useState(''),[busy,setBusy]=useState(false);
   const send=async e=>{e.preventDefault();if(!title.trim())return;
@@ -194,15 +289,15 @@ function PortalShare({share,owner,user,onMessage,settings}){
         {[['Problem',x.problem],['Goals and success measures',x.goals],['Out of scope',x.outOfScope]].filter(([,v])=>v).map(([k,v])=><div key={k}><small>{k}</small><p>{v}</p></div>)}
         {x.requirements.length>0&&<><small>Requirements</small><ul className="portal-checks">{x.requirements.map((r,i)=><li key={i} className={r.done?'done':''}><i/>R{i+1} · {r.title}</li>)}</ul></>}
       </details>)}
+      {docs.filter(x=>x.kind==='brief').map(x=><BriefCard key={x.id} doc={x} owner={owner} shareId={share.id} user={user} onMessage={onMessage}/>)}
       {!docs.length&&!links.length&&<p className="portal-empty">No links or documents have been shared yet.</p>}
     </div>}
     {tab==='requests'&&<RequestsTab data={data} requests={requests} owner={owner} shareId={share.id} user={user} onMessage={onMessage}/>}
     {tab==='settings'&&settings}
-    {tab==='invoices'&&<div className="portal-grid">{invoices.map(i=><article className="portal-project" key={i.id}><div className="approval-head"><span className={'chip '+(i.balance>0?'hero':'sage')}>{i.balance>0?'Due '+day(i.due):'Paid'}</span><small>Issued {day(i.issue)}</small></div><h3>{i.no}</h3>{i.items.map((l,n)=><p key={n} className="invoice-line"><span>{l.desc}</span><span>{l.qty} × {currency.format(l.price)}</span></p>)}<p className="invoice-line total"><span>Total</span><b>{currency.format(i.total)}</b></p><p className="invoice-line"><span>Paid</span><span>{currency.format(i.paid)}</span></p><p className="invoice-line"><span>Balance</span><b>{currency.format(i.balance)}</b></p></article>)}{!invoices.length&&<p className="portal-empty">No invoices have been shared.</p>}</div>}
+    {tab==='invoices'&&<div className="portal-grid">{invoices.map(i=><article className="portal-project" key={i.id}><div className="approval-head"><span className={'chip '+(i.balance>0?'hero':'sage')}>{i.balance>0?'Due '+day(i.due):'Paid'}</span><small>Issued {day(i.issue)}</small></div><h3>{i.no}</h3>{i.items.map((l,n)=><p key={n} className="invoice-line"><span>{l.desc}</span><span>{l.qty} × {currency.format(l.price)}</span></p>)}<p className="invoice-line total"><span>Total</span><b>{currency.format(i.total)}</b></p><p className="invoice-line"><span>Paid</span><span>{currency.format(i.paid)}</span></p><p className="invoice-line"><span>Balance</span><b>{currency.format(i.balance)}</b></p>{i.balance>0&&(i.paymentLink||data.paymentLink)&&<div style={{marginTop:12}}><a className="btn sm" href={i.paymentLink||data.paymentLink} target="_blank" rel="noopener noreferrer">💳 Pay with Card / UPI</a></div>}</article>)}{!invoices.length&&<p className="portal-empty">No invoices have been shared.</p>}</div>}
   </section>;
 }
 
-// Top right: the client's name as you set it in Terracove, with the login email under it.
 const initials=name=>name.split(/\s+/).filter(Boolean).map(w=>w[0]).join('').slice(0,2).toUpperCase();
 function PortalUser({name,email,onSignOut}){
   const shown=name||email||'';
@@ -213,6 +308,26 @@ export function ClientPortal({owner}){
   const [user,setUser]=useState(auth?.currentUser),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[nextPassword,setNextPassword]=useState(''),[confirmNext,setConfirmNext]=useState(''),[currentPassword,setCurrentPassword]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[shares,setShares]=useState([]),[loaded,setLoaded]=useState(false),[showPassword,setShowPassword]=useState(false);
   useEffect(()=>{if(auth)return onAuthStateChanged(auth,setUser);},[]);
   useEffect(()=>{
+    if(!auth)return;
+    if(isSignInWithEmailLink(auth,window.location.href)){
+      let emailForSignIn=window.localStorage.getItem('sd_portal_email_link');
+      if(!emailForSignIn){
+        emailForSignIn=window.prompt('Please confirm your email address to complete passwordless sign-in:');
+      }
+      if(emailForSignIn){
+        setBusy(true);
+        signInWithEmailLink(auth,emailForSignIn.trim(),window.location.href)
+          .then(()=>{
+            window.localStorage.removeItem('sd_portal_email_link');
+            window.history.replaceState({},document.title,window.location.pathname+window.location.hash.split('?')[0]);
+            setMessage('Signed in successfully with magic link!');
+          })
+          .catch(err=>setMessage(authMessage(err)))
+          .finally(()=>setBusy(false));
+      }
+    }
+  },[]);
+  useEffect(()=>{
     setShares([]);setLoaded(false);if(!user||!owner||!db)return;
     let stopped=false,unsub=[];import('firebase/firestore').then(({collection,query,where})=>{
       if(stopped)return;const feeds=new Map();
@@ -221,17 +336,25 @@ export function ClientPortal({owner}){
     });return()=>{stopped=true;unsub.forEach(f=>f());};
   },[owner,user?.uid,user?.emailVerified]);
   const action=async fn=>{setBusy(true);setMessage('');try{await fn();}catch(e){setMessage(authMessage(e));}finally{setBusy(false);setPassword('');setNextPassword('');setConfirmNext('');setCurrentPassword('');}};
+  const sendMagicLink=async()=>{
+    const target=email.trim().toLowerCase();
+    if(!target){setMessage('Enter your email address above first to receive a sign-in link.');return;}
+    setBusy(true);setMessage('');
+    try{
+      await sendSignInLinkToEmail(auth,target,{url:window.location.href,handleCodeInApp:true});
+      window.localStorage.setItem('sd_portal_email_link',target);
+      setMessage(`Sign-in link sent to ${target}! Open the link in your email to sign in without a password.`);
+    }catch(err){setMessage(authMessage(err));}finally{setBusy(false);}
+  };
   if(!auth)return <div className="mid">Client sign-in is not configured.</div>;
   const hasPassword=user?.providerData.some(x=>x.providerId==='password');
-  // The portal's Settings tab: who is signed in, and changing the password.
   const settings=user&&<div className="portal-grid portal-settings">
-    <article className="portal-project"><h3>Your account</h3><p className="invoice-line"><span>Name</span><b>{shares[0]?.data?.clientName||'—'}</b></p><p className="invoice-line"><span>Login email</span><b>{user.email}</b></p><p className="invoice-line"><span>Signed in with</span><b>{hasPassword?'Email and password':'Google'}</b></p><button type="button" className="ghost sm" style={{justifySelf:'start'}} onClick={()=>action(()=>signOut(auth))}>Sign out</button></article>
-    <article className="portal-project"><h3>Password</h3>{!showPassword?<><p className="empty-note" style={{margin:0}}>{hasPassword?'Change the password you use to sign in to this portal.':'You sign in with Google. You can also set a password.'}</p><button type="button" className="ghost sm" style={{justifySelf:'start'}} onClick={()=>setShowPassword(true)}>Change password</button></>:<>
+    <article className="portal-project"><h3>Your account</h3><p className="invoice-line"><span>Name</span><b>{shares[0]?.data?.clientName||'—'}</b></p><p className="invoice-line"><span>Login email</span><b>{user.email}</b></p><p className="invoice-line"><span>Signed in with</span><b>{hasPassword?'Email and password':'Passwordless / Google'}</b></p><button type="button" className="ghost sm" style={{justifySelf:'start'}} onClick={()=>action(()=>signOut(auth))}>Sign out</button></article>
+    <article className="portal-project"><h3>Password</h3>{!showPassword?<><p className="empty-note" style={{margin:0}}>{hasPassword?'Change the password you use to sign in to this portal.':'You sign in with Google or magic link. You can also set a password.'}</p><button type="button" className="ghost sm" style={{justifySelf:'start'}} onClick={()=>setShowPassword(true)}>Change password</button></>:<>
       <form className="portal-password-form" onSubmit={e=>{e.preventDefault();if(nextPassword!==confirmNext){setMessage('The two passwords don’t match. Type the same password in both fields.');return;}if(nextPassword===currentPassword){setMessage('Choose a new password that is different from your current one.');return;}action(async()=>{
-        // Prove it is really them first: current password, or Google for accounts without one.
         if(hasPassword)await reauthenticateWithCredential(user,EmailAuthProvider.credential(user.email,currentPassword));else await reauthenticateWithPopup(user,provider);
         await updatePassword(user,nextPassword);setMessage('Password updated.');setShowPassword(false);});}}>
-        {hasPassword?<label>Current password<input required type="password" autoComplete="current-password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)}/></label>:<p className="mu">You’ll confirm with Google before the new password is saved.</p>}
+        {hasPassword?<label>Current password<input required type="password" autoComplete="current-password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)}/></label>:<p className="mu">You’ll confirm before the new password is saved.</p>}
         <label>New password<input required type="password" minLength={12} autoComplete="new-password" value={nextPassword} onChange={e=>setNextPassword(e.target.value)}/></label>
         <label>Re-enter new password<input required type="password" minLength={12} autoComplete="new-password" value={confirmNext} aria-invalid={!!confirmNext&&confirmNext!==nextPassword} onChange={e=>setConfirmNext(e.target.value)}/>{confirmNext&&<small className={confirmNext===nextPassword?'match-ok':'match-bad'}>{confirmNext===nextPassword?'Passwords match':'Passwords don’t match yet'}</small>}</label>
         <div className="context-actions" style={{margin:0}}><button className="btn" disabled={busy}>Update password</button><button type="button" className="ghost" onClick={()=>{setShowPassword(false);setCurrentPassword('');setNextPassword('');setConfirmNext('');}}>Cancel</button></div></form></>}</article>
@@ -239,21 +362,21 @@ export function ClientPortal({owner}){
   return <main className="portal-shell portal-v2">
     <header className="portal-top"><BrandLogo/>{user&&<PortalUser name={shares[0]?.data?.clientName} email={user.email} onSignOut={()=>action(()=>signOut(auth))}/>}</header>
     {message&&<p role="status" className="notice soft portal-message">{message}</p>}
-    {!user?<section className="portal-signin"><span className="eyebrow">CLIENT PORTAL</span><h1>Welcome back</h1><p>Sign in to see your projects, approve work and open shared documents.</p><form onSubmit={e=>{e.preventDefault();action(()=>signInWithEmailAndPassword(auth,email.trim(),password));}}><label>Email<input required type="email" autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)}/></label><label>Password<input required type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label><button className="btn" disabled={busy}>Sign in</button></form><div className="portal-signin-alt"><button className="ghost" disabled={busy} onClick={()=>action(()=>signInWithPopup(auth,provider))}>Continue with Google</button><button className="ghost" disabled={busy||!email.trim()} onClick={()=>action(async()=>{await sendPasswordResetEmail(auth,email.trim());setMessage('If this email has an eligible account, password reset instructions have been sent.');})}>Forgot password</button></div></section>
+    {!user?<section className="portal-signin"><span className="eyebrow">CLIENT PORTAL</span><h1>Welcome back</h1><p>Sign in to see your projects, approve work and open shared documents.</p><form onSubmit={e=>{e.preventDefault();action(()=>signInWithEmailAndPassword(auth,email.trim(),password));}}><label>Email<input required type="email" autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)}/></label><label>Password<input required type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label><button className="btn" disabled={busy}>Sign in</button></form><div className="portal-signin-alt"><button type="button" className="ghost" disabled={busy} onClick={sendMagicLink}>Email me a sign-in link (no password)</button><button type="button" className="ghost" disabled={busy} onClick={()=>action(()=>signInWithPopup(auth,provider))}>Continue with Google</button><button type="button" className="ghost" disabled={busy||!email.trim()} onClick={()=>action(async()=>{await sendPasswordResetEmail(auth,email.trim());setMessage('If this email has an eligible account, password reset instructions have been sent.');})}>Forgot password</button></div></section>
     :<>{!loaded?<p className="portal-empty">Loading your shared work…</p>:!shares.length?<><p className="portal-empty">No work has been shared with this account at this portal link yet.</p>{settings}</>:shares.map(share=><PortalShare key={share.id} share={share} owner={owner} user={user} onMessage={setMessage} settings={settings}/>)}
 </>}
   </main>;
 }
 
-// For checking the portal's look without signing in: #/portal-preview shows sample data (never real work).
 export function PortalPreview(){
   const today=new Date().toISOString();
   const share={id:'preview',sample:{requests:[{id:'r1',title:'Can you add a blog to the website?',details:'Something simple, 2–3 posts a month.',at:today,reply:'custom',replyText:'Ready by Friday 30 Oct',repliedAt:today,taskId:'x'},{id:'r2',title:'Could the logo be bigger on mobile?',details:'',at:today}]},data:{business:'Your studio',contactEmail:'studio@example.com',clientName:'Ava Studio',currency:'INR',accent:getComputedStyle(document.documentElement).getPropertyValue('--hero').trim(),updatedAt:today,
+    paymentLink:'https://checkout.stripe.com/pay/test',
     links:[{label:'Website',url:'https://example.com/'},{label:'',url:'https://instagram.com/example'}],
     projects:[{id:'p',name:'Website launch',status:'Active',start:'2026-10-16',end:''}],
     tasks:[{id:'a',projectId:'p',title:'Homepage design',status:'In progress',due:'2026-10-30',checklist:[{title:'Hero section',done:true},{title:'Footer',done:false}],approval:{state:'pending',note:'Here is the homepage. Happy for it to go live?',requestedAt:today}},{id:'b',projectId:'p',title:'Brand colours',status:'Done',due:'',checklist:[],approval:{state:'approved',note:'',requestedAt:'2026-10-20T10:00:00.000Z',decidedAt:'2026-10-21T10:00:00.000Z',comment:'Love it'}},{id:'c',projectId:'p',title:'Content inventory',status:'Todo',due:'2026-11-04',checklist:[]}],
-    docs:[{id:'d',kind:'prd',title:'Website PRD',status:'In review',problem:'The current site is slow and hard to update.',goals:'Loads in under 2 seconds on 4G.',outOfScope:'',requirements:[{title:'Editors can publish pages',done:true},{title:'Homepage loads under 2s',done:false}]},{id:'e',kind:'link',title:'Content inventory',url:'https://drive.google.com/'}],
+    docs:[{id:'d',kind:'prd',title:'Website PRD',status:'In review',problem:'The current site is slow and hard to update.',goals:'Loads in under 2 seconds on 4G.',outOfScope:'',requirements:[{title:'Editors can publish pages',done:true},{title:'Homepage loads under 2s',done:false}]},{id:'b1',kind:'brief',title:'Client Project Questionnaire',questions:[{id:'q1',question:'What is your primary launch goal?',answer:'',required:true},{id:'q2',question:'Any reference websites you admire?',answer:'',required:false}],submittedAt:''},{id:'e',kind:'link',title:'Content inventory',url:'https://drive.google.com/'}],
     approvals:[{id:'q',kind:'quote',title:'INV-0008 · Phase 2',projectId:'p',approval:{state:'pending',note:'Quote for phase 2. Happy to go ahead?',requestedAt:today},quote:{no:'INV-0008',items:[{desc:'Blog templates',qty:1,price:18000},{desc:'Content migration',qty:10,price:1200}],tax:18,total:35400}},{id:'d2',kind:'prd',title:'Website PRD',projectId:'p',approval:{state:'pending',note:'',requestedAt:today},prd:{problem:'The current site is slow and hard to update.',goals:'Loads in under 2 seconds on 4G.',outOfScope:'',requirements:[{title:'Editors can publish pages'},{title:'Homepage loads under 2s'}]}}],
-    invoices:[{id:'i',no:'INV-0007',issue:'2026-10-20',due:'2026-11-03',items:[{desc:'Website design',qty:1,price:12000}],total:12000,paid:0,balance:12000}]}};
+    invoices:[{id:'i',no:'INV-0007',issue:'2026-10-20',due:'2026-11-03',items:[{desc:'Website design',qty:1,price:12000}],total:12000,paid:0,balance:12000,paymentLink:'https://checkout.stripe.com/pay/test'}]}};
   return <main className="portal-shell portal-v2"><header className="portal-top"><BrandLogo/><span className="chip sand">Preview · sample data</span><PortalUser name={share.data.clientName} email="studio@example.com" onSignOut={()=>{}}/></header><PortalShare share={share} owner="" user={{email:''}} onMessage={()=>{}} settings={<div className="portal-grid portal-settings"><article className="portal-project"><h3>Your account</h3><p className="invoice-line"><span>Name</span><b>Ava Studio</b></p><p className="invoice-line"><span>Login email</span><b>studio@example.com</b></p><p className="invoice-line"><span>Signed in with</span><b>Email and password</b></p></article><article className="portal-project"><h3>Change your password</h3><form className="portal-password-form" onSubmit={e=>e.preventDefault()}><label>Current password<input type="password" disabled/></label><label>New password<input type="password" disabled/></label><label>Re-enter new password<input type="password" disabled/></label><button className="btn" disabled>Update password</button></form></article></div>}/></main>;
 }

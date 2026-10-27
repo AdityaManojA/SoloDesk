@@ -45,7 +45,13 @@ export function applyResponses(workspace, clientId, responses) {
     if (!row?.approval || !DECISIONS.includes(r.decision) || !at || at < row.approval.requestedAt) continue;
     if (row.approval.state !== 'pending' && (!row.approval.decidedAt || at <= row.approval.decidedAt)) continue;
     if (approvalClient(workspace, row) !== clientId) continue;
-    row.approval = { ...row.approval, state: r.decision, comment: String(r.comment || '').slice(0, 1000), decidedAt: at };
+    row.approval = {
+      ...row.approval,
+      state: r.decision,
+      comment: String(r.comment || '').slice(0, 1000),
+      decidedAt: at,
+      ...(r.signerName ? { signOff: { name: String(r.signerName).trim().slice(0, 100), email: String(r.email || '').slice(0, 100), signedAt: at, userAgent: String(r.userAgent || '').slice(0, 200) } } : {})
+    };
     if (found.kind === 'prd') row.status = r.decision === 'approved' ? 'Approved' : 'In review';
     changed.push(row.id);
   }
@@ -53,7 +59,31 @@ export function applyResponses(workspace, clientId, responses) {
 }
 
 export const validApproval = a => a == null || (typeof a === 'object' && !Array.isArray(a) && Object.keys(APPROVAL_LABEL).includes(a.state)
-  && typeof a.requestedAt === 'string' && ['note', 'comment', 'decidedAt'].every(k => a[k] == null || typeof a[k] === 'string'));
+  && typeof a.requestedAt === 'string' && ['note', 'comment', 'decidedAt'].every(k => a[k] == null || typeof a[k] === 'string')
+  && (a.signOff == null || (typeof a.signOff === 'object' && typeof a.signOff.name === 'string')));
+
+export function signOffProposal(workspace, itemId, { signerName, signerEmail = '', userAgent = '' } = {}, now = new Date()) {
+  const name = String(signerName || '').trim();
+  if (!name) throw new Error('Signer name is required for formal sign-off.');
+  const item = [...workspace.tasks, ...(workspace.docs || []), ...workspace.invoices].find(x => x.id === itemId);
+  if (!item) throw new Error('Item not found.');
+  const timestamp = now instanceof Date ? now.toISOString() : new Date(now).toISOString();
+  item.approval = {
+    state: 'approved',
+    note: item.approval?.note || '',
+    requestedAt: item.approval?.requestedAt || timestamp,
+    decidedAt: timestamp,
+    comment: `Digitally signed by ${name}`,
+    signOff: {
+      name,
+      email: String(signerEmail || ''),
+      signedAt: timestamp,
+      userAgent: String(userAgent || '').slice(0, 200)
+    }
+  };
+  if (item.kind === 'prd') item.status = 'Approved';
+  return item;
+}
 
 // Everything out for approval, newest activity first.
 export function approvalItems(workspace) {

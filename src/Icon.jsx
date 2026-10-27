@@ -28,6 +28,7 @@ const paths = {
   zoomIn: 'M10.5 3a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15 M21 21l-5.2-5.2 M7.5 10.5h6 M10.5 7.5v6',
   zoomOut: 'M10.5 3a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15 M21 21l-5.2-5.2 M7.5 10.5h6',
   check: 'M5 12l4 4L19 6', logout: 'M9 3H4v18h5 M9 12h12 M16 7l5 5-5 5', more: 'M5 5h14 M5 12h14 M5 19h14',
+  play: 'M5 3l14 9-14 9V3z', pause: 'M6 4h4v16H6z M14 4h4v16h-4z',
 };
 export default function Icon({ name, size = 20, ...props }) {
   return <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}><path d={paths[name] || paths.dash} /></svg>;

@@ -13,8 +13,19 @@ export const replyLabel = r => r?.reply ? (r.reply === 'custom' ? r.replyText ||
 // A link or file update from the client. Returns the activity row to record, or null when nothing changed.
 export function applyClientUpdate(workspace, clientId, update, now = new Date().toISOString()) {
   const client = workspace.clients.find(c => c.id === clientId);
+  if (!client || !update) return null;
+  if (update.kind === 'brief') {
+    const doc = (workspace.docs || []).find(x => x.id === update.docId && x.kind === 'brief' && (x.client === clientId || workspace.projects.some(p => p.id === x.project && p.client === clientId)));
+    if (!doc) return null;
+    if (Array.isArray(update.questions)) {
+      doc.questions = update.questions;
+    }
+    doc.submittedAt = now;
+    doc.updatedAt = now;
+    return { id: rid(), at: now, kind: 'docs', recordId: doc.id, client: clientId, title: doc.title, action: 'client-submitted-brief' };
+  }
   const url = clientLinkUrl(update?.url);
-  if (!client || !url) return null;
+  if (!url) return null;
   const label = String(update.label || '').trim().slice(0, 60);
   if (update.kind === 'file') {
     const doc = (workspace.docs || []).find(x => x.id === update.docId && x.kind === 'link' && (x.client === clientId || workspace.projects.some(p => p.id === x.project && p.client === clientId)));

@@ -9,8 +9,9 @@ import { applyClientUpdate } from './client-feed';
 
 const DELAY = 2000;
 export function usePortalSync({ d, user, demo, mut, toast }) {
-  const [shares, setShares] = useState([]), [comments, setComments] = useState([]), [requests, setRequests] = useState([]), timer = useRef(null), writing = useRef(new Set()), latestShares = useRef([]);
+  const [shares, setShares] = useState([]), [comments, setComments] = useState([]), [requests, setRequests] = useState([]), timer = useRef(null), writing = useRef(new Set()), pendingRetry = useRef(new Set()), latestShares = useRef([]), latestD = useRef(d);
   latestShares.current = shares;
+  latestD.current = d;
   const config = shares.map(s => [s.id, ...(s.projectIds || []), '|', ...(s.invoiceIds || []), '|', ...(s.docIds || [])].join(',')).join(';');
   useEffect(() => {
     if (demo || !user || !db) { setShares([]); return; }
@@ -19,31 +20,63 @@ export function usePortalSync({ d, user, demo, mut, toast }) {
   useEffect(() => {
     if (!d || !latestShares.current.length) return;
     clearTimeout(timer.current);
+    const syncShare = (share) => {
+      const data = portalUpdate(latestD.current, share, user?.email);
+      if (!data) return;
+      if (writing.current.has(share.id)) {
+        pendingRetry.current.add(share.id);
+        return;
+      }
+      writing.current.add(share.id);
+      setDoc(doc(db, 'solodeskPortals', user.uid, 'shares', share.id), { ownerUid: share.ownerUid, clientId: share.clientId, recipientUid: share.recipientUid, recipientEmail: share.recipientEmail, projectIds: share.projectIds || [], invoiceIds: share.invoiceIds || [], docIds: share.docIds || [], data })
+        .catch(() => {}).finally(() => {
+          writing.current.delete(share.id);
+          if (pendingRetry.current.delete(share.id)) {
+            const nextShare = latestShares.current.find(s => s.id === share.id);
+            if (nextShare) syncShare(nextShare);
+          }
+        });
+    };
     timer.current = setTimeout(() => {
       for (const share of latestShares.current) {
-        const data = portalUpdate(d, share, user?.email);
-        if (!data || writing.current.has(share.id)) continue;
-        writing.current.add(share.id);
-        setDoc(doc(db, 'solodeskPortals', user.uid, 'shares', share.id), { ownerUid: share.ownerUid, clientId: share.clientId, recipientUid: share.recipientUid, recipientEmail: share.recipientEmail, projectIds: share.projectIds || [], invoiceIds: share.invoiceIds || [], docIds: share.docIds || [], data })
-          .catch(() => {}).finally(() => writing.current.delete(share.id));
+        syncShare(share);
       }
     }, DELAY);
     return () => clearTimeout(timer.current);
   }, [d, config]);
   // Client comments (live) and link updates (applied once, then removed).
   const ids = shares.map(s => s.id).sort().join(',');
+  const activeSubs = useRef(new Map()), feeds = useRef(new Map()), reqs = useRef(new Map());
   useEffect(() => {
-    if (demo || !user || !db || !ids) { setComments([]); setRequests([]); return; }
-    const feeds = new Map(), reqs = new Map(), offs = [];
-    for (const clientId of ids.split(',')) {
+    if (demo || !user || !db || !ids) {
+      activeSubs.current.forEach(offs => offs.forEach(f => f()));
+      activeSubs.current.clear();
+      feeds.current.clear();
+      reqs.current.clear();
+      setComments([]);
+      setRequests([]);
+      return;
+    }
+    const currentIdSet = new Set(ids.split(',').filter(Boolean));
+    for (const [clientId, offs] of activeSubs.current.entries()) {
+      if (!currentIdSet.has(clientId)) {
+        offs.forEach(f => f());
+        activeSubs.current.delete(clientId);
+        feeds.current.delete(clientId);
+        reqs.current.delete(clientId);
+      }
+    }
+    for (const clientId of currentIdSet) {
+      if (activeSubs.current.has(clientId)) continue;
       const base = ['solodeskPortals', user.uid, 'shares', clientId];
+      const offs = [];
       offs.push(onSnapshot(collection(db, ...base, 'comments'), snap => {
-        feeds.set(clientId, snap.docs.map(x => ({ id: x.id, clientId, ...x.data(), at: x.data().at?.toDate?.().toISOString() || '' })));
-        setComments([...feeds.values()].flat().sort((a, b) => a.at.localeCompare(b.at)));
+        feeds.current.set(clientId, snap.docs.map(x => ({ id: x.id, clientId, ...x.data(), at: x.data().at?.toDate?.().toISOString() || '' })));
+        setComments([...feeds.current.values()].flat().sort((a, b) => a.at.localeCompare(b.at)));
       }, () => {}));
       offs.push(onSnapshot(collection(db, ...base, 'requests'), snap => {
-        reqs.set(clientId, snap.docs.map(x => ({ id: x.id, clientId, ...x.data(), at: x.data().at?.toDate?.().toISOString() || '', repliedAt: x.data().repliedAt?.toDate?.().toISOString() || '' })));
-        setRequests([...reqs.values()].flat().sort((a, b) => b.at.localeCompare(a.at)));
+        reqs.current.set(clientId, snap.docs.map(x => ({ id: x.id, clientId, ...x.data(), at: x.data().at?.toDate?.().toISOString() || '', repliedAt: x.data().repliedAt?.toDate?.().toISOString() || '' })));
+        setRequests([...reqs.current.values()].flat().sort((a, b) => b.at.localeCompare(a.at)));
       }, () => {}));
       offs.push(onSnapshot(collection(db, ...base, 'updates'), snap => {
         for (const x of snap.docs) {
@@ -52,8 +85,16 @@ export function usePortalSync({ d, user, demo, mut, toast }) {
           toast(`${x.data().label || 'A link'} was updated by your client.`);
         }
       }, () => {}));
+      activeSubs.current.set(clientId, offs);
     }
-    return () => offs.forEach(f => f());
+    setComments([...feeds.current.values()].flat().sort((a, b) => a.at.localeCompare(b.at)));
+    setRequests([...reqs.current.values()].flat().sort((a, b) => b.at.localeCompare(a.at)));
+    return () => {
+      if (!user || demo) {
+        activeSubs.current.forEach(offs => offs.forEach(f => f()));
+        activeSubs.current.clear();
+      }
+    };
   }, [ids, user?.uid, demo]);
   return { comments, shares, requests };
 }
@@ -73,3 +114,21 @@ export const deleteRequest = (user, clientId, requestId) => import('firebase/fir
 // Answer a client request with one of the reply labels (and your own timing for "custom").
 export const replyToRequest = (user, clientId, requestId, reply, replyText = '', taskId) => import('firebase/firestore').then(({ updateDoc, serverTimestamp }) =>
   updateDoc(doc(db, 'solodeskPortals', user.uid, 'shares', clientId, 'requests', requestId), { reply, replyText: String(replyText || '').trim().slice(0, 200), repliedAt: serverTimestamp(), ...(taskId ? { taskId } : {}) }));
+
+// Revoke a client share and remove its subcollections (responses, comments, requests, updates)
+export async function deletePortalShare(dbInstance, ownerUid, clientId) {
+  if (!dbInstance || !ownerUid || !clientId) return;
+  const { collection, getDocs, deleteDoc, doc, writeBatch } = await import('firebase/firestore');
+  const shareRef = doc(dbInstance, 'solodeskPortals', ownerUid, 'shares', clientId);
+  for (const sub of ['responses', 'comments', 'requests', 'updates']) {
+    try {
+      const snap = await getDocs(collection(shareRef, sub));
+      if (!snap.empty) {
+        const batch = writeBatch(dbInstance);
+        snap.docs.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+    } catch {}
+  }
+  await deleteDoc(shareRef);
+}

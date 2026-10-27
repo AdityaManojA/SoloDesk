@@ -5,10 +5,18 @@
 //
 // Old app versions read `json`. In the split layout it holds a marker their validation rejects, so an old tab
 // shows a load error instead of saving a workspace with those lists missing.
-export const PART_LISTS = ['notes', 'docs', 'activity', 'focusSessions', 'trash'];
+export const PART_LISTS = ['notes', 'docs', 'activity', 'focusSessions', 'trash', 'tasks', 'invoices'];
 export const PART_BYTES = 900_000;
 export const SPLIT_MARKER = JSON.stringify({ splitStorage: 2, message: 'This workspace was saved by a newer Terracove. Reload the page.' });
 const bytes = s => new TextEncoder().encode(s).byteLength;
+
+export function partHash(str) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 16777619) >>> 0;
+  }
+  return h.toString(36);
+}
 
 export function splitWorkspace(workspace) {
   const core = { ...workspace }, parts = {};
@@ -51,13 +59,24 @@ const sortKeys = w => Object.fromEntries(Object.keys(w).sort().map(k => [k, w[k]
 // 'workspace-conflict' error when the stored workspace no longer matches `baseline` (changed elsewhere).
 export async function writeWorkspace(tx, refOf, value, baseline, assertUnchanged) {
   const { core, parts } = splitWorkspace(value);
+  const newHashes = Object.fromEntries(Object.entries(parts).map(([id, json]) => [id, partHash(json)]));
   const snap = await tx.get(refOf(null)), data = snap.exists() ? snap.data() : null, oldIds = data?.parts || [];
-  const partSnaps = await Promise.all(oldIds.map(id => tx.get(refOf(id))));
-  const partDocs = Object.fromEntries(partSnaps.filter(s => s.exists()).map((s, i) => [s.id ?? oldIds[i], s.data().json]));
-  let current; try { current = baselineOf(joinWorkspace(data, partDocs)); } catch { current = 'missing-part'; }
+  const oldHashes = data?.partHashes;
+  let current;
+  if (data?.baseline && data.v >= 2) {
+    current = data.baseline;
+  } else {
+    const partSnaps = await Promise.all(oldIds.map(id => tx.get(refOf(id))));
+    const partDocs = Object.fromEntries(partSnaps.filter(s => s.exists()).map((s, i) => [s.id ?? oldIds[i], s.data().json]));
+    try { current = baselineOf(joinWorkspace(data, partDocs)); } catch { current = 'missing-part'; }
+  }
   assertUnchanged(current, baseline);
-  for (const [id, json] of Object.entries(parts)) if (partDocs[id] !== json) tx.set(refOf(id), { json });
+  for (const [id, json] of Object.entries(parts)) {
+    if (!oldHashes || oldHashes[id] !== newHashes[id]) {
+      tx.set(refOf(id), { json });
+    }
+  }
   for (const id of oldIds) if (!(id in parts)) tx.delete(refOf(id));
-  tx.set(refOf(null), { json: SPLIT_MARKER, core, parts: Object.keys(parts), v: 2 });
+  tx.set(refOf(null), { json: SPLIT_MARKER, core, parts: Object.keys(parts), partHashes: newHashes, baseline: baselineOf(value), v: 2 });
   return baselineOf(value);
 }

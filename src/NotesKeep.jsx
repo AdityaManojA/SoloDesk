@@ -43,7 +43,7 @@ function withReminder(item) {
 function Checklist({ note, save }) {
   const [items, setItems] = useState(note.checklist || []), refs = useRef({}), focus = useRef(null), swipe = useRef(null);
   useEffect(() => { setItems(note.checklist || []); }, [note.id]);
-  useEffect(() => { const f = focus.current, el = f && refs.current[f.id]; if (el) { el.focus(); const at = f.at === 'start' ? 0 : el.value.length; el.setSelectionRange(at, at); } focus.current = null; });
+  useEffect(() => { const f = focus.current, el = f && refs.current[f.id]; if (el) { el.focus(); const at = f.at === 'start' ? 0 : el.value.length; el.setSelectionRange(at, at); } focus.current = null; }, [items]);
   const debounced = useDebounced(list => save(list));
   const commit = (list, now = false) => { setItems(list); now ? debounced.flush(list) : debounced.run(list); };
   const t = today();
@@ -180,7 +180,9 @@ export function NoteDialog({ note, d, mut, toast, onClose }) {
   const edit = fn => mut(w => { const n = (w.notes || []).find(x => x.id === note.id); if (n) fn(n); });
   const close = () => { const n = (d.notes || []).find(x => x.id === note.id); const typed = [...(box.current?.querySelectorAll('input,textarea,[contenteditable=true]') || [])].some(x => (x.value ?? x.textContent ?? '').trim());
     if (n && !typed && !n.title && !n.body && !(n.checklist || []).length) mut(w => { w.notes = w.notes.filter(x => x.id !== n.id); }); onClose(); };
-  useEffect(() => { const k = e => { if (e.key === 'Escape') close(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); });
+  const closeRef = useRef(close);
+  closeRef.current = close;
+  useEffect(() => { const k = e => { if (e.key === 'Escape') closeRef.current(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, []);
   return <div className="ov" onClick={close}><div ref={box} className="dlg keep-dialog" role="dialog" aria-modal="true" aria-label="Edit note" onClick={e => e.stopPropagation()}>
     <NoteEditor note={note} edit={edit} autoFocus onTrash={() => { mut(w => trashReusable(w, 'notes', note.id)); onClose(); toast('Note moved to Trash.'); }}
       labels={<LinkPicker note={note} d={d} edit={edit} />} />

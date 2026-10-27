@@ -67,6 +67,8 @@ export default function Calendar({ d, mut, open, user, taskflow, toast = () => {
     if (date) requestAnimationFrame(() => { const el = document.querySelector('.page-calendar .cal-label'); if (el && el.getBoundingClientRect().top < 0) window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - 96), behavior: 'smooth' }); });
   };
   const step = by => setDay(shiftZoom(zoom, day, by));
+  const stepRef = useRef(step);
+  stepRef.current = step;
   const zoomIndex = ZOOMS.indexOf(zoom), zoomArea = useRef(null), lastWheel = useRef(0);
   // Ctrl/⌘ + scroll and trackpad pinch (which browsers report as Ctrl + wheel) zoom the calendar, not the page.
   useEffect(() => {
@@ -74,7 +76,7 @@ export default function Calendar({ d, mut, open, user, taskflow, toast = () => {
     const wheel = e => { if (!e.ctrlKey && !e.metaKey) return; e.preventDefault(); const now = Date.now(); if (now - lastWheel.current < 350 || Math.abs(e.deltaY) < 2) return; lastWheel.current = now; setZoom(z => { const i = ZOOMS.indexOf(ZOOMS.includes(z) ? z : 'month'); return ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, i + (e.deltaY < 0 ? 1 : -1)))]; }); };
     el.addEventListener('wheel', wheel, { passive: false }); return () => el.removeEventListener('wheel', wheel);
   }, []);
-  useEffect(() => { const keys = e => { if (e.target.closest('input,textarea,select,[contenteditable]') || document.querySelector('[role=dialog]')) return; const k = { y: 'year', m: 'month', w: 'week', d: 'day' }[e.key.toLowerCase()]; if (k && !e.metaKey && !e.ctrlKey && !e.altKey) setZoom(k); if (e.key === 't' || e.key === 'T') setDay(today()); if (e.key === 'ArrowLeft' && e.altKey) step(-1); if (e.key === 'ArrowRight' && e.altKey) step(1); }; window.addEventListener('keydown', keys); return () => window.removeEventListener('keydown', keys); });
+  useEffect(() => { const keys = e => { if (e.target.closest('input,textarea,select,[contenteditable]') || document.querySelector('[role=dialog]')) return; const k = { y: 'year', m: 'month', w: 'week', d: 'day' }[e.key.toLowerCase()]; if (k && !e.metaKey && !e.ctrlKey && !e.altKey) setZoom(k); if (e.key === 't' || e.key === 'T') setDay(today()); if (e.key === 'ArrowLeft' && e.altKey) stepRef.current(-1); if (e.key === 'ArrowRight' && e.altKey) stepRef.current(1); }; window.addEventListener('keydown', keys); return () => window.removeEventListener('keydown', keys); }, []);
   useEffect(() => {
     if (!selected) return;
     setMoveDate(localDay(selected.start));

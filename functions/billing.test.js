@@ -34,3 +34,29 @@ test('short tasks stay unbilled instead of being lost, and the shown total match
     focusSessions: ['A', 'B', 'C'].map(title => ({ project: 'p', title, seconds: 420 })) };
   assert.equal(unbilled(tiny, 'p').billable, 0, 'no Invoice button for time that would not make a line');
 });
+
+test('taskLines groups sessions by taskId even if title was updated, and keeps distinct tasks with same title separate', () => {
+  const w = {
+    ...fresh(),
+    clients: [{ id: 'c', name: 'Client' }],
+    projects: [{ id: 'p', name: 'Web', client: 'c', hourlyRate: 100 }],
+    focusSessions: [
+      { id: 's1', project: 'p', taskId: 't1', title: 'Wireframes v1', seconds: 3600 },
+      { id: 's2', project: 'p', taskId: 't1', title: 'Wireframes v2', seconds: 3600 },
+      { id: 's3', project: 'p', taskId: 't2', title: 'Review', seconds: 1800 },
+      { id: 's4', project: 'p', taskId: 't3', title: 'Review', seconds: 1800 }
+    ]
+  };
+  const unb = unbilled(w, 'p');
+  assert.equal(unb.billable, 3);
+  const invId = invoiceUnbilledHours(w, 'p');
+  const inv = w.invoices.find(i => i.id === invId);
+  assert.equal(inv.items.length, 3);
+  const t1Item = inv.items.find(it => it.desc === 'Wireframes v2');
+  assert.ok(t1Item);
+  assert.equal(t1Item.qty, 2);
+  const reviewItems = inv.items.filter(it => it.desc === 'Review');
+  assert.equal(reviewItems.length, 2);
+  assert.equal(reviewItems[0].qty, 0.5);
+  assert.equal(reviewItems[1].qty, 0.5);
+});

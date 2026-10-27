@@ -39,9 +39,14 @@ import {assertUnchanged,validateWorkspace,blockers,validateDependencies,projectB
 import {ViewStateProvider,useViewState,PageFrame,DataNav} from './ViewState.jsx';
 import {CommandMenu} from './CommandMenu.jsx';
 import {SmartField,taskChips} from './SmartField.jsx';
+import {HeaderTimer} from './HeaderTimer.jsx';
+import {createExpense,projectFinancials} from './expenses.js';
+import {PAYMENT_TERMS,dueDateForTerms,calcLateFee} from './payment-terms.js';
+import {quarterOfDate,taxPackSummary,taxPackCsv} from './tax-pack.js';
+import {quoteToInvoice} from './billing.js';
 import {ApprovalsPage,ApprovalBox,useApprovalSync} from './Approvals.jsx';
 import {approvalItems,approvalClient} from './approvals';
-import {usePortalSync,sendOwnerComment} from './portal-sync';
+import {usePortalSync,sendOwnerComment,deletePortalShare} from './portal-sync';
 import {NotificationBell} from './Notifications.jsx';
 import {unseenAnswers} from './notifications';
 import {unbilled,invoiceUnbilledHours} from './billing';
@@ -257,7 +262,7 @@ function ProjectPage({ d, mut, open, id, removeItem, user, demo, toast }) {
     <Back to="projects" label="Projects" />
     <div className="page-head"><div className="grow"><h1>{p.name}</h1><div className="tag-row"><span className={'chip ' + (p.status === 'Active' ? 'hero' : p.status === 'Complete' ? 'sage' : 'sand')}>{p.status}</span><ProjectClientLink d={d} mut={mut} project={p} toast={toast} />{p.start && <span>· {p.start}{p.end ? ' – ' + p.end : ' · ongoing'}</span>}<span>· {done} of {tasks.length} tasks complete</span></div></div>
       <button className="ghost" onClick={() => open('project', p)}>Edit</button><button className="btn" onClick={() => open('task', { project: id, client: p.client })}>+ Task</button></div>
-    <div className="section-tabs" role="group" aria-label="Project sections">{[['tasks','Tasks ' + tasks.length],['notes','Notes'],['files','Files & docs'],['budget','Budget']].map(([key,title])=><button type="button" key={key} aria-pressed={section===key} onClick={()=>setSection(key)}>{title}</button>)}</div>
+    <div className="section-tabs" role="group" aria-label="Project sections">{[['tasks','Tasks ' + tasks.length],['notes','Notes'],['files','Files & docs'],['budget','Budget & profit']].map(([key,title])=><button type="button" key={key} aria-pressed={section===key} onClick={()=>setSection(key)}>{title}</button>)}</div>
     {section==='tasks'&&<section aria-label="Project tasks">{tasks.length ? tasks.map(k => <div className="row task-row" data-priority={k.priority || 'None'} key={k.id}><button className="chk" aria-pressed={k.status === 'Done'} aria-label={k.status === 'Done' ? 'Mark not done' : 'Mark complete'} onClick={() => toggleTask(mut, k.id)}>{k.status === 'Done' && <Icon name="check" size={16} />}</button><a className="grow" href={'#/tasks/' + k.id}><b style={{ textDecoration: k.status === 'Done' ? 'line-through' : 'none' }}>{k.title}</b><small>{k.status}{k.due ? ` · due ${k.due}` : ''}{k.priority ? ` · ${k.priority} priority` : ''}</small></a></div>) : <Empty m="No tasks yet for this project." label="Add task" onClick={() => open('task', { project: id, client: p.client })} />}</section>}
     {section==='notes'&&<NoteBoard d={d} mut={mut} toast={toast} scope={{project:id}} onFiles={()=>setSection('files')}/>}
     {section==='files'&&<FilesAndDocs d={d} mut={mut} toast={toast} scope={{kind:'project',id}} user={user} demo={demo}/>}
@@ -429,6 +434,8 @@ function InvoicePage({ d, mut, open, ask, id, removeItem, toast, user, demo }) {
           <button className="ghost danger sm" onClick={() => removeItem('invoices',id)}>Delete invoice</button></>}
         </div></div>
       {!editor.editing && canRemind(i) && <p className="reminder-note">{s === 'Overdue' ? `${daysLate(i)} day${daysLate(i) === 1 ? '' : 's'} overdue. ` : ''}{(i.reminders || []).length ? `Reminded ${lastReminded(i)}${i.reminders.length > 1 ? ` (${i.reminders.length} reminders)` : ''}. ` : 'No reminder sent yet. '}<button type="button" className="text-link" onClick={() => remind('mail')}>Use my email app instead</button></p>}
+      {!editor.editing && i.lateFeeEnabled && s === 'Overdue' && (() => { const fee = calcLateFee(i); return fee > 0 ? <p className="reminder-note" style={{ color: 'var(--hero, #c2593f)', fontWeight: 600 }}>Automated 1.5% monthly late fee: {money(fee, i.currency)} · Total with late fee: {money(c.bal + fee, i.currency)}</p> : null; })()}
+      {!editor.editing && i.paymentLink && <div style={{ margin: '8px 0' }}><a className="btn sm" href={i.paymentLink} target="_blank" rel="noopener noreferrer">💳 Pay online: {i.paymentLink}</a></div>}
       {!editor.editing && <small>Download PDF opens your browser's print window. Choose "Save as PDF" as the destination.</small>}
     </div>
     <div className={editor.editing ? 'two-col sheet-edit' : ''} style={{ marginTop: 12 }}>
@@ -566,6 +573,7 @@ function ClientForm({ v, close, save, removeItem }) {
       {links.map((l, i) => <div className="link-row" key={i}><input aria-label={'Link ' + (i + 1) + ' name'} placeholder="Name (optional)" maxLength={40} value={l.label} onChange={e => set(i, 'label', e.target.value)} /><input aria-label={'Link ' + (i + 1) + ' address'} placeholder="acme.com" inputMode="url" value={l.url} onChange={e => set(i, 'url', e.target.value)} /><button type="button" className="icon-button" aria-label={'Remove link ' + (i + 1)} onClick={() => setLinks(links.length > 1 ? links.filter((_, j) => j !== i) : [{ label: '', url: '' }])}><Icon name="close" size={16} /></button></div>)}
       {links.length < 10 && <button type="button" className="add-inline-link" onClick={() => setLinks([...links, { label: '', url: '' }])}><Icon name="plus" size={16} />Add a link</button>}
     </fieldset>
+    <Sel l="Default billing currency" name="currency" o={[['', 'Workspace default (' + (v.currency || 'USD') + ')'], ['USD', 'USD ($)'], ['EUR', 'EUR (€)'], ['GBP', 'GBP (£)'], ['INR', 'INR (₹)'], ['CAD', 'CAD ($)'], ['AUD', 'AUD ($)'], ['JPY', 'JPY (¥)']]} defaultValue={v.currency || ''} />
     <label>Address<textarea name="address" rows="2" defaultValue={v.address} /></label><label>Notes<textarea name="notes" rows="2" defaultValue={v.notes} /></label>
   </Modal>;
 }
@@ -597,7 +605,7 @@ function ProjectForm({ v, d, mut, toast, close, save, removeItem }) {
     <Sel l="Client" o={opts} value={client} onChange={e => { setManual(m => new Set(m).add('client')); setClient(e.target.value); }} />
     {adding ? <div className="inline-add"><input ref={addInput} autoFocus aria-label="New client name" placeholder="Client name" value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addClient(); } if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setAdding(false); } }} /><button type="button" className="btn sm" onClick={addClient}>Add</button><button type="button" className="ghost sm" onClick={() => setAdding(false)}>Cancel</button></div>
       : <button type="button" className="add-inline-link" onClick={() => setAdding(true)}><Icon name="plus" size={16} />Add a new client</button>}
-    <Sel l="Status" name="status" o={['Active', 'On hold', 'Complete']} defaultValue={v.status || 'Active'} />
+    <div className="grid2"><Sel l="Status" name="status" o={['Active', 'On hold', 'Complete']} defaultValue={v.status || 'Active'} /><Sel l="Project currency" name="currency" o={[['', 'Client / workspace default'], ['USD', 'USD ($)'], ['EUR', 'EUR (€)'], ['GBP', 'GBP (£)'], ['INR', 'INR (₹)'], ['CAD', 'CAD ($)'], ['AUD', 'AUD ($)'], ['JPY', 'JPY (¥)']]} defaultValue={v.currency || ''} /></div>
     <h3>Calendar timeline</h3><p className="mu form-help">Leave the end date empty for ongoing work: the project runs from its start date until you add an end date.</p>
     <div className="grid2"><Fld l="Start date" type="date" value={dates.start} onChange={setDate('start')} /><Fld l="End date (optional)" type="date" value={dates.end} onChange={setDate('end')} /></div>
     <label className="check-row"><input type="checkbox" checked={budget} onChange={e => setBudget(e.target.checked)} /> Track an effort budget</label>
@@ -716,7 +724,7 @@ export default function App() {
     return () => window.removeEventListener('beforeunload',warn);
   }, [demo,saving]);
   useEffect(() => { if (route.page === 'u') return; document.title = !demo && user === null && !['privacy','cookies'].includes(route.page) ? 'Sign in · Terracove' : `${NAV.find(([k]) => k === route.page)?.[1] || ({more: 'More', privacy: 'Privacy Policy', cookies: 'Cookies & storage',portal:'Client portal'})[route.page] || 'Home'} · Terracove`; }, [route.page,user,demo]);
-  const apply = (value) => { if(value===null){undoHistory.current=[];setUndoCount(0);routeScrolls.current.clear();} dataRef.current = value; setD(value); };
+  const apply = (value) => { if(value===null){undoHistory.current=[];setUndoCount(0);routeScrolls.current.clear();dataRef.currentJson=null;} else {dataRef.currentJson=JSON.stringify(value);} dataRef.current = value; setD(value); };
   const load = async (u) => {
     const request = ++loadVersion.current;
     setErr(''); apply(null);
@@ -761,16 +769,17 @@ export default function App() {
     const before=dataRef.current;if(!before)return;const n=structuredClone(before);fn(n);
     for(const task of n.tasks){const old=before.tasks.find(t=>t.id===task.id);if(old&&task.status==='Done'&&(old.status!=='Done'||JSON.stringify(old.dependencies)!==JSON.stringify(task.dependencies))&&blockers(n,task).length){toast('Finish the blocking tasks first. Open task details to manage dependencies.');return false;}}
     repeatCompletedTasks(before,n);
-    if(JSON.stringify(before)===JSON.stringify(n))return true;
+    const beforeJson=dataRef.currentJson||JSON.stringify(before),nJson=JSON.stringify(n);
+    if(beforeJson===nJson)return true;
     recordActivity(before,n);stampUpdated(before,n);
-    undoHistory.current=[...undoHistory.current.slice(-19),structuredClone(before)];setUndoCount(undoHistory.current.length);apply(n);
-    if (demo) { try { localStorage.setItem('sd_demo', JSON.stringify(n)); } catch { toast('Browser storage is full. Export your data before leaving.'); } return true; }
+    undoHistory.current=[...undoHistory.current.slice(-19),beforeJson];setUndoCount(undoHistory.current.length);apply(n);
+    if (demo) { try { localStorage.setItem('sd_demo', nJson); } catch { toast('Browser storage is full. Export your data before leaving.'); } return true; }
     // Resolves true once saved; the Excel sync inbox waits for this before clearing an applied change.
     return saves.current.save(n);
   };
   const mutRef=useRef(mut);mutRef.current=mut;
   useEffect(()=>watchSyncInbox(demo||!d?null:user?.uid,(fn)=>mutRef.current(fn)),[user?.uid,demo,!!d]);
-  const undo=()=>{const previous=undoHistory.current.pop();if(!previous)return;setUndoCount(undoHistory.current.length);apply(previous);if(demo){try{localStorage.setItem('sd_demo',JSON.stringify(previous));}catch{toast('Browser storage is full.');}}else persist(previous);toast('Last workspace change undone.');};
+  const undo=()=>{const previousJson=undoHistory.current.pop();if(!previousJson)return;const previous=JSON.parse(previousJson);setUndoCount(undoHistory.current.length);apply(previous);if(demo){try{localStorage.setItem('sd_demo',previousJson);}catch{toast('Browser storage is full.');}}else persist(previous);toast('Last workspace change undone.');};
   const finishLogout = async () => {
     if (signingOut) return;
     setSigningOut(true);
@@ -810,7 +819,7 @@ export default function App() {
   const removeItem = (kind,id,invoiceId) => {
     const info = deletionInfo(dataRef.current,kind,id,invoiceId);
     if (!info) return;
-    ask(info.message.replace('This cannot be undone.','You can restore this deletion from Trash. Client portal access is revoked separately and must be republished after restoring.'),async()=>{if(kind==='clients'&&!demo){try{await deleteDoc(doc(fdb,'solodeskPortals',user.uid,'shares',id));}catch{toast('Could not revoke client access. Reconnect and try deleting again.');return;}}mut(n=>trashRecord(n,kind,id,invoiceId)); if(kind !== 'payments' && route.id===id) nav(kind); toast('Moved to Trash. Restore it from More → Trash, or use Undo.');},{label:'Move to Trash',danger:true,title:'Move to Trash?'});
+    ask(info.message.replace('This cannot be undone.','You can restore this deletion from Trash. Client portal access is revoked separately and must be republished after restoring.'),async()=>{if(kind==='clients'&&!demo){try{await deletePortalShare(fdb,user.uid,id);}catch{toast('Could not revoke client access. Reconnect and try deleting again.');return;}}mut(n=>trashRecord(n,kind,id,invoiceId)); if(kind !== 'payments' && route.id===id) nav(kind); toast('Moved to Trash. Restore it from More → Trash, or use Undo.');},{label:'Move to Trash',danger:true,title:'Move to Trash?'});
   };
   const closeExperience=()=>{if(experience==='onboarding')rememberSeen(localStorage,onboardingKey(experienceOwner));setExperience(null);};
   const startTour=()=>{rememberSeen(localStorage,onboardingKey(experienceOwner));setExperience('tour');};
@@ -846,7 +855,7 @@ export default function App() {
       {GROUPS.map(([title,keys]) => <div key={title}><span className="nav-caption">{title}</span><nav aria-label={title}>{keys.map(k => { const t = NAV.find(([x]) => x === k)[1], on = page === k || (k === 'reports' && page === 'invoices'); return <a key={k} href={'#/' + k} className={on ? 'on' : ''} aria-current={on ? 'page' : undefined}><Icon name={NAV_ICON[k] || k} size={18} /><span>{t}</span>{k === 'tasks' && d.tasks.filter(x => x.status !== 'Done' && !x.arch).length > 0 && <span className="nav-count">{d.tasks.filter(x => x.status !== 'Done' && !x.arch).length}</span>}{k === 'approvals' && unseenAnswers(d, d.settings.approvalsSeenAt) + clientRequests.filter(r => !r.reply).length > 0 && <span className="nav-count alert" title="New client answers and requests">{unseenAnswers(d, d.settings.approvalsSeenAt) + clientRequests.filter(r => !r.reply).length}</span>}</a>; })}</nav></div>)}
       <div className="sidebar-bottom"><div className="sidebar-user"><a className="sidebar-who" href="#/profile" title="Your profile"><span className="avatar">{(demo ? 'Demo' : user?.displayName || d.settings.biz || 'You').split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase()}</span><span className="who"><b>{demo ? 'Demo explorer' : user?.displayName || 'Your account'}</b><small>{demo ? 'Sample workspace' : user?.email || d.settings.biz || 'Signed in'}</small></span></a><button type="button" className="sidebar-logout" onClick={logout} aria-label={demo ? 'Exit demo' : 'Log out'} title={demo ? 'Exit demo' : 'Log out'}><Icon name="logout" size={16} /></button></div><a className="sidebar-version" href="#/settings/whats-new">Terracove {currentVersion()} · What’s new</a></div>
     </aside>
-    <div className="app-body"><header className="topbar"><a className="header-brand" href="#/dash"><BrandLogo /></a><nav className="breadcrumb" aria-label="Breadcrumb"><a href="#/dash">Workspace</a> <span>/</span> {route.id ? <a href={'#/' + page}>{NAV.find(([k]) => k === page)?.[1] || 'More'}</a> : <b aria-current="page">{NAV.find(([k]) => k === page)?.[1] || 'More'}</b>}{route.id && <> <span>/</span> <b aria-current="page">{crumbName(d, page, route.id)}</b></>}</nav><div className="topbar-right">{demo ? <span className="demo-badge">LOCAL DEMO · SAMPLE DATA</span> : <span className={'save-state ' + saving} role="status">{saving === 'saving' ? 'Saving…' : ['error','conflict'].includes(saving) ? <button className="ghost sm" onClick={() => {if(saving!=='conflict')persist(dataRef.current);}}>Unsaved changes</button> : ''}</span>}<span className="topbar-date">{new Date().toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</span><div className="header-actions" role="group" aria-label="Workspace actions"><CommandMenu d={d} mut={mut} toast={toast} open={open} Modal={Modal} undo={undo} undoCount={undoCount}/><WorkspaceSearch d={d} taskflow={taskflow} Modal={Modal} openProject={p=>open('project',p)}/><NotificationBell d={d} mut={mut} comments={clientComments} requests={clientRequests}/><span className="toolbar-divider" aria-hidden="true" /><a className="icon-button header-link" href="#/settings" aria-label="Open settings" title="Settings"><Icon name="settings" size={18} /></a><button className="icon-button" aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} title={theme === 'dark' ? 'Light mode' : 'Dark mode'} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}><Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} /></button><button type="button" className="ghost danger sm signout-button" aria-label="Sign out of Terracove" disabled={signingOut} onClick={logout}><Icon name="logout" size={18} /><span>{signingOut ? 'Signing out…' : 'Sign out'}</span></button></div></div></header>
+    <div className="app-body"><header className="topbar"><a className="header-brand" href="#/dash"><BrandLogo /></a><nav className="breadcrumb" aria-label="Breadcrumb"><a href="#/dash">Workspace</a> <span>/</span> {route.id ? <a href={'#/' + page}>{NAV.find(([k]) => k === page)?.[1] || 'More'}</a> : <b aria-current="page">{NAV.find(([k]) => k === page)?.[1] || 'More'}</b>}{route.id && <> <span>/</span> <b aria-current="page">{crumbName(d, page, route.id)}</b></>}</nav><div className="topbar-right">{demo ? <span className="demo-badge">LOCAL DEMO · SAMPLE DATA</span> : <span className={'save-state ' + saving} role="status">{saving === 'saving' ? 'Saving…' : ['error','conflict'].includes(saving) ? <button className="ghost sm" onClick={() => {if(saving!=='conflict')persist(dataRef.current);}}>Unsaved changes</button> : ''}</span>}<span className="topbar-date">{new Date().toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</span><HeaderTimer d={d} mut={mut} toast={toast} /><div className="header-actions" role="group" aria-label="Workspace actions"><CommandMenu d={d} mut={mut} toast={toast} open={open} Modal={Modal} undo={undo} undoCount={undoCount}/><WorkspaceSearch d={d} taskflow={taskflow} Modal={Modal} openProject={p=>open('project',p)}/><NotificationBell d={d} mut={mut} comments={clientComments} requests={clientRequests}/><span className="toolbar-divider" aria-hidden="true" /><a className="icon-button header-link" href="#/settings" aria-label="Open settings" title="Settings"><Icon name="settings" size={18} /></a><button className="icon-button" aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} title={theme === 'dark' ? 'Light mode' : 'Dark mode'} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}><Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} /></button><button type="button" className="ghost danger sm signout-button" aria-label="Sign out of Terracove" disabled={signingOut} onClick={logout}><Icon name="logout" size={18} /><span>{signingOut ? 'Signing out…' : 'Sign out'}</span></button></div></div></header>
     <main ref={mainRef} id="workspace" tabIndex={-1}>
       {(!online||['error','conflict'].includes(saving))&&!demo&&<section className="sync-notice" role="status"><strong>{!online?'Offline · changes stay in this tab':saving==='conflict'?'Another tab or device changed this workspace':'Changes are not saved'}</strong><p>{saveError||'Reconnect to save pending changes. An account-scoped draft is kept in this tab for reload recovery.'}</p><a className="ghost sm" href="#/backups">Export pending backup</a>{saving==='conflict'?<button className="ghost sm" onClick={()=>ask('Download a backup of pending changes first. Load the latest saved workspace and discard this tab’s pending version?',()=>{sessionStorage.removeItem('sd_pending_'+user.uid);setSaving('saved');load(user);},{title:'Load latest saved version?',label:'Load latest'})}>Load latest saved version</button>:<button className="ghost sm" disabled={!online} onClick={()=>persist(dataRef.current)}>Retry save</button>}</section>}
       <ScreenBoundary key={page+(route.id||'')}><Suspense fallback={<ScreenLoading/>}><PageFrame mainRef={mainRef} top={routeScrolls.current.get(window.location.hash||'#/dash')||0}><div className={'page-content page-'+page} key={page + (route.id || '')}>
@@ -880,11 +889,12 @@ export default function App() {
     {updateNote && !experience && <UpdateNotice Modal={Modal} onClose={closeUpdate}/>}
     {experience && <Experience key={experience+'-'+experienceOwner} mode={experience} demo={demo} onClose={closeExperience} onTour={startTour}/>}
     {dlg?.k === 'new' && <Modal title="Create new" label="Close" onClose={close} onSubmit={close}>
-      {[['client', 'Client'], ['project', 'Project'], ['task', 'Task'], ['invoice', 'Invoice']].map(([k, t]) => <button type="button" key={k} className="row" style={{ width: '100%', font: 'inherit', color: 'inherit', cursor: 'pointer' }} onClick={() => { close(); setTimeout(() => open(k), 0); }}><b>{t}</b></button>)}</Modal>}
+      {[['client', 'Client'], ['project', 'Project'], ['task', 'Task'], ['invoice', 'Invoice'], ['expense', 'Expense']].map(([k, t]) => <button type="button" key={k} className="row" style={{ width: '100%', font: 'inherit', color: 'inherit', cursor: 'pointer' }} onClick={() => { close(); setTimeout(() => open(k), 0); }}><b>{t}</b></button>)}</Modal>}
     {dlg?.k === 'client' && <ClientForm v={v} close={close} save={save} removeItem={removeItem} />}
     {dlg?.k === 'project' && <ProjectForm v={v} d={d} mut={mut} toast={toast} close={close} save={save} removeItem={removeItem} />}
     {dlg?.k === 'task' && <TaskForm v={v} d={d} cOpts={cOpts} close={close} save={save} removeItem={removeItem} />}
     {dlg?.k === 'invoice' && <InvForm v={v} d={d} mut={mut} close={close} toast={toast} removeItem={removeItem} />}
+    {dlg?.k === 'expense' && <ExpenseForm v={v} d={d} close={close} save={save} />}
     {dlg?.k === 'pay' && (() => { const b = calc(v).bal; return <Modal title="Record payment" onClose={close} onSubmit={(o) => {
       if (num(o.amt) <= 0 || num(o.amt) > b + 0.005) return toast('Enter an amount up to the remaining balance.');
       mut((n) => n.invoices.find((i) => i.id === v.id).pays.push({ id: rid(), amt: num(o.amt), date: o.date, note: o.note })); close(); }}>

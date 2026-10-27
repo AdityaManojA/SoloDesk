@@ -64,3 +64,46 @@ test('saving writes the main document and parts, and refuses to overwrite change
   assert.equal(old.docs.get('main').v, 2);
   assert.ok(b2);
 });
+
+test('tasks and invoices move into part documents and join back completely', () => {
+  const bigTasks = Array.from({ length: 40 }, (_, i) => ({ id: 't' + i, title: 'Task ' + i, notes: 'y'.repeat(50_000) }));
+  const bigInvoices = Array.from({ length: 40 }, (_, i) => ({ id: 'inv' + i, no: 'INV-' + i, items: [{ desc: 'Work ' + i, qty: 1, price: 100 }], notes: 'z'.repeat(50_000), pays: [] }));
+  const w = { ...fresh(), tasks: bigTasks, invoices: bigInvoices };
+  const { core, parts } = splitWorkspace(w);
+  assert.ok(!JSON.parse(core).tasks, 'tasks are moved out of the main document');
+  assert.ok(!JSON.parse(core).invoices, 'invoices are moved out of the main document');
+  assert.ok(Object.keys(parts).some(k => k.startsWith('tasks.')), 'tasks span part documents');
+  assert.ok(Object.keys(parts).some(k => k.startsWith('invoices.')), 'invoices span part documents');
+  const back = joinWorkspace({ core, parts: Object.keys(parts) }, parts);
+  assert.equal(baselineOf(back), baselineOf(w));
+  assert.equal(back.tasks.length, 40);
+  assert.equal(back.invoices.length, 40);
+});
+
+test('part hash caching avoids re-reading and re-writing unchanged parts', async () => {
+  const { writeWorkspace } = await import('../src/workspace-store.js');
+  let getCalls = 0, setCalls = 0;
+  const docs = new Map(), key = id => id || 'main';
+  const snap = id => ({ id, exists: () => docs.has(key(id)), data: () => docs.get(key(id)) });
+  const store = {
+    docs, refOf: id => id,
+    tx: {
+      get: async id => { getCalls++; return snap(id); },
+      set: (id, v) => { setCalls++; docs.set(key(id), v); },
+      delete: id => docs.delete(key(id))
+    }
+  };
+  const v1 = { ...fresh(), notes: big(20) };
+  const b1 = await writeWorkspace(store.tx, store.refOf, v1, null, conflict);
+  // Reset counters
+  getCalls = 0; setCalls = 0;
+  // Modify only 1 note in part 0 (keeping other parts untouched)
+  const v2 = structuredClone(v1);
+  v2.notes[0].title = 'Updated Title';
+  const b2 = await writeWorkspace(store.tx, store.refOf, v2, b1, conflict);
+  // getCalls must be exactly 1 (only main document was read, 0 part reads!)
+  assert.equal(getCalls, 1, 'only main document was read');
+  // setCalls must be exactly 2 (main doc + the 1 changed part notes.0, not all parts!)
+  assert.equal(setCalls, 2, 'only main and the single changed part were written');
+  assert.notEqual(b1, b2);
+});
