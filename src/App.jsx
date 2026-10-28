@@ -31,7 +31,7 @@ import {ProfileEditor,PublicProfile} from './Profile.jsx';
 import {InvoiceSheet,useInvoiceEdit} from './InvoiceEditor.jsx';
 import {AppearanceSettings,InvoiceDefaults,WhatsNew,UpdateNotice} from './SettingsParts.jsx';
 import {applyActionColour} from './appearance';
-import {profileRoute,PROFILE_COLLECTION} from './profile';
+import {profileRoute,PROFILE_COLLECTION,safeUrl} from './profile';
 import {currentVersion,shouldShowUpdate} from './changelog';
 import {assertWorkspaceSize} from './workspace-size';
 import {splitWorkspace,joinWorkspace,baselineOf,writeWorkspace} from './workspace-store';
@@ -435,7 +435,7 @@ function InvoicePage({ d, mut, open, ask, id, removeItem, toast, user, demo }) {
         </div></div>
       {!editor.editing && canRemind(i) && <p className="reminder-note">{s === 'Overdue' ? `${daysLate(i)} day${daysLate(i) === 1 ? '' : 's'} overdue. ` : ''}{(i.reminders || []).length ? `Reminded ${lastReminded(i)}${i.reminders.length > 1 ? ` (${i.reminders.length} reminders)` : ''}. ` : 'No reminder sent yet. '}<button type="button" className="text-link" onClick={() => remind('mail')}>Use my email app instead</button></p>}
       {!editor.editing && i.lateFeeEnabled && s === 'Overdue' && (() => { const fee = calcLateFee(i); return fee > 0 ? <p className="reminder-note" style={{ color: 'var(--hero, #c2593f)', fontWeight: 600 }}>Automated 1.5% monthly late fee: {money(fee, i.currency)} · Total with late fee: {money(c.bal + fee, i.currency)}</p> : null; })()}
-      {!editor.editing && i.paymentLink && <div style={{ margin: '8px 0' }}><a className="btn sm" href={i.paymentLink} target="_blank" rel="noopener noreferrer">💳 Pay online: {i.paymentLink}</a></div>}
+      {!editor.editing && i.paymentLink && safeUrl(i.paymentLink) && <div style={{ margin: '8px 0' }}><a className="btn sm" href={safeUrl(i.paymentLink)} target="_blank" rel="noopener noreferrer">💳 Pay online: {i.paymentLink}</a></div>}
       {!editor.editing && <small>Download PDF opens your browser's print window. Choose "Save as PDF" as the destination.</small>}
     </div>
     <div className={editor.editing ? 'two-col sheet-edit' : ''} style={{ marginTop: 12 }}>

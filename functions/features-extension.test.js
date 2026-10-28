@@ -8,6 +8,7 @@ import { PAYMENT_TERMS, dueDateForTerms, calcLateFee } from '../src/payment-term
 import { taxPackSummary, taxPackCsv } from '../src/tax-pack.js';
 import { signOffProposal } from '../src/approvals.js';
 import { createIntakeBrief, submitBriefAnswers } from '../src/intake.js';
+import { safeUrl } from '../src/profile.js';
 
 test('multi-currency formats properly and allows per-invoice/client currency', () => {
   setCur('USD');
@@ -260,4 +261,14 @@ test('focus timer tracks elapsed time, pause/resume and logs session accurately'
   assert.equal(w.focusSessions.length, 1);
   assert.equal(w.focusSessions[0].seconds, 60);
   assert.equal(w.focusSessions[0].title, 'Design System');
+});
+
+test('safeUrl permits secure web payment links and rejects unsafe schemes', () => {
+  assert.equal(safeUrl('https://buy.stripe.com/test_123'), 'https://buy.stripe.com/test_123');
+  assert.equal(safeUrl('http://paypal.me/designstudio'), 'http://paypal.me/designstudio');
+  assert.equal(safeUrl('javascript:alert(1)'), null);
+  assert.equal(safeUrl('data:text/html,<script>alert(1)</script>'), null);
+  assert.equal(safeUrl('vbscript:msgbox(1)'), null);
+  assert.equal(safeUrl('https://user:pass@malicious.com'), null);
+  assert.equal(safeUrl('not-a-valid-url'), null);
 });

@@ -38,10 +38,12 @@ service cloud.firestore {
       match /responses/{task} {
         allow read: if isOwner() || isClient();
         allow create, update: if isClient() &&
-          request.resource.data.keys().hasOnly(['taskId','decision','comment','at','email']) &&
+          request.resource.data.keys().hasOnly(['taskId','decision','comment','at','email','signerName','userAgent']) &&
           request.resource.data.taskId == task && task in share().data.get('approvalIds', []) &&
           request.resource.data.decision in ['approved','changes'] &&
           request.resource.data.comment is string && request.resource.data.comment.size() <= 1000 &&
+          (!('signerName' in request.resource.data) || (request.resource.data.signerName is string && request.resource.data.signerName.size() <= 100)) &&
+          (!('userAgent' in request.resource.data) || (request.resource.data.userAgent is string && request.resource.data.userAgent.size() <= 300)) &&
           request.resource.data.email is string && request.resource.data.at == request.time;
         allow delete: if isOwner();
       }
@@ -75,17 +77,23 @@ service cloud.firestore {
           request.resource.data.get('taskId', '') is string;
         allow delete: if isOwner();
       }
-      // Link and file updates from the client; SoloDesk applies them to the workspace and removes them.
+      // Link, file and questionnaire updates from the client; SoloDesk applies them to the workspace and removes them.
       match /updates/{update} {
         allow read, delete: if isOwner();
         allow create: if isClient() &&
-          request.resource.data.keys().hasOnly(['kind','docId','label','url','replaceUrl','at','email']) &&
-          request.resource.data.kind in ['link','file'] &&
-          request.resource.data.url is string && request.resource.data.url.size() <= 300 &&
-          request.resource.data.label is string && request.resource.data.label.size() <= 60 &&
-          request.resource.data.docId is string && request.resource.data.docId.size() <= 100 &&
-          request.resource.data.replaceUrl is string && request.resource.data.replaceUrl.size() <= 300 &&
-          request.resource.data.email is string && request.resource.data.at == request.time;
+          request.resource.data.kind in ['link','file','brief'] &&
+          ((request.resource.data.kind in ['link','file'] &&
+            request.resource.data.keys().hasOnly(['kind','docId','label','url','replaceUrl','at','email']) &&
+            request.resource.data.url is string && request.resource.data.url.size() <= 300 &&
+            request.resource.data.label is string && request.resource.data.label.size() <= 60 &&
+            request.resource.data.docId is string && request.resource.data.docId.size() <= 100 &&
+            request.resource.data.replaceUrl is string && request.resource.data.replaceUrl.size() <= 300 &&
+            request.resource.data.email is string && request.resource.data.at == request.time) ||
+           (request.resource.data.kind == 'brief' &&
+            request.resource.data.keys().hasOnly(['kind','docId','questions','at','email']) &&
+            request.resource.data.docId is string && request.resource.data.docId.size() <= 100 &&
+            request.resource.data.questions is list && request.resource.data.questions.size() <= 30 &&
+            request.resource.data.at == request.time && request.resource.data.email is string));
       }
     }
     // Solodesk public profiles (Profile → Public profile), one document per username. Anyone with the link can
