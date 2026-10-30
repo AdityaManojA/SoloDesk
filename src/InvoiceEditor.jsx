@@ -45,7 +45,7 @@ export function InvoiceSheet({ i, d, edit }) {
           <small>Issued</small><F ctx={ctx} path="issue" type="date" aria-label="Issue date" />
           <small>Due</small><F ctx={ctx} path="due" type="date" aria-label="Due date" />
           <small>Reference / PO</small><F ctx={ctx} path="reference" aria-label="Reference or PO number" />
-        </div> : <><div>{value.no}</div>{text(value.title, { fontWeight: 600 })}<div>Issued {value.issue}</div><div>Due {value.due}</div>{value.reference && <div>Ref. {value.reference}</div>}<div className="stamp">{L.ICON[s]}{s}</div></>}
+        </div> : <><div>{value.no}</div>{text(value.title, { fontWeight: 600 })}<div>Issued {value.issue}</div><div>Due {value.due}</div>{value.reference && <div>Ref. {value.reference}</div>}<div className={'stamp' + (s === 'Draft' || s === 'Sent' ? ' noprint' : '')}>{L.ICON[s]}{s}</div></>}
       </div>
     </div>
     <div className="sh-bill party"><small>BILL TO</small>
