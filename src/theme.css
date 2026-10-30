@@ -1194,6 +1194,7 @@ input[type=radio]{border-radius:50%!important}
 /* Invoice sheet: ink and warm greys instead of the old blue */
 .sheet{color:#141414}.sheet small,.sheet .mu{color:#6E675C}.sheet th{color:#6E675C!important;background:transparent}
 :root[data-theme=dark] .sheet th{background:transparent!important}
+.sheet th.r,.sheet td.r{white-space:nowrap;overflow-wrap:normal;word-break:normal}
 /* Calendar dots used an undefined colour */
 
 /* Toasts sit above the dock only on phones */
