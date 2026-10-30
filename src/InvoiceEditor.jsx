@@ -34,8 +34,8 @@ export function InvoiceSheet({ i, d, edit }) {
       <div className="party">
         <small>FROM</small>
         {st.logo && <img className="logo" src={st.logo} alt="" />}
-        {edit ? <><F ctx={ctx} path="from.name" aria-label="Your business name" style={{ fontWeight: 700, fontSize: 16 }} /><F ctx={ctx} path="from.email" aria-label="Your email" /><F ctx={ctx} path="from.phone" aria-label="Your phone" /><F ctx={ctx} path="from.address" multiline aria-label="Your address" /><F ctx={ctx} path="from.taxId" aria-label="Your tax ID (GSTIN, VAT)" placeholder="Tax ID (GSTIN, VAT)" /></>
-          : <><b className="biz">{view.from.name || 'Your business'}</b><div className="sm-t" style={{ whiteSpace: 'pre-line' }}>{[view.from.email, view.from.phone, view.from.address, view.from.taxId && 'Tax ID ' + view.from.taxId].filter(Boolean).join('\n')}</div></>}
+        {edit ? <><F ctx={ctx} path="from.name" aria-label="Your business name" style={{ fontWeight: 700, fontSize: 16 }} /><F ctx={ctx} path="from.role" aria-label="Your job title" placeholder="Job title, e.g. Independent Technical Consultant" /><F ctx={ctx} path="from.email" aria-label="Your email" /><F ctx={ctx} path="from.phone" aria-label="Your phone" /><F ctx={ctx} path="from.address" multiline aria-label="Your address" /><F ctx={ctx} path="from.taxId" aria-label="Your tax ID (GSTIN, VAT)" placeholder="Tax ID (GSTIN, VAT)" /></>
+          : <><b className="biz">{view.from.name || 'Your business'}</b>{view.from.role && <div className="biz-role">{view.from.role}</div>}<div className="sm-t" style={{ whiteSpace: 'pre-line' }}>{[view.from.email, view.from.phone, view.from.address, view.from.taxId && 'Tax ID ' + view.from.taxId].filter(Boolean).join('\n')}</div></>}
       </div>
       <div className="sh-r">
         <div className="ttl">INVOICE</div>

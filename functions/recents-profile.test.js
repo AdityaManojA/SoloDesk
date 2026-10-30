@@ -72,7 +72,7 @@ test('invoice number, title, parties and bank details are editable and fall back
   assert.equal(invoice.no,'INV-0001');assert.equal(invoice.title,'Phase 1');assert.deepEqual(Object.keys(invoice.bank),['accountName','bankName','accountNumber','ifsc','swift','iban','upi']);
   const view=invoiceView(invoice,{biz:'Sunday',pay:'Pay by transfer',bank:{upi:'sunday@hdfc'}},{name:'Alpha',email:'a@x.com'});
   w.invoices.pop();
-  assert.equal(view.from.name,'Sunday');assert.equal(view.billTo.email,'a@x.com');assert.equal(view.bank.accountName,'Sunday LLP');assert.equal(view.bank.upi,'sunday@hdfc');assert.equal(view.taxLabel,'GST');
+  assert.equal(view.from.name,'Sunday');assert.equal(view.from.role,'');assert.equal(view.billTo.email,'a@x.com');assert.equal(view.bank.accountName,'Sunday LLP');assert.equal(view.bank.upi,'sunday@hdfc');assert.equal(view.taxLabel,'GST');
   assert.ok(validateWorkspace({...w,invoices:[{...w.invoices[0],...invoice}],profile:{username:'aditya',name:'A',public:false,links:[],clients:[]}}));
   assert.throws(()=>validateWorkspace({...w,profile:{public:'yes'}}),/profile/);
   assert.throws(()=>validateWorkspace({...w,notes:[{id:'n',title:'N',checklist:[{title:'x',due:'soon'}]}]}),/note/);

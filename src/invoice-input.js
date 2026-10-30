@@ -54,11 +54,11 @@ export function prepareInvoice(workspace, values, lines, editingId) {
 }
 
 // Editable invoice blocks. Empty values fall back to business settings and the client record.
-export const PARTY_FIELDS={from:['name','email','phone','address','taxId'],billTo:['name','email','address'],bank:['accountName','bankName','accountNumber','ifsc','swift','iban','upi']};
+export const PARTY_FIELDS={from:['name','role','email','phone','address','taxId'],billTo:['name','email','address'],bank:['accountName','bankName','accountNumber','ifsc','swift','iban','upi']};
 export function invoiceView(invoice, settings = {}, client = {}) {
   const pick=(own,fallback)=>Object.fromEntries(Object.entries(fallback).map(([key,value])=>[key,own?.[key] || value || '']));
   return {
-    from:pick(invoice.from,{name:settings.biz,email:settings.email,phone:settings.phone,address:settings.addr,taxId:settings.taxId}),
+    from:pick(invoice.from,{name:settings.biz,role:settings.role,email:settings.email,phone:settings.phone,address:settings.addr,taxId:settings.taxId}),
     billTo:pick(invoice.billTo,{name:client.name,email:client.email,address:client.address}),
     bank:pick(invoice.bank,Object.fromEntries(PARTY_FIELDS.bank.map(key=>[key,settings.bank?.[key]]))),
     pay:invoice.pay || settings.pay || '',

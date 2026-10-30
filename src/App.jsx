@@ -503,7 +503,7 @@ function Settings({ d, mut, toast, ask, user, logout, demo, saving, signingOut, 
     <nav className="tabs-pill settings-tabs" aria-label="Settings sections">{sections.map(([k,l])=><a key={k} href={'#/settings/'+k} aria-current={active===k?'true':undefined} onClick={e=>{e.preventDefault();go(k);}}>{l}</a>)}</nav>
     <section id="settings-general" className="settings-section"><form className="card form-grid" onSubmit={(e) => { e.preventDefault(); const o = Object.fromEntries(new FormData(e.target)); mut((n) => { Object.assign(n.settings, o); }); toast('Settings saved.'); }}>
       <h2 className="full" style={{margin:0}}>General</h2><p className="full empty-note" style={{margin:0}}>Your business details, currency and logo. These appear on invoices.</p>
-      <Fld l="Business name" name="biz" defaultValue={s.biz} /><Fld l="Business email" name="email" type="email" defaultValue={s.email} /><Fld l="Phone" name="phone" defaultValue={s.phone} />
+      <Fld l="Business name" name="biz" defaultValue={s.biz} /><Fld l="Job title" name="role" maxLength={120} placeholder="e.g. Independent Technical Consultant" defaultValue={s.role || ''} /><Fld l="Business email" name="email" type="email" defaultValue={s.email} /><Fld l="Phone" name="phone" defaultValue={s.phone} />
       <Sel l="Default currency" name="cur" o={['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY', 'CHF']} defaultValue={s.cur} />
       <label className="full">Address<textarea name="addr" rows="2" defaultValue={s.addr} /></label>
       <label className="full">Logo (PNG or JPG, shown on invoices)<FileInput accept="image/png,image/jpeg" onChange={pick} /></label>
