@@ -72,7 +72,7 @@ export function InvoiceSheet({ i, d, edit }) {
       <tr><td className="r">Paid</td><td className="r">{money(c.paid)}</td></tr>
       <tr className="tot"><td className="r">Balance due</td><td className="r">{money(c.bal)}</td></tr>
     </tbody></table>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 24, marginTop: 20, paddingTop: 16, borderTop: '1px solid #DED4C3' }}>
+    <div className="sheet-extras" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 24, marginTop: 20, paddingTop: 16, borderTop: '1px solid #DED4C3' }}>
       {(edit || bank.length > 0) && <div><small>BANK DETAILS</small><div className="bank-grid" style={{ marginTop: 6 }}>{(edit ? PARTY_FIELDS.bank : bank.map(([k]) => k)).map(k => [<small key={k + 'l'}>{BANK_LABELS[k]}</small>, edit ? <F ctx={ctx} key={k} path={'bank.' + k} aria-label={BANK_LABELS[k]} /> : <span key={k}>{view.bank[k]}</span>])}</div></div>}
       <div>
         {(edit || value.notes) && <><small>NOTES & TERMS</small>{edit ? <textarea data-edit rows="3" aria-label="Notes and terms" value={value.notes} onChange={e => edit.set('notes', e.target.value)} /> : <p style={{ whiteSpace: 'pre-line', marginTop: 4 }}>{value.notes}</p>}</>}
